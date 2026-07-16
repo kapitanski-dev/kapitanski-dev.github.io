@@ -272,7 +272,7 @@
   <div id="progress"></div>
   <div class="wrap">
     <header class="masthead">
-      <div class="kicker">Wydanie poranne · Redagowane przez AI</div>
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
       <h1 id="tytul-gazety">Gazeta Codzienna</h1>
       <div class="date-bar">
         <span id="numer-wydania"></span>
@@ -311,7 +311,8 @@ __DANE__
     document.title = tytul + ' — ' + D.data_wydania;
     document.getElementById('tytul-gazety').textContent = tytul;
     document.getElementById('data-wydania').textContent = D.data_wydania;
-    document.getElementById('numer-wydania').textContent = D.numer || 'Wydanie poranne';
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
 
     /* ---- artykuły ---- */
     const main = document.getElementById('gazeta');
