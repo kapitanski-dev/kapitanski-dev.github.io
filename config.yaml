@@ -1,0 +1,51 @@
+# ============================================================
+# KONFIGURACJA GAZETY „GRZYB TIMES”
+# Ten plik edytujesz TY. Routine czyta go przy każdym wydaniu.
+# Zmiana = commit do repo, nic więcej.
+# ============================================================
+
+wydanie:
+  tytul: "Grzyb Times"
+  jezyk: pl
+  # Łączna liczba artykułów (pierwsza kategoria z listy = artykuł hero)
+  liczba_artykulow: 5
+
+# ------------------------------------------------------------
+# TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = hero).
+# Liczba kategorii = liczba_artykulow (1 artykuł na kategorię).
+# ------------------------------------------------------------
+kategorie:
+  - nazwa: Inwestowanie
+    zakres: "rynki, akcje, M&A, decyzje banków centralnych"
+    wykres: preferowany
+  - nazwa: Polityka
+    zakres: "ważne decyzje rządowe, wybory, dyplomacja"
+    wykres: opcjonalny
+  - nazwa: Wojna
+    zakres: "konflikty zbrojne, geopolityka, bezpieczeństwo"
+    wykres: opcjonalny
+  - nazwa: Technologia
+    zakres: "AI, innowacje, giganci technologiczni, humanoidy"
+    wykres: opcjonalny
+  - nazwa: Ciekawostka na dziś
+    zakres: "ciekawe odkrycie naukowe, przyroda, kosmos, osobliwość biznesowa"
+    wykres: nie
+
+# ------------------------------------------------------------
+# ŹRÓDŁA PIERWOTNE — zamknięta lista. Każdy artykuł MUSI
+# pochodzić z jednej z tych domen (link artykułu).
+# ------------------------------------------------------------
+zrodla_pierwotne:
+  - reuters.com
+  - bloomberg.com
+  - pap.pl
+  - bankier.pl
+  - money.pl
+
+# ------------------------------------------------------------
+# RESEARCH WTÓRNY — poza listę wolno wyjść WYŁĄCZNIE po to, by
+# zweryfikować liczby/fakty, dodać kontekst lub zebrać dane do
+# wykresu. Źródło wtórne NIGDY nie jest linkiem artykułu.
+# ------------------------------------------------------------
+research_wtorny:
+  dozwolony: true
