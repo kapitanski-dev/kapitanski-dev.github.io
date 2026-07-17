@@ -35,11 +35,18 @@ najważniejszą wiadomość z ostatnich 12 h pochodzącą z domeny z `zrodla_pie
 Jeśli w żadnym źródle nie ma nic sensownego dla kategorii — wybierz najlepszy
 dostępny materiał z listy, nie wychodząc poza nią.
 
-Dla każdego artykułu użyj WebFetch na URL artykułu i wyciągnij obraz:
-- `<meta property="og:image" content="URL">` → użyj jako `obraz.url` (musi być `https://`)
-- brak og:image → pierwszy `<img src>` kończący się na `.jpg/.jpeg/.png/.webp`
-- nadal brak → `obraz.url` = `""`
-- **NIGDY** nie wstawiaj `data:` URL ani SVG jako `obraz.url`
+**Obrazy — NIE pobieraj ich z artykułu** (zdjęcia Reuters/Bloomberg są chronione
+przed hotlinkingiem i nie załadują się na GitHub Pages). Zamiast tego dla każdego
+artykułu podaj pole `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
+wskazującą konkretny, fotografowalny obiekt związany z tematem. Skrypt w KROK 3
+sam zamieni ją na realne zdjęcie z Wikimedia Commons.
+
+Dobre `obraz.query` = konkretny obiekt, nie abstrakcja:
+- osoba: `Jerome Powell`, `Donald Tusk`, `Sam Altman`
+- miejsce/budynek: `Warsaw Stock Exchange`, `Federal Reserve building`, `Strait of Hormuz`
+- rzecz/logo: `Leopard 2 tank`, `NVIDIA logo`, `James Webb Space Telescope`
+❌ unikaj abstraktów (`inflation`, `economy growth`) — dają losowe wykresy.
+Jeśli naprawdę nie ma sensownego obiektu, ustaw `obraz.query` = `""`.
 
 Research wtórny (poza listą) tylko jeśli `research_wtorny.dozwolony: true` i
 wyłącznie do weryfikacji liczb, kontekstu lub danych do wykresu. Źródło wtórne
@@ -89,8 +96,34 @@ dane = {
   "kicker": f"{etykieta} · Redagowane przez AI",
   "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}",
   "numer": etykieta,
-  "artykuly": []   # <-- wstaw artykuły (patrz schemat niżej)
+  "artykuly": []   # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
 }
+
+# --- Rezolwer obrazów: fraza EN -> realny, hotlinkowalny URL z Wikimedia Commons ---
+import urllib.request, urllib.parse
+
+def wikimedia_image(query):
+    if not query: return ""
+    params = {'action':'query','generator':'search','gsrsearch':query,'gsrnamespace':'6',
+              'gsrlimit':'8','prop':'imageinfo','iiprop':'url|mime','iiurlwidth':'1000','format':'json'}
+    url = 'https://commons.wikimedia.org/w/api.php?' + urllib.parse.urlencode(params)
+    req = urllib.request.Request(url, headers={'User-Agent':'GrzybTimes/1.0 (news bot)'})
+    try:
+        data = json.load(urllib.request.urlopen(req, timeout=20))
+    except Exception:
+        return ""
+    pages = (data.get('query') or {}).get('pages') or {}
+    for p in sorted(pages.values(), key=lambda p: p.get('index', 999)):
+        ii = (p.get('imageinfo') or [{}])[0]
+        if ii.get('mime') in ('image/jpeg','image/png','image/webp'):
+            return ii.get('thumburl') or ii.get('url','')
+    return ""
+
+for a in dane["artykuly"]:
+    obraz = a.get("obraz") or {}
+    q = obraz.get("query", "") or a["tytul"]
+    a["obraz"] = {"url": wikimedia_image(q), "alt": obraz.get("alt", q)}
+    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(brak — fallback SVG)'}")
 
 out = tpl.replace('__DANE__', json.dumps(dane, ensure_ascii=False, indent=2))
 assert '__DANE__' not in out
@@ -99,14 +132,14 @@ pathlib.Path('/tmp/grzyb_times.html').write_text(out, encoding='utf-8')
 print(f'OK — {len(out):,} bajtów | plik: {filename}')
 ```
 
-Schemat artykułu (`obraz.url` musi być `https://` lub `""`, nigdy `data:`):
+Schemat artykułu (podajesz `obraz.query` — angielską frazę; skrypt sam doda `obraz.url`):
 
 ```json
 {
   "kategoria": "Inwestowanie",
   "tytul": "Rzeczowy tytuł z liczbą",
   "zrodlo": {"nazwa": "Reuters", "url": "https://...", "godzina": "07:30"},
-  "obraz": {"url": "https://....jpg", "alt": "opis zdjęcia"},
+  "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
   "kluczowe_liczby": [{"wartosc": "2,3%", "opis": "spadek indeksu"}],
   "wykres": {"typ": "linia", "tytul": "...", "etykiety": ["..."], "wartosci": [0]},
   "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."]

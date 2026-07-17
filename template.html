@@ -324,7 +324,7 @@ __DANE__
       el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
       el.dataset.kategoria = a.kategoria;
       const imgSrc = esc(a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '');
-      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${imgSrc}" alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${imgSrc || FALLBACK_IMG}" alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
       const stats = (a.kluczowe_liczby || []).map(s =>
         `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
       const paras = a.akapity.map((p, j) =>
