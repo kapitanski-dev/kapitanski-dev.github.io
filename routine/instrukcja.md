@@ -121,9 +121,12 @@ def wikimedia_image(query):
 
 for a in dane["artykuly"]:
     obraz = a.get("obraz") or {}
-    q = obraz.get("query", "") or a["tytul"]
-    a["obraz"] = {"url": wikimedia_image(q), "alt": obraz.get("alt", q)}
-    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(brak — fallback SVG)'}")
+    q = obraz.get("query")
+    if q is None:            # brak pola query -> użyj tytułu artykułu
+        q = a["tytul"]
+    # q == "" (agent celowo pusty) -> URL pusty -> czysty placeholder SVG
+    a["obraz"] = {"url": wikimedia_image(q), "alt": obraz.get("alt") or a["tytul"]}
+    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(brak — placeholder SVG)'}")
 
 out = tpl.replace('__DANE__', json.dumps(dane, ensure_ascii=False, indent=2))
 assert '__DANE__' not in out
