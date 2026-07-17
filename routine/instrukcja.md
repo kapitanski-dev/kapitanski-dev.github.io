@@ -40,7 +40,13 @@ duplikuj tematów i nie wychodź poza listę źródeł).
 
 Kolejność w wynikowej liście `artykuly`: kategorie w kolejności z configu, a w
 obrębie każdej kategorii artykuły od najważniejszego. Pierwszy artykuł na liście
-(pierwsza kategoria) = **hero**.
+(kategoria **Okładka**) = wielki artykuł okładkowy otwierający wydanie.
+
+**Okładka** (pierwsza kategoria, `liczba: 1`): wybierz JEDNĄ, absolutnie
+najważniejszą wiadomość dnia — z dowolnego tematu (rynki, polityka, wojna,
+technologia, nauka). To ma być „news numer jeden". **Nie powielaj** tej samej
+wiadomości w żadnej innej kategorii — jeśli najważniejszy news jest np.
+polityczny, w kategorii Polityka daj inne tematy.
 
 **Obrazy — NIE pobieraj ich z artykułu** (zdjęcia Reuters/Bloomberg są chronione
 przed hotlinkingiem i nie załadują się na GitHub Pages). Zamiast tego dla każdego
@@ -67,6 +73,11 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
 - **kluczowe_liczby:** 1–3 najważniejsze wartości liczbowe artykułu.
 - **wykres:** tylko gdy masz zweryfikowane realne dane; `typ` = `"linia"` lub
   `"slupki"`; przy kategorii z `wykres: nie` — pomiń. Nie wymyślaj danych.
+  - Dąż do **szczegółowości**: podawaj **8–15 punktów** danych (np. notowania z
+    kolejnych dni/godzin), nie 3–4. Etykiety (`etykiety`) dla każdego punktu.
+  - Dodaj `jednostka` (np. `"%"`, `" pkt"`, `" USD"`, `" mld"`) — pokaże się w
+    interaktywnym tooltipie i na osi Y. Wykres jest interaktywny (najechanie
+    pokazuje wartość punktu), więc realne, gęste dane mają największą wartość.
 
 ## KROK 3 — Wygeneruj plik wydania
 
@@ -101,7 +112,7 @@ months_pl = ['','stycznia','lutego','marca','kwietnia','maja','czerwca','lipca',
 dane = {
   "tytul": tytul,
   "kicker": f"{etykieta} · Redagowane przez AI",
-  "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}",
+  "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}, {now.strftime('%H:%M')}",
   "numer": etykieta,
   "artykuly": []   # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
 }
@@ -160,7 +171,9 @@ Schemat artykułu (podajesz `obraz.query` — angielską frazę; skrypt sam doda
   "zrodlo": {"nazwa": "Reuters", "url": "https://...", "godzina": "07:30"},
   "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
   "kluczowe_liczby": [{"wartosc": "2,3%", "opis": "spadek indeksu"}],
-  "wykres": {"typ": "linia", "tytul": "...", "etykiety": ["..."], "wartosci": [0]},
+  "wykres": {"typ": "linia", "tytul": "S&P 500 — 10 sesji", "jednostka": " pkt",
+             "etykiety": ["1.07","2.07","3.07","4.07","7.07","8.07","9.07","10.07","11.07","14.07"],
+             "wartosci": [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512]},
   "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."]
 }
 ```

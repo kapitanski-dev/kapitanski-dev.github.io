@@ -9,12 +9,17 @@ wydanie:
   jezyk: pl
 
 # ------------------------------------------------------------
-# TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = hero).
+# TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = okładka).
 # `liczba` = ile artykułów w danej kategorii (od najważniejszego).
 # Łączna liczba artykułów wydania = suma wszystkich `liczba`.
-# Pierwszy artykuł pierwszej kategorii = artykuł hero (największy).
+# Pierwsza kategoria „Okładka" (liczba: 1) = wielki artykuł otwierający
+# wydanie, wybierany jako NAJWAŻNIEJSZA wiadomość dnia z dowolnego tematu.
 # ------------------------------------------------------------
 kategorie:
+  - nazwa: Okładka
+    liczba: 1
+    zakres: "NAJWAŻNIEJSZA informacja dnia — dowolny temat (rynki, polityka, wojna, technologia, nauka); ta, która trafia na okładkę. Nie powielaj tej wiadomości w innych kategoriach."
+    wykres: opcjonalny
   - nazwa: Inwestowanie
     liczba: 3
     zakres: "rynki, akcje, M&A, decyzje banków centralnych"
@@ -33,7 +38,7 @@ kategorie:
     wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
     liczba: 1
-    zakres: "ciekawe odkrycie naukowe, przyroda, kosmos, osobliwość biznesowa"
+    zakres: "coś z natury, historii, nauki, biologii lub kosmosu — NIE technologia (od niej jest osobna kategoria)"
     wykres: nie
 
 # ------------------------------------------------------------
