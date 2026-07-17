@@ -21,23 +21,23 @@ kategorie:
     zakres: "NAJWAŻNIEJSZA informacja dnia — dowolny temat (rynki, polityka, wojna, technologia, nauka); ta, która trafia na okładkę. Nie powielaj tej wiadomości w innych kategoriach."
     wykres: opcjonalny
   - nazwa: Inwestowanie
-    liczba: 3
+    liczba: 5
     zakres: "rynki, akcje, M&A, decyzje banków centralnych"
     wykres: preferowany
   - nazwa: Polityka
-    liczba: 2
+    liczba: 5
     zakres: "ważne decyzje rządowe, wybory, dyplomacja"
     wykres: opcjonalny
   - nazwa: Wojna
-    liczba: 2
+    liczba: 3
     zakres: "konflikty zbrojne, geopolityka, bezpieczeństwo"
     wykres: opcjonalny
   - nazwa: Technologia
-    liczba: 2
+    liczba: 5
     zakres: "AI, innowacje, giganci technologiczni, humanoidy"
     wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
-    liczba: 1
+    liczba: 3
     zakres: "coś z natury, historii, nauki, biologii lub kosmosu — NIE technologia (od niej jest osobna kategoria)"
     wykres: nie
 
