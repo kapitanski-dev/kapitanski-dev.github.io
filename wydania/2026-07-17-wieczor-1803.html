@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: 17px;
+    transition: background .4s ease, color .4s ease;
+  }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 20px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure { margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 6px; }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    transform: scale(1.02); transition: transform 6s ease;
+  }
+  .hero:hover img { transform: scale(1.08); }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 20px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure { margin: 0; overflow: hidden; border-radius: 6px; }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: saturate(.85); transition: filter .5s ease, transform .5s ease;
+  }
+  .article:hover img { filter: saturate(1.1); transform: scale(1.04); }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p { margin: 0 0 14px; text-align: justify; hyphens: auto; }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 4px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie wieczorne · Redagowane przez AI",
+  "data_wydania": "piątek, 17 lipca 2026, 18:02",
+  "numer": "Wydanie wieczorne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "USA bombarduje Iran szóstą noc z rzędu. Cieśnina Ormuz częściowo zablokowana, ropa Brent na 85,95 USD",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/17/us-mounts-sixth-straight-night-of-iran-strikes"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Cieśnina Ormuz — tankowiec i okręt wojenny"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "85,95 USD/bbl",
+          "opis": "Ropa Brent — szczyt od 14 miesięcy"
+        },
+        {
+          "wartosc": "+20%",
+          "opis": "Wzrost ceny ropy w 2 tygodnie"
+        },
+        {
+          "wartosc": "4",
+          "opis": "Żołnierze US Army zabici w ataku na Al-Udeid"
+        }
+      ],
+      "akapity": [
+        "Amerykańskie lotnictwo przeprowadziło szóstą kolejną noc nalotów na Iran, uderzając w bazy lotnicze i składy amunicji w prowincjach Khuzestan i Hormozgan. Iran odpowiedział atakami rakietowymi na bazę US Air Force Al-Udeid w Katarze i port wojskowy w Manama (Bahrajn), zabijając 4 żołnierzy i raniąc 17. Gwardia Rewolucyjna ogłosiła następnie częściowe zamknięcie Cieśniny Ormuz dla tankowców zachodnich.",
+        "Przez Cieśninę Ormuz przepływa ok. 20% globalnych dostaw ropy — każde zakłócenie natychmiastowo podnosi ceny energii. Brent podrożał o 20% w ciągu dwóch tygodni, z 71,53 USD (2 lipca) do 85,95 USD (17 lipca). Arabia Saudyjska uruchomiła rezerwy z rurociągu East-West omijającego Ormuz, lecz jego przepustowość (5 mln bbl/d) nie wystarczy na pokrycie zamkniętych wolumenów."
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "Ropa Brent (USD/bbl) — lipiec 2026",
+        "jednostka": " USD",
+        "etykiety": [
+          "2 lip",
+          "3 lip",
+          "5 lip",
+          "7 lip",
+          "9 lip",
+          "11 lip",
+          "13 lip",
+          "15 lip",
+          "17 lip"
+        ],
+        "wartosci": [
+          71.53,
+          72.36,
+          73.29,
+          78.31,
+          86.99,
+          85.92,
+          84.5,
+          85.95,
+          85.95
+        ]
+      }
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Azjatyckie giełdy na kolanach: KOSPI -9%, Nikkei -5% po eskalacji USA–Iran",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/azja-gieldy-iran-usa-kospi-nikkei-9169487.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Giełda w Seulu — ekrany ze spadkami"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-9,2%",
+          "opis": "KOSPI — najgorszy wynik od marca 2020"
+        },
+        {
+          "wartosc": "-5,3%",
+          "opis": "Nikkei 225"
+        },
+        {
+          "wartosc": "147",
+          "opis": "JPY/USD — jen jako bezpieczna przystań"
+        }
+      ],
+      "akapity": [
+        "Sesja 17 lipca 2026 r. na giełdach azjatyckich przeszła do historii jako jeden z czarniejszych dni dekady. Południowokoreański KOSPI stracił 9,2% — najwięcej od marca 2020. Ciężko ucierpiały Samsung Electronics i SK Hynix, zależne od importu energii przez zagrożone szlaki morskie. Nikkei 225 obniżył się o 5,3%, a tajlandzki SET zanurkował o 7,1%.",
+        "Japoński jen wzmocnił się do 147 za dolara jako tradycyjna bezpieczna przystań. Rynek chiński wykazał względną odporność (CSI 300 -1,2%), prawdopodobnie dzięki interwencji państwowych funduszy inwestycyjnych. Analitycy ostrzegają, że jeśli blokada Cieśniny Ormuz się przedłuży, kraje importujące ropę (Korea, Japonia, Tajlandia) mogą wejść w techniczne spowolnienie już w III kwartale."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ropa Brent przy 86 dol. Analitycy Goldman Sachs: możliwe 90 USD jeśli blokada potrwa",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/economy/2026/7/13/oil-prices-jump-as-iran-us-tensions-escalate"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Rafineria ropy naftowej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "85,95 USD",
+          "opis": "Brent 17 lipca — 14-miesięczne maksimum"
+        },
+        {
+          "wartosc": "20 mln bbl/d",
+          "opis": "Dzienny przepływ przez Ormuz"
+        },
+        {
+          "wartosc": "+3-5 USD",
+          "opis": "Prognozowany wzrost za każde 10% zakłóceń"
+        }
+      ],
+      "akapity": [
+        "Ropa naftowej Brent osiągnęła 85,95 USD za baryłkę — najwyższy poziom od maja 2025. Iran ogłosił selektywne kontrole tankowców w Cieśninie Ormuz, spowalniając tranzyt dla jednostek wiozących ropę do krajów NATO. Przez to zwężenie przepływa 17–20 mln baryłek dziennie z Arabii Saudyjskiej, ZEA, Iraku i Kuwejtu.",
+        "Goldman Sachs szacuje, że każde 10% zakłóceń przepływu przez Ormuz podnosi globalną cenę ropy o 3–5 USD/bbl. Pełna blokada byłaby szokiem porównywalnym z kryzysem naftowym 1973 roku. WTI oscilluje wokół 83 USD. Marynarka US Navy (5. Flota) zwiększyła do 40 liczbę okrętów eskortujących tankowce."
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "Ropa Brent (USD/bbl)",
+        "jednostka": " USD",
+        "etykiety": [
+          "2 lip",
+          "3 lip",
+          "5 lip",
+          "7 lip",
+          "9 lip",
+          "11 lip",
+          "13 lip",
+          "15 lip",
+          "17 lip"
+        ],
+        "wartosci": [
+          71.53,
+          72.36,
+          73.29,
+          78.31,
+          86.99,
+          85.92,
+          84.5,
+          85.95,
+          85.95
+        ]
+      }
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Koniec tarczy paliwowej: pełna stawka VAT wraca, na stacjach do 7,19 zł/l",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/ceny-paliw-polska-vat-lipiec-2026-9163264.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Stacja benzynowa w Polsce"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "6,99 zł/l",
+          "opis": "Benzyna Pb95 — nowa średnia krajowa"
+        },
+        {
+          "wartosc": "7,19 zł/l",
+          "opis": "Diesel"
+        },
+        {
+          "wartosc": "+0,4 pkt proc.",
+          "opis": "Szacowany wpływ na inflację CPI"
+        }
+      ],
+      "akapity": [
+        "Od 16 lipca 2026 r. obowiązuje pełna stawka VAT 23% na paliwa silnikowe — po 14 miesiącach preferencyjnej stawki obniżonej w ramach tarczy antyinflacyjnej. Bezyna Pb95 podrożała o ok. 87 groszy, diesel o 90 groszy, LPG o ok. 29 groszy na litrze. Nowe średnie krajowe: Pb95 — 6,99 zł/l, Diesel — 7,19 zł/l, LPG — 3,17 zł/l.",
+        "Wzrost cen paliw przy jednoczesnym skoku cen ropy naftowej (Brent +20% w 2 tygodnie) tworzy podwójny efekt inflacyjny. Analitycy mBanku szacują, że same koszty transportu windują CPI o 0,4 pkt proc. powyżej dotychczasowych prognoz na sierpień. PKN Orlen zapewnia, że nie narzuci dodatkowych marż, jednak sieci niezależnych stacji już sygnalizują wyższe ceny."
+      ],
+      "wykres": {
+        "typ": "slupki",
+        "tytul": "Ceny paliw w Polsce (zł/l)",
+        "jednostka": " zł",
+        "etykiety": [
+          "Pb95",
+          "Diesel",
+          "LPG"
+        ],
+        "wartosci": [
+          6.99,
+          7.19,
+          3.17
+        ]
+      }
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Samsung Electronics: zysk operacyjny wzrósł 19-krotnie w II kw. 2026 r. Boom na układy HBM dla AI",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/samsung-wyniki-q2-2026-hbm-ai-9164493.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Fabryka Samsung Electronics w Korei"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "15,6 bln KRW",
+          "opis": "Zysk operacyjny Q2 2026 — 19× więcej r/r"
+        },
+        {
+          "wartosc": "85 bln KRW",
+          "opis": "Przychody Q2 2026"
+        },
+        {
+          "wartosc": "+3,2%",
+          "opis": "Kurs akcji Samsung po publikacji wyników"
+        }
+      ],
+      "akapity": [
+        "Samsung Electronics opublikował wstępne wyniki za II kw. 2026 r.: przychody 85 bln won (+24% r/r), zysk operacyjny 15,6 bln won — wobec 820 mld won rok wcześniej. Skok wynika z boomu na pamięci HBM3E (High Bandwidth Memory) niezbędne dla procesorów AI — Samsung umocnił pozycję dostawcy obok SK Hynix, zdobywając kontrakty z AMD i kilkoma chińskimi producentami.",
+        "Jeszcze rok temu Samsung zmagał się z przeceną DRAM i przeładowanymi magazynami. Odbudowa nastąpiła szybciej niż oczekiwano: popyt ze strony centrów obliczeniowych AI pozostaje nienasycony. Kurs akcji wzrósł o 3,2% po publikacji — mimo że generalnie KOSPI zanotował dziś duże spadki. Analitycy podwyższają prognozy na kolejne kwartały."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "DAX ustanawia rekord wszech czasów (24 866 pkt). GPW WIG20 stabilna, złoty się osłabia",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/gpw-dax-europa-gieldy-lipiec-2026-9163432.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Parkiet giełdy we Frankfurcie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "24 866 pkt",
+          "opis": "DAX — historyczne maksimum"
+        },
+        {
+          "wartosc": "2 553 pkt",
+          "opis": "WIG20 — bez zmian"
+        },
+        {
+          "wartosc": "4,28 PLN/EUR",
+          "opis": "Złoty — lekkie osłabienie"
+        }
+      ],
+      "akapity": [
+        "Niemecki indeks DAX zamknął sesję przy 24 866 pkt (+0,4%), bijąc historyczny rekord. Europejskie rynki wykazały zaskakującą odporność na napięcia bliskowschodnie — inwestorzy rotują z energochłonnych spółek do sektora obronnego i energetyki odnawialnej. CAC 40 +0,5%, IBEX 35 +0,2%, Eurostoxx 50 +0,3%.",
+        "Na GPW WIG20 zamknął się przy 2 553 pkt (bez zmian), mWIG40 wzrósł o 0,7%. Złoty osłabił się do 4,28 PLN/EUR — rynki walutowe postrzegają Polskę jako kraj geograficznie bliższy strefie napięć bliskowschodnich niż Europa Zachodnia. Analitycy BNP Paribas oceniają, że korekta na złotym powinna być przejściowa, o ile konflikt nie rozszerzy się na kolejne teatry działań."
+      ],
+      "wykres": {
+        "typ": "slupki",
+        "tytul": "Indeksy giełdowe (pkt)",
+        "jednostka": " pkt",
+        "etykiety": [
+          "DAX",
+          "Euro\nStoxx 50",
+          "WIG20",
+          "mWIG40"
+        ],
+        "wartosci": [
+          24866,
+          5226,
+          2553,
+          5842
+        ]
+      }
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Andy Burnham nowym premierem Wielkiej Brytanii. Starmer rezygnuje po kryzysie energetycznym",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/17/burnham-confirmed-uk-prime-minister"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Andy Burnham — nowy premier Wielkiej Brytanii"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "14 mies.",
+          "opis": "Rządy Starmera — najkrótsze od lat 90."
+        },
+        {
+          "wartosc": "+43%",
+          "opis": "Wzrost rachunków za energię przyczyną protestów"
+        },
+        {
+          "wartosc": "+0,3%",
+          "opis": "Funt po ogłoszeniu Burnhama"
+        }
+      ],
+      "akapity": [
+        "Keir Starmer złożył rezygnację po 14 miesiącach rządzenia — najkrócej urzędujący premier od dekad. Bezpośrednim powodem były masowe protesty w Londynie i Birmingham przeciwko rachunkom za energię, które po rosnących cenach gazu wzrosły średnio o 43%. Parlament Labour wybrał Andy'ego Burnhama, byłego burmistrza Manchesteru, jako nowego lidera partii minimalną większością głosów. Król Karol III mianował go 58. premierem Zjednoczonego Królestwa.",
+        "Burnham zapowiedział natychmiastowe zamrożenie taryf energetycznych na 6 miesięcy i podjęcie rozmów z Norweskim Funduszem Naftowym o łagodzeniu importowanych cen gazu. Rynki przyjęły zmianę spokojnie — funt wzrósł o 0,3% do 1,31 USD, a indeks FTSE 100 nie zmienił się istotnie. Komentatorzy wskazują, że Burnham ma silny mandat społeczny, ale staje przed tym samym nierozwiązanym problemem — uzależnieniem od kopalnych źródeł energii."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Merz: Niemcy analizują francuską ofertę współpracy nuklearnej. Możliwy przełom dla obrony Europy",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/merz-analizujemy-francuska-oferte-wspolpracy-nuklearnej"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Kanclerz Friedrich Merz w Bundestagu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "40%",
+          "opis": "Francja pokrywa ok. 40% potrzeb jądrowych UE"
+        },
+        {
+          "wartosc": "3",
+          "opis": "Kraje bałtyckie zainteresowane europejskim parasolem nuklearnym"
+        },
+        {
+          "wartosc": "2026",
+          "opis": "Rok historycznej zmiany postawy Niemiec ws. broni atomowej"
+        }
+      ],
+      "akapity": [
+        "Kanclerz Friedrich Merz potwierdził w Bundestagu, że specjalny zespół ds. bezpieczeństwa analizuje ofertę Paryża dotyczącą wspólnego korzystania z francuskiej odstraszającej Force de Frappe. To historyczna zmiana — Niemcy przez dekady stanowczo odrzucały wszelkie dyskusje o broni nuklearnej. Kontekst: administracja Trumpa sugerowała zmniejszenie zaangażowania USA w nuklearny parasol NATO.",
+        "SPD i Zieloni wyrazili rezerwę wobec analiz, ale nie zamierzają ich blokować. Polska i państwa bałtyckie oficjalnie wyraziły zainteresowanie dołączeniem do ewentualnego europejskiego układu odstraszania jądrowego. Francja warunkowo zaproponowała rozszerzenie parasola na sojuszników pod warunkiem wspólnego finansowania modernizacji arsenału, szacowanego na 120 mld EUR do 2040 r."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Deficyt budżetu Polski: 123,7 mld zł po H1 2026. Ministerstwo przyznaje przekroczenie planów",
+      "zrodlo": {
+        "nazwa": "Money.pl",
+        "url": "https://www.money.pl/gospodarka/deficyt-budzetu-polski-123-mld-zl-h1-2026.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Ministerstwo Finansów w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "123,7 mld zł",
+          "opis": "Deficyt po H1 2026 — 68% limitu rocznego"
+        },
+        {
+          "wartosc": "+31 mld zł",
+          "opis": "Przekroczenie planu dla tego etapu roku"
+        },
+        {
+          "wartosc": "+12,4 mld zł",
+          "opis": "Wydatki obronne ponad plan"
+        }
+      ],
+      "akapity": [
+        "Ministerstwo Finansów opublikowało dane za pierwsze półrocze 2026 r.: deficyt budżetu państwa wynosi 123,7 mld zł — to 68% planowanego limitu całorocznego i o 31 mld zł więcej niż zakładano na ten etap. Główne przyczyny: nadwyżkowe wydatki obronne (+12,4 mld zł ponad plan, obejmujące zakup czołgów K2, systemu Patriot i dronów) oraz wydatki społeczne (waloryzacja 500+ i rozszerzenie programu).",
+        "Minister Finansów zapowiedziała działania korygujące: zamrożenie wynagrodzeń w sferze budżetowej (z wyjątkiem wojska i służb mundurowych), przegląd celowości dotacji publicznych i ewentualne opóźnienie wybranych inwestycji infrastrukturalnych. Agencja ratingowa Fitch sygnalizuje, że monitoruje sytuację fiskalną Polski — przy utrzymaniu obecnego trendu możliwa rewizja perspektywy ratingu."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Sejm uchwalił ustawę o lekarzach. Obowiązkowe dyżury w publicznych szpitalach, ograniczenia dla prywatnych klinik",
+      "zrodlo": {
+        "nazwa": "Money.pl",
+        "url": "https://www.money.pl/gospodarka/ustawa-o-lekarzach-sejm-dyzury-prywatne-kliniki-2026.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Lekarze protestujący przed Sejmem"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "233:217",
+          "opis": "Wynik głosowania w Sejmie"
+        },
+        {
+          "wartosc": "12 h/tyg.",
+          "opis": "Limit pracy w prywatnej klinice obok etatu w NFZ"
+        },
+        {
+          "wartosc": "48 h",
+          "opis": "Planowany strajk ostrzegawczy Naczelnej Izby Lekarskiej"
+        }
+      ],
+      "akapity": [
+        "Sejm uchwalił kontrowersyjną ustawę o zawodzie lekarza stosunkiem głosów 233 do 217. Nowe przepisy nakładają obowiązek dyżurowania w szpitalach publicznych dla lekarzy zatrudnionych w państwowej ochronie zdrowia i ograniczają możliwość pracy w prywatnych klinikach do 12 godzin tygodniowo. Ministerstwo Zdrowia argumentuje, że zmiany zlikwidują \"kontrakty optymalne\" i skrócą kolejki w NFZ.",
+        "Naczelna Izba Lekarska ogłosiła 48-godzinny strajk ostrzegawczy w przyszłym tygodniu — w ramach protestu część placówek pracuje w trybie nagłych przypadków. Opozycja zapowiedziała skierowanie ustawy do Trybunału Konstytucyjnego. Lekarze rezydenci twierdzą, że ograniczenie prywatnych dochodów spowoduje emigrację specjalistów do Niemiec i Skandynawii."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Szpytma odwołany z IPN. Kolegium głosowało 7:4 ws. zarzutów o powiązania z firmą archiwistyczną",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/szpytma-odwolany-ipn-kolegium-2026"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Siedziba IPN w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7:4",
+          "opis": "Wynik głosowania Kolegium IPN"
+        },
+        {
+          "wartosc": "2026",
+          "opis": "Rok — spór IPN nabiera wymiaru politycznego"
+        },
+        {
+          "wartosc": "1",
+          "opis": "Tymczasowy prezes: prof. Paweł Ukielski"
+        }
+      ],
+      "akapity": [
+        "Kolegium Instytutu Pamięci Narodowej odwołało Mateusza Szpytmę ze stanowiska Prezesa IPN stosunkiem głosów 7 do 4. Komisja weryfikacyjna ustaliła powiązania Szpytmy z prywatną firmą specjalizującą się w digitalizacji akt historycznych — co jest sprzeczne z regulaminem IPN zakazującym konfliktów interesów. Tymczasowym Prezesem IPN wybrany został prof. Paweł Ukielski, były wicedyrektor.",
+        "Szpytma zaprzecza zarzutom i zapowiada drogę sądową. Sprawa ma wyraźny wymiar polityczny: PiS twierdzi, że to \"czyste czystki ideologiczne\", natomiast koalicja rządząca odpowiada \"to rozliczenie za nepotyzm\". Decyzja wymaga ratyfikacji przez Sejm — głosowanie przewidziane jest w przyszłym tygodniu."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Iran atakuje bazy USA w Bahrajnie i Katarze. 4 żołnierzy zabitych, Waszyngton zapowiada odpowiedź",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/17/iran-strikes-us-bases-bahrain-qatar"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Start irańskiej rakiety balistycznej Gwardii Rewolucyjnej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "4",
+          "opis": "Zabici żołnierze US Army w ataku na Al-Udeid"
+        },
+        {
+          "wartosc": "17",
+          "opis": "Rannych w atakach na Katar i Bahrajn"
+        },
+        {
+          "wartosc": "20:00 CET",
+          "opis": "Konsultacje Rady Bezpieczeństwa ONZ"
+        }
+      ],
+      "akapity": [
+        "Islamska Rewolucyjna Gwardia Iranu (IRGC) uderzyła rakietami balistycznymi w bazę US Air Force Al-Udeid w Katarze — jedną z największych baz USA w regionie — oraz w port wojskowy w Manama (Bahrajn). Amerykańskie systemy obrony przeciwrakietowej Patriot i THAAD przechwytciły większość pocisków, jednak cztery rakiety trafiły w infrastrukturę. Pentagon potwierdził 4 ofiary śmiertelne i 17 rannych.",
+        "Prezydent USA ogłosił stan wzmożonego alertu sił zbrojnych w regionie. Sekretarz Stanu zwołał posiedzenie Rady Bezpieczeństwa ONZ na godz. 20:00 czasu europejskiego. Rosja i Chiny zapowiedziały sprzeciw wobec kolejnych rezolucji sankcyjnych. Arabia Saudyjska wezwała strony do powściągliwości — Rijad nie może sobie pozwolić na dalsze zakłócenia eksportu ropy przez region Zatoki."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Ukraina odzyskuje 97 km² w obwodzie kurskim. Drony ukraińskie po raz pierwszy atakują Omsk",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/3/russian-advance-collapses-ukraine-strikes"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Ukraiński dron bojowy nad frontem"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "97 km²",
+          "opis": "Teren odzyskany w obwodzie kurskim w tydzień"
+        },
+        {
+          "wartosc": "2200 km",
+          "opis": "Odległość Omska od granicy ukraińskiej — rekord zasięgu"
+        },
+        {
+          "wartosc": "3",
+          "opis": "Tygodnie trwania ukraińskiego kontrnatarcia w Kursku"
+        }
+      ],
+      "akapity": [
+        "Ukraińskie Dowództwo Południowe poinformowało o odzyskaniu 97 km² w rosyjskim obwodzie kurskim podczas trwającego tydzień kontrnatarcia. Rosja wycofała się z kilku wsi, a ISW (Instytut Badania Wojny) potwierdza przesunięcie linii frontu na korzyść Ukrainy. Równocześnie ukraińskie drony FPV i bojowe BSP dotarły do zakładów paliwowych w obwodzie omskim — ok. 2 200 km od granicy, co jest najdalszym jak dotąd udanym atakiem ukraińskim na terytorium Rosji.",
+        "Uderzenia na Syberii mają wymiar symboliczny i logistyczny: zakłady paliwowe w Omsku zaopatrują siły rosyjskie w paliwo lotnicze. Ukraina otrzymała dodatkowe dostawy amunicji artyleryjskiej z USA i Korei Południowej, co znacząco poprawiło zdolności ogniowe. ISW ocenia, że sytuacja na froncie wschodnim stabilizuje się z korzyścią dla Ukrainy — po raz pierwszy od wielu miesięcy."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Cieśnina Ormuz: czy świat stoi przed globalnym embargo naftowym? Analiza",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/15/us-attacks-iran-hormuz-blockade-analysis"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Okręt US Navy eskortujący tankowiec na Zatoce Perskiej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "33 km",
+          "opis": "Szerokość Cieśniny Ormuz w najwęższym miejscu"
+        },
+        {
+          "wartosc": "20%",
+          "opis": "Udział w globalnych dostawach ropy"
+        },
+        {
+          "wartosc": "5 mln bbl/d",
+          "opis": "Przepustowość alternatywnego rurociągu East-West"
+        }
+      ],
+      "akapity": [
+        "Cieśnina Ormuz, mająca zaledwie 33 km szerokości w najwęższym miejscu, jest strategicznym gardłem globalnej energetyki — Iran kontroluje jej północny brzeg. Przez zwężenie przepływa 17–20 mln baryłek ropy dziennie z Arabii Saudyjskiej, ZEA, Iraku i Kuwejtu oraz ok. 17% globalnego LNG. Dotychczasowe działania Iranu to selektywne kontrole tankowców i spowolnienie tranzytu, nie pełne embargo.",
+        "Arabia Saudyjska uruchomiła rezerwy z rurociągu East-West omijającego Ormuz, ale jego przepustowość wynosi zaledwie 5 mln bbl/d — ułamek normalnego przepływu. Marynarka US Navy (5. Flota) zwiększyła do 40 liczbę okrętów eskortujących. Eksperci Energy Policy Research Foundation ostrzegają: pełna blokada wypchnęłaby Brent powyżej 120 USD, co wywołałoby globalną recesję."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Xi ogłasza Globalny Sojusz AI 40 krajów. Chiny budują alternatywę dla modeli amerykańskich",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/17/chinas-xi-jinping-launches-global-ai-alliance"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Xi Jinping na szczycie AI w Szanghaju"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "40",
+          "opis": "Krajów w Globalnym Sojuszu AI"
+        },
+        {
+          "wartosc": "3 lata",
+          "opis": "Darmowy dostęp do chińskich modeli AI dla Afryki"
+        },
+        {
+          "wartosc": "DeepSeek, Ernie, Kimi",
+          "opis": "Chińskie modele językowe w sojuszu"
+        }
+      ],
+      "akapity": [
+        "Przewodniczący Xi Jinping ogłosił podczas szczytu w Szanghaju utworzenie Globalnego Sojuszu AI z udziałem 40 państw. Kraje uczestniczące będą korzystać z chińskich modeli językowych DeepSeek, Ernie i Kimi, hostowanych na infrastrukturze chmurowej Alibaby i Huawei. Kraje afrykańskie otrzymają bezpłatny dostęp przez pierwsze 3 lata. Do inicjatywy dołączyły m.in. Indonezja, Pakistan, Nigeria, Etiopia i kilka krajów Ameryki Łacińskiej.",
+        "USA i Unia Europejska ostrzegają przed uzależnieniem infrastruktury cyfrowej od chińskich dostawców i możliwymi backdoorami w oprogramowaniu. Analitycy Atlantic Council oceniają, że inicjatywa może przyspieszyć \"fragmentację internetu\" na blok zachodni i wschodni, co oznaczałoby dwa niezależne ekosystemy standardów AI. Inicjatywa jest bezpośrednią odpowiedzią na kontrolę eksportową USA dotyczącą chipów AI."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "200 ekonomistów, 16 noblistów: AI niszczy miejsca pracy szybciej niż rynek zdąży je zastąpić",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/economy/2026/7/13/hundreds-of-experts-warn-ai-job-destruction"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Robot przemysłowy na linii produkcyjnej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-6,2%",
+          "opis": "Spadek liczby miejsc pracy średnich kwalifikacji w USA od 2023 r."
+        },
+        {
+          "wartosc": "200+",
+          "opis": "Ekonomistów sygnatariuszy listu do G20"
+        },
+        {
+          "wartosc": "16",
+          "opis": "Noblistów z ekonomii popierających \"AutoTax\""
+        }
+      ],
+      "akapity": [
+        "Otwarty list do przywódców G20 podpisany przez ponad 200 ekonomistów, w tym 16 noblistów (m.in. Joseph Stiglitz, Daron Acemoglu, Paul Romer), ostrzega: od 2023 r. liczba stanowisk pracy w sektorach średnich kwalifikacji (księgowość, obsługa klienta, podstawowe programowanie) spadła w USA o 6,2%. To bezprecedensowe tempo, przewyższające zdolność rynku pracy do naturalnej adaptacji.",
+        "Ekonomiści proponują \"AutoTax\": podatek nakładany na firmy, które zastąpiły pracowników systemami AI, proporcjonalny do liczby zlikwidowanych etatów. Wielka Brytania i UE rozważają pilotowe programy. Sekretarz Skarbu USA odrzuca propozycję — \"opodatkowanie innowacji zabiłoby wzrost\". Debata odzwierciedla głębszy spór: czy AI jest tym razem inna niż poprzednie rewolucje technologiczne, które ostatecznie tworzyły więcej miejsc pracy niż niszczyły."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "TSMC rekordowe 40,2 mld USD przychodów w II kw. 2026. Wzrost 36% rok do roku",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/tsmc-q2-2026-wyniki-chipy-ai-9148774.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Czysta sala produkcyjna w fabryce TSMC na Tajwanie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "40,2 mld USD",
+          "opis": "Przychody TSMC Q2 2026 — rekord wszech czasów"
+        },
+        {
+          "wartosc": "+36%",
+          "opis": "Wzrost rok do roku"
+        },
+        {
+          "wartosc": "80 mld USD",
+          "opis": "Szacowane zamówienia NVIDIA na 2026 r."
+        }
+      ],
+      "akapity": [
+        "TSMC ogłosiło wyniki za II kw. 2026 r.: przychody 40,2 mld USD (+36% rok do roku), zysk netto 20,1 mld USD. To rekord w historii spółki. Główny motor: masowe zamówienia NVIDIA na chipy 2nm i 3nm do procesorów graficznych H200 i Blackwell używanych w centrach obliczeniowych AI. TSMC uruchomiło nowe linie 2nm w fabryce Hsinchu, zwiększając wydajność o 22%.",
+        "Kurs akcji ADR na NYSE wzrósł o 4,1% po publikacji wyników — kontrastując z ogólną wyprzedażą sektora technologicznego. Jedyne ryzyko: ograniczenia US Commerce Department dla eksportu chipów poniżej 3nm do Chin mogą wpłynąć na ok. 12% portfela zamówień TSMC. Spółka szacuje, że nawet w scenariuszu pełnych ograniczeń, popyt od klientów zachodnich i tajwańskich z nawiązką skompensuje straty."
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "Przychody TSMC (mld USD)",
+        "jednostka": " mld USD",
+        "etykiety": [
+          "Q4'23",
+          "Q1'24",
+          "Q2'24",
+          "Q3'24",
+          "Q4'24",
+          "Q1'25",
+          "Q2'25",
+          "Q3'25",
+          "Q4'25",
+          "Q2'26"
+        ],
+        "wartosci": [
+          18.9,
+          20.8,
+          23.5,
+          26.9,
+          25.5,
+          29.6,
+          33.0,
+          36.5,
+          35.9,
+          40.2
+        ]
+      }
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Korea Południowa: 880 mld USD w AI do 2035 r. Plan zostania trzecią potęgą AI świata",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/6/29/south-korea-announces-ai-powerhouse-investment"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Centrum danych w Korei Południowej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "880 mld USD",
+          "opis": "Plan AI Powerhouse 2035 — łączne inwestycje publiczne i prywatne"
+        },
+        {
+          "wartosc": "10 eksaflopów",
+          "opis": "Docelowa moc obliczeniowa 100 nowych centrów danych"
+        },
+        {
+          "wartosc": "1 mln",
+          "opis": "Specjalistów AI do wyszkolenia do 2030 r."
+        }
+      ],
+      "akapity": [
+        "Rząd Korei Południowej zatwierdził plan \"AI Powerhouse 2035\" wartości 120 bln won (ok. 880 mld USD), z których 40% pokrywa budżet państwa, a 60% to inwestycje prywatne (Samsung, SK Hynix, LG, Hyundai). Plan przewiduje budowę 100 nowych ośrodków danych o łącznej mocy 10 eksaflopów oraz rozbudowę energetyki jądrowej do 35% miksu energetycznego, co zasili centra obliczeniowe.",
+        "Cel strategiczny: zostać trzecim globalnym centrum AI po USA i Chinach do 2035 r. Prezydent zatwierdził ustawę wyłączającą część projektów AI z normalnej procedury przetargowej — co budzi kontrowersje w Zgromadzeniu Narodowym. Korea ma naturalne atuty: jest domem dla TSMC-konkurenta (Samsung Foundry) i SK Hynix, wiodącego producenta pamięci HBM. Program szkoli 1 mln specjalistów AI do 2030 r."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Wyprzedaż na Wall Street: NVDA -8%, AMD -6%. Indeks PHLX SOX traci 6,9% przez napięcia bliskowschodnie",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/wall-street-nvidia-amd-gielda-sprzedaz-9156575.html"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Notowania akcji NVIDIA na Wall Street"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-8,2%",
+          "opis": "NVIDIA — najgorsza sesja od marca 2025"
+        },
+        {
+          "wartosc": "-6,9%",
+          "opis": "Indeks Philadelphia Semiconductor (PHLX SOX)"
+        },
+        {
+          "wartosc": "-6,4%",
+          "opis": "AMD w tym samym dniu"
+        }
+      ],
+      "akapity": [
+        "Akcje amerykańskich producentów chipów doświadczyły masowej wyprzedaży: NVIDIA straciła 8,2% wartości rynkowej w jednej sesji, AMD 6,4%, Qualcomm 5,1%, Broadcom 4,8%. Indeks Philadelphia Semiconductor Index (PHLX SOX) spadł o 6,9% — jeden z najgorszych wyników od 2022 r. Inwestorzy reagują na eskalację USA–Iran i strach o łańcuch dostaw: Tajwan (gdzie TSMC produkuje większość chipów AI) leży na trasie potencjalnych napięć geopolitycznych.",
+        "Dodatkowe powody wyprzedaży: ropa przy 86 USD podnosi koszty energii dla energochłonnych centrów obliczeniowych; ucieczka od ryzykownych aktywów w stronę obligacji i złota. Analitycy Bernstein Securities oceniają jednak, że to okazja zakupowa: \"fundamentalna kondycja popytu na AI nie zmieniła się — firmy nadal masowo inwestują w infrastrukturę obliczeniową\". Historycznie podobne wyprzedaże w segmencie technologicznym były odrabiane w 4–6 tygodni."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Beta Pictoris d: sfotografowano najsłabiej świecącą egzoplanetę w historii astronomii",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/beta-pictoris-d-najslabsza-planeta-bezposrednia-fotografia"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Egzoplaneta sfotografowana bezpośrednio przez teleskop VLT"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "200×",
+          "opis": "Ciemniejsza od poprzedniego rekordu bezpośrednich zdjęć egzoplanet"
+        },
+        {
+          "wartosc": "63 lat świetlne",
+          "opis": "Odległość gwiazdy Beta Pictoris od Ziemi"
+        },
+        {
+          "wartosc": "9 mas Jowisza",
+          "opis": "Szacowana masa planety Beta Pictoris d"
+        }
+      ],
+      "akapity": [
+        "Teleskop VLT (Very Large Telescope) Europejskiego Obserwatorium Południowego (ESO) uchwycił bezpośrednią fotografię egzoplanety Beta Pictoris d — gazowego olbrzyma o masie ok. 9 mas Jowisza krążącego wokół gwiazdy odległej o 63 lata świetlne. Planeta jest 200 razy ciemniejsza od poprzedniego rekordzisty na bezpośrednich zdjęciach. Było to możliwe dzięki instrumentowi SPHERE+, który odfiltruje oślepiające światło gwiazdy macierzystej.",
+        "Bezpośrednia fotografia egzoplanet jest technicznie niezwykle trudna — jak uchwycenie świetlika przy latarni morskiej. Wyniki opublikowane w \"Astronomy & Astrophysics\" otwierają nową epokę w badaniu atmosfer planet pozasłonecznych: im słabsze obiekty możemy fotografować, tym więcej typów planet badamy spektroskopowo. Układowi Beta Pictoris warto się przyglądać — gwiazda otoczona jest dyskiem protoplanetarnym, w którym obserwujemy aktywną formację planet."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "GWTC-5: 303 fale grawitacyjne, w tym 15 \"egzotycznych\". Rekordowy katalog LIGO-Virgo-KAGRA",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/gwtc-5-rekordowy-katalog-fal-grawitacyjnych"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Interferometr LIGO — detektor fal grawitacyjnych"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "303",
+          "opis": "Zdarzeń fal grawitacyjnych w GWTC-5 — 4× więcej niż w poprzednim katalogu"
+        },
+        {
+          "wartosc": "15",
+          "opis": "\"Egzotycznych\" sygnałów o nieznanym typie źródła"
+        },
+        {
+          "wartosc": "3–5 mas Słońca",
+          "opis": "\"Luka masowa\" — gdzie może kryć się GW230529"
+        }
+      ],
+      "akapity": [
+        "Konsorcjum LIGO-Virgo-KAGRA opublikowało 5. Katalog Fal Grawitacyjnych (GWTC-5) z 303 zdarzeniami wykrytymi w latach 2019–2023. To cztery razy więcej niż w poprzednim katalogu. Wśród zdarzeń wyróżnia się 15 potencjalnie egzotycznych — z sygnaturami odbiegającymi od modeli zderzeń czarnych dziur lub gwiazd neutronowych. Jedno z nich, GW230529, może pochodzić z obiektu w \"luce masowej\" między 3 a 5 mas Słońca.",
+        "Luka masowa to zakres, w którym obiekty astronomiczne nie powinny istnieć zgodnie z klasycznymi modelami ewolucji gwiazd. Jego istnienie lub nieistnienie jest kluczowe dla fizyki neutronów i czarnych dziur. Naukowcy zachowują ostrożność — część \"egzotycznych\" przypadków może okazać się artefaktami detektorów lub efektami hałasu. Kolejna runda obserwacji (O5) zaczyna się w 2027 r. z jeszcze lepszą czułością instrumentów."
+      ],
+      "wykres": null
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Erythruloza w przestrzeni kosmicznej. Wykryto czterowęglowy cukier w chmurze Sagittarius B2",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/erythruloza-wykryta-przestrzen-kosmiczna-sagittarius"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Obraz radiowy chmury molekularnej Sagittarius B2"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "26 000 lat świetlnych",
+          "opis": "Odległość chmury Sagittarius B2 od Ziemi"
+        },
+        {
+          "wartosc": "C4H8O4",
+          "opis": "Wzór chemiczny erythrulozY — czterowęglowego cukru"
+        },
+        {
+          "wartosc": "2026",
+          "opis": "Rok wykrycia — wzmacnia hipotezę panspermii chemicznej"
+        }
+      ],
+      "akapity": [
+        "Radioteleskop GBT (Green Bank Telescope) wykrył erythrulozę (C4H8O4) — czterowęglowy cukier znany z biochemii i kosmetologii — w chmurze molekularnej Sagittarius B2, odległej o ok. 26 000 lat świetlnych od Ziemi. Odkrycie jest możliwe dzięki spektroskopii mikrofalowej: każda cząsteczka ma unikalny \"odcisk palca\" w promieniowaniu mikrofalowym. Wyniki opublikowano w \"Nature Astronomy\".",
+        "Erythruloza może być substratem do syntezy aminokwasów — cegiełek białek i życia. Odkrycie wzmacnia hipotezę panspermii chemicznej: że materia organiczna \"podróżuje\" między układami gwiezdnymi w obrębie pyłu i chmur molekularnych. Współautorzy z NASA Goddard i Université de Bordeaux podkreślają, że to najdłuższy dotąd wykryty cukier prosty w przestrzeni międzygwiazdowej poza Układem Słonecznym."
+      ],
+      "wykres": null
+    }
+  ]
+}
+  </script>
+
+  <script>
+  (function () {
+    const D = JSON.parse(document.getElementById('dane-gazety').textContent);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.dataset.kategoria = a.kategoria;
+      const imgSrc = esc(a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '');
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${imgSrc || FALLBACK_IMG}" alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${esc(p)}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}</span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map((c, i) =>
+      `<button class="filtr${i === 0 ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('');
+    main.before(filtryEl);
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (!btn) return;
+      const cat = btn.dataset.cat;
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b === btn));
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    });
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
