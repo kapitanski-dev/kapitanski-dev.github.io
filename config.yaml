@@ -7,27 +7,32 @@
 wydanie:
   tytul: "Grzyb Times"
   jezyk: pl
-  # Łączna liczba artykułów (pierwsza kategoria z listy = artykuł hero)
-  liczba_artykulow: 5
 
 # ------------------------------------------------------------
 # TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = hero).
-# Liczba kategorii = liczba_artykulow (1 artykuł na kategorię).
+# `liczba` = ile artykułów w danej kategorii (od najważniejszego).
+# Łączna liczba artykułów wydania = suma wszystkich `liczba`.
+# Pierwszy artykuł pierwszej kategorii = artykuł hero (największy).
 # ------------------------------------------------------------
 kategorie:
   - nazwa: Inwestowanie
+    liczba: 3
     zakres: "rynki, akcje, M&A, decyzje banków centralnych"
     wykres: preferowany
   - nazwa: Polityka
+    liczba: 2
     zakres: "ważne decyzje rządowe, wybory, dyplomacja"
     wykres: opcjonalny
   - nazwa: Wojna
+    liczba: 2
     zakres: "konflikty zbrojne, geopolityka, bezpieczeństwo"
     wykres: opcjonalny
   - nazwa: Technologia
+    liczba: 2
     zakres: "AI, innowacje, giganci technologiczni, humanoidy"
     wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
+    liczba: 1
     zakres: "ciekawe odkrycie naukowe, przyroda, kosmos, osobliwość biznesowa"
     wykres: nie
 

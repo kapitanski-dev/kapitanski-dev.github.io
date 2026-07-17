@@ -24,16 +24,23 @@ echo "Repo: $REPO" && ls "$REPO"
 ```
 
 Przeczytaj `"$REPO/config.yaml"` (narzędzie Read). Stamtąd pochodzą:
-tytuł gazety, lista kategorii (kolejność = ważność, pierwsza = hero),
-`liczba_artykulow`, `zrodla_pierwotne`, reguły research wtórny.
-**Nie zgaduj — użyj wartości z pliku.**
+tytuł gazety, lista kategorii (kolejność = ważność, pierwsza = hero), **`liczba`
+artykułów dla każdej kategorii**, `zrodla_pierwotne`, reguły research wtórny.
+**Nie zgaduj — użyj wartości z pliku.** Łączna liczba artykułów wydania = suma
+pól `liczba` ze wszystkich kategorii.
 
 ## KROK 1 — Research
 
 Użyj WebSearch. Dla **każdej** kategorii z `config.yaml` (w kolejności) znajdź
-najważniejszą wiadomość z ostatnich 12 h pochodzącą z domeny z `zrodla_pierwotne`.
-Jeśli w żadnym źródle nie ma nic sensownego dla kategorii — wybierz najlepszy
-dostępny materiał z listy, nie wychodząc poza nią.
+**dokładnie tyle artykułów, ile wynosi jej pole `liczba`** — najważniejsze
+wiadomości z ostatnich 12 h z domen z `zrodla_pierwotne`. W obrębie kategorii
+uporządkuj je od najważniejszego do najmniej istotnego. Jeśli w źródłach nie ma
+tylu sensownych materiałów dla kategorii — dodaj tyle, ile realnie jest (nie
+duplikuj tematów i nie wychodź poza listę źródeł).
+
+Kolejność w wynikowej liście `artykuly`: kategorie w kolejności z configu, a w
+obrębie każdej kategorii artykuły od najważniejszego. Pierwszy artykuł na liście
+(pierwsza kategoria) = **hero**.
 
 **Obrazy — NIE pobieraj ich z artykułu** (zdjęcia Reuters/Bloomberg są chronione
 przed hotlinkingiem i nie załadują się na GitHub Pages). Zamiast tego dla każdego
@@ -127,6 +134,15 @@ for a in dane["artykuly"]:
     # q == "" (agent celowo pusty) -> URL pusty -> czysty placeholder SVG
     a["obraz"] = {"url": wikimedia_image(q), "alt": obraz.get("alt") or a["tytul"]}
     print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(brak — placeholder SVG)'}")
+
+# --- Kontrola: liczba artykułów na kategorię wg config.yaml ---
+from collections import Counter
+oczek = {k['nazwa']: k.get('liczba', 1) for k in cfg['kategorie']}
+masz = Counter(a['kategoria'] for a in dane['artykuly'])
+for kat, n in oczek.items():
+    if masz.get(kat, 0) != n:
+        print(f"  ⚠ {kat}: jest {masz.get(kat,0)}, config oczekuje {n}")
+print(f"Artykułów łącznie: {len(dane['artykuly'])} (config: {sum(oczek.values())})")
 
 out = tpl.replace('__DANE__', json.dumps(dane, ensure_ascii=False, indent=2))
 assert '__DANE__' not in out

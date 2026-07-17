@@ -343,7 +343,7 @@ __DANE__
     });
 
     /* ---- filtry kategorii ---- */
-    const cats = ['Wszystkie', ...D.artykuly.map(a => a.kategoria)];
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
     const filtryEl = document.createElement('div');
     filtryEl.className = 'filtry';
     filtryEl.innerHTML = cats.map((c, i) =>
