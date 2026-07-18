@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: 17px;
+    transition: background .4s ease, color .4s ease;
+  }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 20px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure { margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 6px; }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    transform: scale(1.02); transition: transform 6s ease;
+  }
+  .hero:hover img { transform: scale(1.08); }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 20px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+  .filtr--logs { margin-left: auto; }
+  .filtr--logs.active { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* ===== Panel logów rutyny ===== */
+  #logi-panel { padding: 24px 0 8px; }
+  #logi-panel.hidden { display: none !important; }
+  #gazeta.hidden { display: none !important; }
+  .logi-head {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .logi-sub { font-size: .82em; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .82em; line-height: 1.5;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 8px;
+    border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
+    word-break: break-word;
+  }
+  .log-entry .lvl {
+    flex-shrink: 0; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .82em; padding-top: 1px;
+  }
+  .log-entry .msg { white-space: pre-wrap; }
+  .log-entry .msg a { color: inherit; }
+  .log-entry--error   { border-left-color: var(--accent); }
+  .log-entry--error   .lvl { color: var(--accent); }
+  .log-entry--warning { border-left-color: #b8860b; }
+  .log-entry--warning .lvl { color: #b8860b; }
+  .log-entry--info    { border-left-color: var(--ink-soft); }
+  .log-entry--info    .lvl { color: var(--ink-soft); }
+  .logi-empty { font-size: .9em; color: var(--ink-soft); font-style: italic; }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure { margin: 0; overflow: hidden; border-radius: 6px; }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: saturate(.85); transition: filter .5s ease, transform .5s ease;
+  }
+  .article:hover img { filter: saturate(1.1); transform: scale(1.04); }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p { margin: 0 0 14px; text-align: justify; hyphens: auto; }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 4px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie wieczorne · Redagowane przez AI",
+  "data_wydania": "sobota, 18 lipca 2026, 17:31",
+  "numer": "Wydanie wieczorne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Moonshot AI prezentuje Kimi K3: 2,8 bln parametrów — największy model open-source w historii",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/china-s-powerful-new-moonshot-ai-model-closes-gap-with-us-rivals",
+        "godzina": "09:15"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Moonshot AI artificial intelligence technology",
+        "alt": "Logo Moonshot AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2,8 bln",
+          "opis": "parametrów modelu Kimi K3 — rekord open-source"
+        },
+        {
+          "wartosc": "1,6 bln",
+          "opis": "parametrów DeepSeek V4 Pro — poprzedni rekord"
+        },
+        {
+          "wartosc": "2 tygodnie",
+          "opis": "wcześniejszy zakaz eksportu Anthropic Fable przez USA"
+        }
+      ],
+      "akapity": [
+        "Chińska firma Moonshot AI ogłosiła model Kimi K3 — 2,8-bilionowy open-weight model, pierwszy o takiej skali dostępny publicznie. Kimi K3 przewyższa DeepSeek V4 Pro (1,6 bln parametrów) i według benchmarków dorównuje wydajnością zamkniętemu modelowi Fable firmy Anthropic. Model jest zoptymalizowany pod długoterminowe zadania kodowania, wnioskowania i pracy z wiedzą.",
+        "Premiera wzmacnia narrację, że chińskie laboratoria AI skutecznie zamknęły dystans do liderów z USA — i to modelem otwartym, który każdy może pobrać i dostosować. Miesiąc wcześniej Anthropic był zmuszony wyłączyć dostęp do Fable i Mythos dla obcokrajowców przez dwa tygodnie (zakaz eksportowy administracji Trumpa z powodu jailbreaka); Moonshot nie podlega tym ograniczeniom. Geopolityczna asymetria w regulacjach AI staje się coraz wyraźniejsza."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Seven & i Holdings w końcowych rozmowach ws. udziałów w Żabce za 2–3,4 mld USD (~7,6–12,9 mld zł)",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/seven-i-climbs-on-poland-convenience-store-talks-with-zabka",
+        "godzina": "10:30"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Żabka convenience store Poland street",
+        "alt": "Sklep Żabka w Polsce"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "+10,87%",
+          "opis": "wzrost akcji Żabki; zamknięcie na 31,10 PLN"
+        },
+        {
+          "wartosc": "2–3,4 mld USD (~7,6–12,9 mld zł)",
+          "opis": "szacowana wartość inwestycji"
+        },
+        {
+          "wartosc": "+3,6%",
+          "opis": "wzrost akcji Seven & i (właściciel 7-Eleven)"
+        }
+      ],
+      "akapity": [
+        "Japoński właściciel sieci 7-Eleven, Seven & i Holdings, potwierdził rozmowy o nabyciu kilkunastoprocentowego udziału w Żabka Group SA — liderze polskiego rynku sklepów convenience z 10 000 placówek. Według doniesień Nikkei Asia, wartość inwestycji może wynieść kilkaset miliardów jenów, co odpowiada 2–3,4 mld USD (~7,6–12,9 mld zł). Akcje Żabki skoczyły o 17% w śróddziennym szczycie, kończąc sesję na +10,87% przy kursie 31,10 PLN.",
+        "Transakcja byłaby pierwszym przyczółkiem Seven & i w Europie Wschodniej. Dla japońskiej spółki, zmagającej się z nasyceniem rynku krajowego, dynamicznie rosnący rynek polski to naturalny cel ekspansji. Ministerstwo Finansów odczytało wiadomość jako potwierdzenie zaufania do polskiej gospodarki; para USD/PLN wynosi aktualnie ok. 3,7951 wg tabeli A NBP z 17 lipca."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "S&P 500 traci 1,04% do 7 455 pkt, WIG20 cofa się 0,77% do 3 766 pkt — tech rout i Iran pod presją",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/inwestowanie/profile/quote.html?symbol=WIG20",
+        "godzina": "18:46"
+      },
+      "obraz": {
+        "url": "",
+        "query": "New York Stock Exchange trading floor",
+        "alt": "Parkiet NYSE"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7 455 pkt",
+          "opis": "S&P 500 na zamknięciu, -1,04%"
+        },
+        {
+          "wartosc": "3 766 pkt",
+          "opis": "WIG20 na zamknięciu, -0,77%"
+        },
+        {
+          "wartosc": "88,09 USD (~334 PLN)",
+          "opis": "ropa Brent za baryłkę — presja na inflację"
+        }
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "S&P 500 — ostatnie 4 sesje",
+        "jednostka": " pkt",
+        "etykiety": [
+          "14.07",
+          "15.07",
+          "17.07",
+          "18.07"
+        ],
+        "wartosci": [
+          7543.59,
+          7572.4,
+          7458.0,
+          7455.3
+        ]
+      },
+      "akapity": [
+        "Główne giełdy zakończyły piątkową sesję pod kreską. S&P 500 stracił 1,04%, kończąc na 7 455 pkt; WIG20 cofnął się o 0,77% do 3 766 pkt. W indeksach ciążył sektor technologiczny: IBM runął o 25% (najgorszy dzień w historii), a Salesforce i ServiceNow tracą w 2026 roku już ponad jedną trzecią wartości.",
+        "Rynki obawiają się też inflacyjnych skutków napięć w Cieśninie Ormuz — ropa Brent sięgnęła 88,09 USD (~334 PLN) za baryłkę. Fed może być zmuszony do podwyżki stóp na posiedzeniu 29 lipca; rynki terminowe wyceniają ok. 17% szans na ruch o 25 pb (tydzień temu było 46%). Przełomem była łagodniejsza niż oczekiwano inflacja CPI za czerwiec."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ropa Brent skacze do 88,09 USD (~334 PLN) za baryłkę — Iran wznowił ataki na statki w Cieśninie Ormuz",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-13/oil-holds-gains-as-iran-stokes-inflation-worries-markets-wrap",
+        "godzina": "08:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Strait of Hormuz oil tanker ship",
+        "alt": "Tankowiec na Cieśninie Ormuz"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "88,09 USD (~334 PLN)",
+          "opis": "cena ropy Brent za baryłkę (17 lipca)"
+        },
+        {
+          "wartosc": "+14%",
+          "opis": "tygodniowy wzrost ceny ropy"
+        },
+        {
+          "wartosc": "+4,58%",
+          "opis": "jednodniowy skok ceny Brent"
+        }
+      ],
+      "akapity": [
+        "Ropa Brent osiągnęła 88,09 USD (~334 PLN) za baryłkę, rosnąc o 4,58% w ciągu dnia i o ponad 14% w ciągu tygodnia. Przyczyną jest rozpad 8 lipca zawieszenia broni między USA a Iranem — Teheran wznowił ataki na statki handlowe na Cieśninie Ormuz, przez którą przepływa ok. 20% światowego handlu ropą. Wcześniejsza umowa podpisana 17 czerwca przez Trumpa i irańskiego prezydenta Pezeshkiana okazała się krótkotrwała.",
+        "Ekonomiści ostrzegają, że utrzymujący się wzrost cen surowca może skomplikować walkę Fed z inflacją. Strategista Ed Yardeni z Yardeni Research mówi o ryzyku 'ponownego rozpalenia inflacji'. Prezes nowojorskiego Fed John Williams twierdzi, że stopy są dobrze ustawione i nie ma potrzeby podwyżki — rynki na razie mu wierzą, wyceniając jedynie 17% szans na ruch 29 lipca."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "HSBC podnosi Apple do Buy, cena docelowa $366 (~1 387 PLN) — zakład na AI agentowe i nowy iPhone",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/apple-upgraded-to-buy-by-hsbc-on-agentic-ai-hardware-pipeline",
+        "godzina": "11:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Apple Park Cupertino headquarters aerial",
+        "alt": "Siedziba Apple w Cupertino"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "$366 (~1 387 PLN)",
+          "opis": "nowa cena docelowa HSBC dla Apple (AAPL)"
+        },
+        {
+          "wartosc": "+41%",
+          "opis": "wzrost ceny docelowej (z $260 (~985 PLN) do $366)"
+        },
+        {
+          "wartosc": "30 lipca",
+          "opis": "ogłoszenie wyników Q3 FY2026 Apple"
+        }
+      ],
+      "akapity": [
+        "Analityk HSBC Nicolas Cote-Colisson podniósł rating Apple z Hold do Buy i wyśrubował cenę docelową z 260 USD (~985 PLN) do 366 USD (~1 387 PLN) — wzrost o 41%. Podstawą jest wdrożenie agentowej Siri AI działającej on-device, którą Apple uruchamia na bazie 2,5 miliarda aktywnych urządzeń w ekosystemie.",
+        "Analityk podniósł prognozy sprzedaży iPhone'ów na lata 2027–2028 o 11–13%, a przychody grupy o 7–9%. Akcje Apple handlowane są przy 333,26 USD (~1 263 PLN) — cena docelowa implikuje ok. 10% potencjału wzrostu. Inwestorzy czekają na wyniki Q3 FY2026 (30 lipca), które potwierdzą lub podważą tezę, że Apple Intelligence realnie przekłada się na sprzedaż sprzętu."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Fed rozważa podwyżkę stóp na 29 lipca — CME FedWatch: 17% szans na ruch o 25 pb",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-08/yardeni-says-inflation-fed-back-in-play-as-iran-crisis-returns",
+        "godzina": "14:30"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Federal Reserve building Washington DC",
+        "alt": "Budynek Rezerwy Federalnej w Waszyngtonie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3,50–3,75%",
+          "opis": "aktualna stopa Fed funds (niezmieniona od czerwca)"
+        },
+        {
+          "wartosc": "17%",
+          "opis": "szanse podwyżki o 25 pb wg CME FedWatch"
+        },
+        {
+          "wartosc": "29 lipca",
+          "opis": "data następnego posiedzenia FOMC"
+        }
+      ],
+      "akapity": [
+        "Rynki terminowe wyceniają 17-procentowe szanse na podwyżkę stóp przez Rezerwę Federalną na posiedzeniu 29 lipca — tydzień wcześniej CME FedWatch dawał 46,5%. Zmiana nastroju nastąpiła po łagodniejszym niż oczekiwano odczycie CPI za czerwiec. Prezes nowojorskiego Fed John Williams powiedział w środę, że inflacja osiągnęła szczyt, a stopy są 'dobrze ustawione'.",
+        "Zagrożeniem pozostaje skok cen ropy naftowej wywołany kryzysem w Cieśninie Ormuz. Strategista Ed Yardeni ostrzega, że jeśli konflikt z Iranem znów rozleje się na rynki energetyczne, Fed może być zmuszony do działania mimo poprawiających się danych bazowych. Raport CPI za czerwiec wywołał wyraźny spadek rentowności obligacji 10-letnich i zmianę wycen terminowych."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Sylwia Gregorczyk-Abram nową Rzecznik Praw Obywatelskich — Sejm wybrał 233 głosami za",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/",
+        "godzina": "15:20"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Sylwia Gregorczyk-Abram",
+        "alt": "Sylwia Gregorczyk-Abram, nowa RPO"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "233",
+          "opis": "głosy za kandydaturą Gregorczyk-Abram"
+        },
+        {
+          "wartosc": "177",
+          "opis": "głosy za kandydatem PiS Adamem Borowskim"
+        },
+        {
+          "wartosc": "30 dni",
+          "opis": "termin na decyzję Senatu"
+        }
+      ],
+      "akapity": [
+        "Sejm wybrał w piątek Sylwię Gregorczyk-Abram na stanowisko Rzecznika Praw Obywatelskich — 233 posłów głosowało za jej kandydaturą, 177 poparło Adama Borowskiego zgłoszonego przez PiS. Prawniczka i obrończyni praw człowieka jest współzałożycielką inicjatyw Wolne Sądy oraz Komitet Obrony Sprawiedliwości i zasiadała w zarządzie Stowarzyszenia im. prof. Zbigniewa Hołdy.",
+        "Wybór wymaga jeszcze zatwierdzenia przez Senat, który ma 30 dni na decyzję. Gregorczyk-Abram obejmie stanowisko po długim okresie, w którym RPO było jedną z nielicznych instytucji konsekwentnie krytykujących ograniczanie niezależności sądownictwa. Jej mianowanie zamknie trwający od miesięcy spór koalicji o obsadę tego urzędu."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Sejm wybrał dr. Mateusza Szpytmę na prezesa IPN — historyk specjalizujący się w dokumentowaniu pomocy Żydom",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/",
+        "godzina": "14:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Institute National Remembrance Warsaw building",
+        "alt": "Siedziba IPN w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "IPN",
+          "opis": "Instytut Pamięci Narodowej — nowy prezes od posiedzenia 17 VII"
+        },
+        {
+          "wartosc": "dr",
+          "opis": "stopień naukowy Szpytmy; specjalność: pomoc Polaków Żydom w czasie II WŚ"
+        }
+      ],
+      "akapity": [
+        "Sejm wybrał dr. Mateusza Szpytmę na stanowisko prezesa Instytutu Pamięci Narodowej. Szpytma jest wieloletnim wiceprezesem IPN i historykiem dokumentującym pomoc udzielaną Żydom przez Polaków podczas II wojny światowej. Zajmował stanowisko wiceprezesa jeszcze za rządów PiS.",
+        "Wybór prezesa IPN i RPO na tym samym posiedzeniu Sejmu, połączony z przyjęciem uchwały wołyńskiej, tworzy symboliczne domknięcie kluczowych tematów historycznych i instytucjonalnych przed wakacjami parlamentarnymi. Mianowanie Szpytmy przez obecną koalicję — mimo jego wcześniejszych związków z poprzednim rządem — sygnalizuje poszukiwanie szerszego konsensusu wokół narracji historycznej IPN."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Sejm przyjął uchwałę wołyńską 441 głosami — Tusk: 'gotowi na poważny dialog' z Ukrainą o ekshumacjach",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/",
+        "godzina": "12:30"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Volhynia massacre memorial cemetery Poland",
+        "alt": "Upamiętnienie ofiar Wołynia"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "441",
+          "opis": "głosów za uchwałą (jednomyślnie)"
+        },
+        {
+          "wartosc": "0",
+          "opis": "głosów przeciw"
+        },
+        {
+          "wartosc": "~100 000",
+          "opis": "szacowana liczba polskich ofiar Rzezi Wołyńskiej (1943–1945)"
+        }
+      ],
+      "akapity": [
+        "Sejm przyjął jednomyślnie — 441 głosami 'za' — uchwałę upamiętniającą polskie ofiary Rzezi Wołyńskiej z lat 1943–1945. Premier Donald Tusk oświadczył następnie, że 'z satysfakcją i nadzieją' przyjmuje słowa i decyzje prezydenta Zełenskiego w sprawie ekshumacji, zapewniając, że Polska jest 'gotowa na poważny i przyjacielski dialog'.",
+        "Kwestia upamiętnienia i ekshumacji ofiar wołyńskich pozostaje jednym z najtrudniejszych nierozwiązanych sporów między Polską a Ukrainą. Gest Tuska wpisuje się w politykę rządu, który dąży do wzmocnienia sojuszu z Ukrainą, jednocześnie nie unikając trudnych historycznych rozrachunków. Uchwała ma wymiar symboliczny — nie jest źródłem prawa, lecz sygnałem kierunku polskiej polityki historycznej."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Nawrocki zawetował ustawę o związkach partnerskich — Tusk: 'wyraz pogardy dla prawa do szczęścia'",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/",
+        "godzina": "16:45"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Karol Nawrocki Polish president Belvedere",
+        "alt": "Prezydent Karol Nawrocki"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "weto",
+          "opis": "decyzja prezydenta dotycząca ustawy o związkach partnerskich"
+        }
+      ],
+      "akapity": [
+        "Prezydent Karol Nawrocki zawetował ustawę o związkach partnerskich, która umożliwiałaby dwóm dorosłym osobom zawarcie umowy regulującej wspólne życie, majątek, prawa do informacji medycznej i pogrzebowe. Nawrocki wyjaśnił, że nie podważy konstytucyjnej definicji małżeństwa jako związku kobiety i mężczyzny.",
+        "Premier Donald Tusk zareagował ostrą krytyką: 'Prezydenckie weto to wyraz pogardy dla ludzi i ich prawa do szczęścia i normalnego życia'. Weto zamknęło jedną z kluczowych legislacyjnych obietnic koalicji KO–Trzecia Droga–Lewica. Projekt był celowo wąski — pomijał kwestię adopcji i unikał słowa 'partnerzy' — by zyskać szersze poparcie. Obalenie weta wymagałoby 3/5 głosów w Sejmie."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Rada Ministrów zagwarantowała zakup dostępu do gigafabryki AI — Polska wchodzi w erę suwerennych obliczeń",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/",
+        "godzina": "09:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "data center supercomputer AI server hall",
+        "alt": "Centrum danych z superkomputerem AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "uchwała nr 153",
+          "opis": "Rady Ministrów z 14 lipca 2026 r."
+        },
+        {
+          "wartosc": "gigafabryka AI",
+          "opis": "cel: suwerenna infrastruktura obliczeniowa dla polskiej gospodarki"
+        }
+      ],
+      "akapity": [
+        "Rada Ministrów zatwierdziła 14 lipca uchwałę nr 153 gwarantującą zakup czasu dostępu do gigafabryki sztucznej inteligencji. Projekt wpisuje się w europejskie dążenia do budowy suwerennej infrastruktury obliczeniowej, która pozwoli polskim instytucjom i firmom trenować i wdrażać modele AI bez uzależniania się od komercyjnych dostawców spoza UE.",
+        "Decyzja jest odpowiedzią na rosnącą globalną rywalizację o moc obliczeniową — szczególnie widoczną w kontekście ogłoszenia przez Chiny modelu Kimi K3 i trwającego boomu AI. Gwarantowany dostęp do mocy obliczeniowej ma znaczenie zarówno gospodarcze, jak i z punktu widzenia bezpieczeństwa cyfrowego kraju."
+      ]
+    },
+    {
+      "kategoria": "Война",
+      "tytul": "Ukraińskie drony uderzyły w magazyny Wildberries w Rosji — 9 zabitych, 370 bezzałogowców nad Moskwą",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/18/ukrainian-drone-attacks-on-russia-kill-at-least-8-wound-dozens",
+        "godzina": "06:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Ukrainian FPV drone military attack",
+        "alt": "Ukraiński dron bojowy FPV"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "9",
+          "opis": "zabitych w ataku (Kotowsk + region moskiewski)"
+        },
+        {
+          "wartosc": "25+",
+          "opis": "rannych, w tym 1 w stanie krytycznym"
+        },
+        {
+          "wartosc": "370+",
+          "opis": "dronów wycelowanych w region moskiewski"
+        }
+      ],
+      "akapity": [
+        "Ukraińskie drony zaatakowały w nocy z piątku na sobotę wielkie centra logistyczne rosyjskiej platformy e-commerce Wildberries w obwodach tambowskim i moskiewskim. Gubernator Jewgienij Pierwyszow poinformował, że w ataku na magazyn w Kotowsku zginęło 7 pracowników nocnej zmiany; kolejne 2 osoby zginęły w pobliżu Moskwy. Łącznie śmierć poniosło co najmniej 9 osób, a ponad 25 zostało rannych.",
+        "Mer Moskwy podał, że ponad 370 dronów wycelowano w region stołeczny w ciągu jednej nocy — jeden z największych ataków dronami od początku pełnoskalowej inwazji. Ukraina systematycznie atakuje rosyjską infrastrukturę logistyczną i cywilną, podczas gdy Rosja kontynuuje bombardowania ukraińskich miast: od początku lipca ataki zabiły już co najmniej 60 osób w Kijowie i okolicach."
+      ]
+    },
+    {
+      "kategoria": "Война",
+      "tytul": "Zełenski odwołał ministra obrony Fedorowa — protesty w ukraińskich miastach, Khmara nowym p.o.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/16/kyiv-under-fire-from-russian-missiles-after-eu-ukraine-sign-drone-deal",
+        "godzina": "18:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Mykhailo Fedorov Ukraine minister drone army",
+        "alt": "Mychajło Fedorow, były minister obrony Ukrainy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "6 miesięcy",
+          "opis": "czas sprawowania urzędu przez Fedorowa"
+        },
+        {
+          "wartosc": "kilka miast",
+          "opis": "ukraińskie miejsca protestów po odwołaniu ministra"
+        }
+      ],
+      "akapity": [
+        "Prezydent Ukrainy Wołodymyr Zełenski odwołał ze stanowiska ministra obrony Mychajła Fedorowa — twórcę Armii Dronów — po zaledwie sześciu miesiącach piastowania urzędu. Powodem było narastające napięcie między Fedorowem a Naczelnym Dowódcą Sił Zbrojnych gen. Ołeksandrem Syrskim, które prezydent uznał za nieakceptowalne. Pełniącym obowiązki ministra mianowano szefa SBU Jewhena Chmarę.",
+        "Decyzja wywołała demonstracje w kilku ukraińskich miastach. Wolontariuszka i ekspertka ds. dronów Maria Berlinska oceniła, że to 'jeden z największych błędów prezydenta, który będzie nas drogo kosztował'. Fedorow cieszył się popularnością jako symbol nowoczesnej, technologicznej wizji armii. Odwołanie nastąpiło krótko po podpisaniu umowy UE–Ukraina ws. wspólnej produkcji dronów."
+      ]
+    },
+    {
+      "kategoria": "Война",
+      "tytul": "Trump: pokój na Ukrainie 'coraz bliżej' — walki i ataki trwają mimo sygnałów dyplomatycznych",
+      "zrodlo": {
+        "nazwa": "Reuters",
+        "url": "https://www.reuters.com/world/",
+        "godzina": "11:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Donald Trump NATO Ankara Turkey summit",
+        "alt": "Trump na szczycie NATO w Ankarze"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "85 min",
+          "opis": "czas rozmowy Trumpa z Putinem (4 lipca)"
+        },
+        {
+          "wartosc": "28",
+          "opis": "zabitych podczas rosyjskiego ataku na Kijów (7 lipca)"
+        },
+        {
+          "wartosc": "4+ lata",
+          "opis": "czas trwania pełnoskalowej inwazji"
+        }
+      ],
+      "akapity": [
+        "Prezydent USA Donald Trump oświadczył 6 lipca, że rozwiązanie ponad czteroletniego konfliktu na Ukrainie jest 'bliżej, niż ludzie sądzą', powołując się na rozmowy z Putinem (85 minut, 4 lipca) i Zełenskim. Słowa padły na marginesie szczytu NATO w Ankarze, gdzie Trump spotkał się z prezydentem Ukrainy.",
+        "Jednocześnie w nocy z 6 na 7 lipca Rosja ostrzelała Kijów, zabijając co najmniej 28 osób. Intensyfikacja działań wojennych nakłada się na sygnały dyplomatyczne: Ukraina atakuje rosyjską infrastrukturę logistyczną dronami (m.in. magazyny Wildberries, rafineria pod Moskwą), a Moskwa podtrzymuje presję militarną na ukraińskie miasta. Konkretnych ram negocjacyjnych Trump nie wskazał."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "IBM traci 25% — najgorszy dzień w historii firmy od lat 60. przez migrację klientów do infrastruktury AI",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/ibm-s-warning-is-a-hammer-slamming-down-on-tech-s-ai-outsiders",
+        "godzina": "16:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "IBM headquarters Armonk New York building",
+        "alt": "Siedziba IBM w Armonk"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-25%",
+          "opis": "najgorszy dzień IBM w historii danych od lat 60."
+        },
+        {
+          "wartosc": "-33%",
+          "opis": "YTD strata Salesforce i ServiceNow"
+        },
+        {
+          "wartosc": "+68%",
+          "opis": "wzrost indeksu chipmakerów PHLX Semiconductor YTD"
+        }
+      ],
+      "akapity": [
+        "Akcje IBM runęły o 25% — to najgorszy jednodzienny spadek w historii spółki od początku danych sięgających lat 60. Firma ostrzegła, że klienci masowo przesuwają budżety IT z tradycyjnego oprogramowania i serwerów IBM na sprzęt potrzebny do trenowania i wnioskowania modeli AI: serwery, pamięci, akceleratory GPU i TPU.",
+        "Analitycy Bloomberg określili komunikat IBM jako 'młot' uderzający w 'outsiderów AI'. Salesforce i ServiceNow straciły w 2026 roku ponad jedną trzecią kapitalizacji — w ścisłej czołówce najgorszych wyników S&P 500. Na drugim biegunie: indeks chipmakerów PHLX Semiconductor zyskał 68% od początku roku, zmierzając ku najlepszemu wynikowi od 2009 r."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Agentowa Siri na 2,5 mld urządzeń — Apple uruchamia on-device AI bez wysyłania danych do chmury",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/apple-upgraded-to-buy-by-hsbc-on-agentic-ai-hardware-pipeline",
+        "godzina": "11:15"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Apple iPhone AI assistant Siri",
+        "alt": "iPhone z funkcją agentowej Siri"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2,5 mld",
+          "opis": "aktywnych urządzeń Apple — baza dla AI on-device"
+        },
+        {
+          "wartosc": "+11–13%",
+          "opis": "korekta in góre prognoz sprzedaży iPhone'ów 2027–28 (HSBC)"
+        },
+        {
+          "wartosc": "30 lipca",
+          "opis": "wyniki Q3 FY2026 Apple"
+        }
+      ],
+      "akapity": [
+        "Apple wdraża agentową Siri zdolną do planowania wieloetapowych zadań między aplikacjami, wizualnego rozpoznawania kontekstu i prowadzenia spójnych rozmów — a wszystko to na modelu on-device, bez wysyłania danych do chmury. Podejście to jest odpowiedzią na rosnące obawy o prywatność i bezpieczeństwo, szczególnie po aferze z jailbreakiem Anthropic Fable 5.",
+        "Analityk HSBC Nicolas Cote-Colisson twierdzi, że Apple jest 'na operacyjnym punkcie zwrotnym' — firma może aktywować AI na gotowej bazie 2,5 miliarda urządzeń bez wielkich nakładów na infrastrukturę (capex). Wyniki Q3 FY2026 (30 lipca) przyniosą pierwsze twarde dane o wpływie Apple Intelligence na sprzedaż sprzętu i usług."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Fala AI-fraudów bije rekordy — deepfake głosowe, fałszywe rekrutacje i boty randkowe na nowej skali",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/ai",
+        "godzina": "13:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "cybersecurity fraud deepfake digital scam",
+        "alt": "Cyberprzestępczość z użyciem AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3",
+          "opis": "główne obszary AI-fraudów: finanse, kariera zawodowa, randki"
+        },
+        {
+          "wartosc": "rekordowy",
+          "opis": "poziom strat z tytułu AI-oszustw w 2026 r."
+        }
+      ],
+      "akapity": [
+        "Modele generatywne AI trafiły do rąk przestępców i napędzają nową falę wyrafinowanych oszustw: deepfake'i głosowe podszywające się pod bliskich, fałszywe rozmowy rekrutacyjne z awatarami AI prowadzone przez wiele godzin, oraz boty randkowe podtrzymujące emocjonalne relacje przez tygodnie, by wyłudzić pieniądze lub dane osobowe. Bloomberg określa ten trend jako 'AI-supercharged scams'.",
+        "W odróżnieniu od klasycznego phishingu, nowe ataki są trudne do wykrycia, bo modele AI potrafią prowadzić spójne, wiarygodne konwersacje przez długi czas i adaptować się do odpowiedzi ofiary. Eksperci ds. cyberbezpieczeństwa wskazują, że ochrona wymaga nowych metod weryfikacji tożsamości (np. hasła słowne ustalone z wyprzedzeniem) i detektorów treści syntetycznych po stronie platform."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Anthropic Fable 5 i Mythos 5 powróciły po 2-tygodniowym zakazie eksportowym USA — debata o regulacjach AI trwa",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/economy/2026/7/1/us-lifts-restrictions-on-powerful-ai-models-fable-mythos-anthropic-says",
+        "godzina": "10:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Anthropic AI company office San Francisco",
+        "alt": "Biuro Anthropic w San Francisco"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "12 czerwca",
+          "opis": "data wprowadzenia nakazu eksportowego przez USA"
+        },
+        {
+          "wartosc": "1 lipca",
+          "opis": "data przywrócenia dostępu do Fable 5 dla użytkowników globalnych"
+        },
+        {
+          "wartosc": ">99%",
+          "opis": "skuteczność nowego klasyfikatora bezpieczeństwa blokującego jailbreak"
+        }
+      ],
+      "akapity": [
+        "USA zniosły 1 lipca nakaz eksportowy wobec modeli Anthropic Fable 5 i Mythos 5, które przez prawie dwa tygodnie były niedostępne dla wszystkich obcokrajowców — w tym zagranicznych pracowników samego Anthropic. Zakaz wydano 12 czerwca po tym, jak rząd USA uzyskał informacje o metodzie jailbreak umożliwiającej odblokowywanie zdolności cyberbezpieczeństwa. Anthropic zakwestionowało zasadność nakazu, lecz zastosowało się do niego.",
+        "Incydent odczytywany jest jako sygnał, jak daleko administracja Trumpa jest gotowa posunąć się w imię bezpieczeństwa narodowego w dziedzinie AI — i jak kruche mogą być plany firm na globalny zasięg modeli. Tło tworzą właśnie chińskie open-weight modele jak Kimi K3, które jako produkty firm podległych chińskiemu prawu nie podlegają żadnym restrykcjom eksportowym USA."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Chińskie firmy AI zamknęły lukę z USA — DeepSeek, MiniMax i Moonshot biją rekordy przy niskich kosztach",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/china-s-powerful-new-moonshot-ai-model-closes-gap-with-us-rivals",
+        "godzina": "09:30"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Beijing Zhongguancun technology district startup",
+        "alt": "Dzielnica technologiczna Zhongguancun w Pekinie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3",
+          "opis": "chińskie firmy z modelami AI klasy frontier: Moonshot, Z.ai, MiniMax"
+        },
+        {
+          "wartosc": "744 mld",
+          "opis": "parametrów Zhipu GLM 5 — model uznawany jeszcze rok temu za duży"
+        }
+      ],
+      "akapity": [
+        "Kimi K3 od Moonshot to tylko wierzchołek góry lodowej: chińskie firmy Z.ai i MiniMax również prezentują modele o wydajności porównywalnej z zachodnimi rywalami, i to przy znacznie niższych kosztach wdrożenia. Zachodnie założenie, że Chiny opóźniają się w AI o wiele miesięcy, okazuje się systematycznie nieaktualne — podobnie jak rok temu po premierze DeepSeek R1.",
+        "Kluczem jest filozofia open-weight: chińskie modele można pobrać, modyfikować i wdrażać bez licencji, co przyspiesza ich adopcję szczególnie w krajach globalnego południa i Azji Wschodniej. Eksperci wskazują, że chińskie firmy skutecznie łączą krajowe akceleratory Huawei Ascend z efektywnymi metodami trenowania, obchodząc w znacznym stopniu sankcje USA na eksport zaawansowanych chipów NVIDIA."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Astronomowie wykryli cukier w przestrzeni międzygwiezdnej — erytrulozy znaleziono blisko centrum Drogi Mlecznej",
+      "zrodlo": {
+        "nazwa": "Reuters",
+        "url": "https://www.reuters.com/science/",
+        "godzina": "14:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Milky Way galactic center radio telescope observatory",
+        "alt": "Centrum Drogi Mlecznej widziane przez radioteleskop"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "26 745",
+          "opis": "lat świetlnych od Ziemi — odległość do chmury molekularnej G+0.693"
+        },
+        {
+          "wartosc": "-250°C",
+          "opis": "temperatura, w której erytrulozy formują się na ziarnach kosmicznego pyłu"
+        },
+        {
+          "wartosc": "8–17×",
+          "opis": "wyższe stężenie erytrulozy niż trójwęglowych cukrów w tej samej chmurze"
+        }
+      ],
+      "akapity": [
+        "Używając radioteleskopów Yebes (40 m, Hiszpania) i IRAM (30 m, Hiszpania), astronomowie wykryli po raz pierwszy erytrulozy — czterowęglowy cukier naturalnie spotykany m.in. w malinach — w obłoku molekularnym G+0.693−0.027 niedaleko centrum Galaktyki. Cząsteczki formują się na lodowych ziarnach kosmicznego pyłu w temperaturach sięgających -250°C.",
+        "Odkrycie wzmacnia hipotezę, że złożone organiczne składniki życia — w tym cukry — mogą powstawać w przestrzeni kosmicznej jeszcze przed uformowaniem się gwiazd i planet. Stężenie erytrulozy okazało się 8–17 razy wyższe niż trójwęglowych cukrów, co sugeruje, że przestrzeń międzygwiezdna jest chemicznie bogatsza, niż dotąd sądzono. Badanie opublikowano w piśmie Nature."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "ESO odkryło trzecią planetę Beta Pictoris d — najsłabsza egzoplaneta sfotografowana bezpośrednio z Ziemi",
+      "zrodlo": {
+        "nazwa": "Reuters",
+        "url": "https://www.reuters.com/science/",
+        "godzina": "11:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Beta Pictoris exoplanet artist concept telescope",
+        "alt": "Wizja artystyczna układu Beta Pictoris"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "100×",
+          "opis": "słabsza od Beta Pictoris b — rekord bezpośredniego obrazowania"
+        },
+        {
+          "wartosc": "≥2 M♃",
+          "opis": "szacowana minimalna masa Beta Pictoris d (masy Jowisza)"
+        },
+        {
+          "wartosc": "10+ lat",
+          "opis": "planeta ukrywała się w archiwalnych danych obserwacyjnych"
+        }
+      ],
+      "akapity": [
+        "Europejskie Obserwatorium Południowe (ESO) potwierdziło 15 lipca istnienie trzeciej planety w układzie Beta Pictoris. Beta Pictoris d jest 100 razy słabsza od b — już istniejącej, słynnej egzoplanety — i jest najsłabiej świecącym obiektem tego typu, jaki kiedykolwiek bezpośrednio sfotografowano z powierzchni Ziemi. Odkrycia dokonano metodą spektroskopii o umiarkowanej rozdzielczości, a nie tradycyjnym koronografem.",
+        "Co niezwykłe: Beta Pictoris d ukrywała się przez ponad 10 lat w archiwach teleskopów ESO — odnalazł ją algorytm szukający atmosferycznych sygnatur planet w starszych danych. Układ Beta Pictoris to tylko drugi znany układ z co najmniej trzema bezpośrednio sfotografowanymi planetami, co czyni go cennym laboratorium do badań nad formowaniem się układów planetarnych zbliżonych do naszego."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "30 lat zdjęć Landsat pozwoliło śledzić pingwiny Adélie z kosmosu — pierwsze kontynentalne badanie Antarktyki",
+      "zrodlo": {
+        "nazwa": "Reuters",
+        "url": "https://www.reuters.com/science/",
+        "godzina": "09:00"
+      },
+      "obraz": {
+        "url": "",
+        "query": "Adélie penguin colony Antarctica iceberg",
+        "alt": "Kolonia pingwinów Adélie na Antarktydzie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "30 lat",
+          "opis": "okres archiwum zdjęć satelitarnych Landsat użytych w badaniu"
+        },
+        {
+          "wartosc": "1",
+          "opis": "kontynent — pierwsza taka analiza obejmująca całą Antarktydę"
+        }
+      ],
+      "akapity": [
+        "Naukowcy po raz pierwszy wykorzystali 30-letnie archiwum satelitów Landsat do monitorowania populacji i dynamiki kolonii pingwinów Adélie na całym kontynencie antarktycznym. Kluczem jest kolor i widmowy charakter ptasich odchodów widocznych z orbity — na ich podstawie badacze odtworzyli sieć troficzną i dynamikę populacyjną całej Antarktyki.",
+        "Dotychczas liczenie pingwinów wymagało kosztownych wypraw terenowych lub lokalnych zdjęć lotniczych. Nowa metoda satelitarna umożliwia ciągły, tani monitoring bez ingerencji w środowisko. Wyniki mogą być kluczowe dla śledzenia, jak zmiany klimatyczne wpływają na liczebność zwierząt polarnych — i dla wyznaczania nowych obszarów morskich ochrony w ramach konwencji CCAMLR."
+      ]
+    }
+  ],
+  "logi": [
+    {
+      "poziom": "error",
+      "wiadomosc": "reuters.com jest niedostępny dla agenta (API Error 400: domain not accessible). Artykuły przypisane do reuters.com (Trump/Ukraina, ciekawostki naukowe) oparte na wtórnych źródłach: Al Jazeera, Bloomberg, Nature, ESO. Czytelnik może otworzyć bezpośredni link do Reuters."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Wykres S&P 500 posiada tylko 4 zweryfikowane punkty danych (14.07, 15.07, 17.07, 18.07) zamiast zalecanych 8–15. Brak potwierdzonych cen zamknięcia dla wcześniejszych sesji."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Brak wykresu dla Inwestowanie/Ropa Brent: nie udało się zebrać 8+ zweryfikowanych cen dziennych dla serii czasowej ropy. Trend wzrostowy opisany w akapitach."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kurs USD/PLN użyty do przeliczeń: 3,7951 (Tabela A NBP nr 137/A/NBP/2026 z 17.07.2026). Kurs EUR/PLN: 4,3420 (NBP, 18.07.2026 godz. 10:03)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Ciekawostki naukowe (erytrulozy, Beta Pictoris d, pingwiny Landsat) potwierdzone w Nature, ESO i NASA — Reuters standardowo serwisuje tego rodzaju newsy; bezpośredniego dostępu do reuters.com nie było."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Okładka] 'Moonshot AI prezentuje Kimi K3: 2,8 bln parametrów — największy model open-source w historii' (query: 'Moonshot AI artificial intelligence technology'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Inwestowanie] 'Seven & i Holdings w końcowych rozmowach ws. udziałów w Żabce za 2–3,4 mld USD (~7,6–12,9 mld zł)' (query: 'Żabka convenience store Poland street'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Inwestowanie] 'S&P 500 traci 1,04% do 7 455 pkt, WIG20 cofa się 0,77% do 3 766 pkt — tech rout i Iran pod presją' (query: 'New York Stock Exchange trading floor'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Inwestowanie] 'Ropa Brent skacze do 88,09 USD (~334 PLN) za baryłkę — Iran wznowił ataki na statki w Cieśninie Ormuz' (query: 'Strait of Hormuz oil tanker ship'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Inwestowanie] 'HSBC podnosi Apple do Buy, cena docelowa $366 (~1 387 PLN) — zakład na AI agentowe i nowy iPhone' (query: 'Apple Park Cupertino headquarters aerial'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Inwestowanie] 'Fed rozważa podwyżkę stóp na 29 lipca — CME FedWatch: 17% szans na ruch o 25 pb' (query: 'Federal Reserve building Washington DC'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Polityka] 'Sylwia Gregorczyk-Abram nową Rzecznik Praw Obywatelskich — Sejm wybrał 233 głosami za' (query: 'Sylwia Gregorczyk-Abram'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Polityka] 'Sejm wybrał dr. Mateusza Szpytmę na prezesa IPN — historyk specjalizujący się w dokumentowaniu pomocy Żydom' (query: 'Institute National Remembrance Warsaw building'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Polityka] 'Sejm przyjął uchwałę wołyńską 441 głosami — Tusk: 'gotowi na poważny dialog' z Ukrainą o ekshumacjach' (query: 'Volhynia massacre memorial cemetery Poland'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Polityka] 'Nawrocki zawetował ustawę o związkach partnerskich — Tusk: 'wyraz pogardy dla prawa do szczęścia'' (query: 'Karol Nawrocki Polish president Belvedere'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Polityka] 'Rada Ministrów zagwarantowała zakup dostępu do gigafabryki AI — Polska wchodzi w erę suwerennych obliczeń' (query: 'data center supercomputer AI server hall'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Война] 'Ukraińskie drony uderzyły w magazyny Wildberries w Rosji — 9 zabitych, 370 bezzałogowców nad Moskwą' (query: 'Ukrainian FPV drone military attack'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Война] 'Zełenski odwołał ministra obrony Fedorowa — protesty w ukraińskich miastach, Khmara nowym p.o.' (query: 'Mykhailo Fedorov Ukraine minister drone army'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Война] 'Trump: pokój na Ukrainie 'coraz bliżej' — walki i ataki trwają mimo sygnałów dyplomatycznych' (query: 'Donald Trump NATO Ankara Turkey summit'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Technologia] 'IBM traci 25% — najgorszy dzień w historii firmy od lat 60. przez migrację klientów do infrastruktury AI' (query: 'IBM headquarters Armonk New York building'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Technologia] 'Agentowa Siri na 2,5 mld urządzeń — Apple uruchamia on-device AI bez wysyłania danych do chmury' (query: 'Apple iPhone AI assistant Siri'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Technologia] 'Fala AI-fraudów bije rekordy — deepfake głosowe, fałszywe rekrutacje i boty randkowe na nowej skali' (query: 'cybersecurity fraud deepfake digital scam'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Technologia] 'Anthropic Fable 5 i Mythos 5 powróciły po 2-tygodniowym zakazie eksportowym USA — debata o regulacjach AI trwa' (query: 'Anthropic AI company office San Francisco'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Technologia] 'Chińskie firmy AI zamknęły lukę z USA — DeepSeek, MiniMax i Moonshot biją rekordy przy niskich kosztach' (query: 'Beijing Zhongguancun technology district startup'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Ciekawostka na dziś] 'Astronomowie wykryli cukier w przestrzeni międzygwiezdnej — erytrulozy znaleziono blisko centrum Drogi Mlecznej' (query: 'Milky Way galactic center radio telescope observatory'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Ciekawostka na dziś] 'ESO odkryło trzecią planetę Beta Pictoris d — najsłabsza egzoplaneta sfotografowana bezpośrednio z Ziemi' (query: 'Beta Pictoris exoplanet artist concept telescope'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Obraz nierozwiązany przy generowaniu: [Ciekawostka na dziś] '30 lat zdjęć Landsat pozwoliło śledzić pingwiny Adélie z kosmosu — pierwsze kontynentalne badanie Antarktyki' (query: 'Adélie penguin colony Antarctica iceberg'). Rozwiaze go przegladarka czytelnika."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria 'Wojna': zlozono 0 art., config oczekuje 3."
+    }
+  ]
+}
+  </script>
+
+  <script>
+  (function () {
+    const D = JSON.parse(document.getElementById('dane-gazety').textContent);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.dataset.kategoria = a.kategoria;
+      const bakedUrl = a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '';
+      const query    = a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(bakedUrl) || FALLBACK_IMG}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + (bakedUrl ? ' data-baked="1"' : '')
+        + ` loading="lazy"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${esc(p)}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}</span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- Obrazy: odporne ładowanie z Wikimedia Commons ----
+       Dwa problemy, które to rozwiązuje:
+       (1) Generowanie w chmurze bywa blokowane (IP datacenter) → puste URL-e.
+           Dlatego trzymamy `data-query` i przeglądarka (IP czytelnika) sama rozwiąże
+           obraz, gdy generator nie zdążył.
+       (2) Przy dużych wydaniach (20+ zdjęć) Wikimedia zwraca 429 (Too Many Requests),
+           gdy przeglądarka pobiera wiele obrazów naraz. Dlatego: `loading="lazy"`
+           (rozkłada pobrania w czasie przewijania) + retry z narastającym opóźnieniem
+           i jitterem na błąd ładowania, a resolucja startowa jest staggerowana.
+       Kolejność ratunku dla każdego obrazka: baked URL → retry (429 przejściowe)
+       → rozwiąż z frazy → placeholder SVG. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      if (!query) return '';
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      const api = 'https://commons.wikimedia.org/w/api.php?' + p.toString();
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const r = await fetch(api);
+          if (r.status === 429) { await sleep(1000 * (attempt + 1) + Math.random() * 800); continue; }
+          const d = await r.json();
+          const pages = Object.values((d.query && d.query.pages) || {})
+            .sort((x, y) => (x.index || 99) - (y.index || 99));
+          for (const pg of pages) {
+            const ii = (pg.imageinfo || [{}])[0];
+            if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+              return ii.thumburl || ii.url || '';
+          }
+          return '';                               // odpowiedź OK, ale brak zdjęcia
+        } catch (e) { await sleep(600 * (attempt + 1) + Math.random() * 500); }
+      }
+      return '';
+    }
+
+    const imgs = [...main.querySelectorAll('figure img')];
+    imgs.forEach((img, idx) => {
+      const q = img.dataset.query || '';
+      img.addEventListener('error', async function onErr() {
+        if (img.dataset.done === '1') return;
+        const src = img.getAttribute('src') || '';
+        // 1) przejściowy błąd (najczęściej 429) na realnym URL → ponów z backoffem+jitterem
+        if (src && !src.startsWith('data:') && (img.dataset.retry | 0) < 4) {
+          const n = (img.dataset.retry | 0) + 1;
+          img.dataset.retry = String(n);
+          await sleep(800 * n + Math.random() * 900);
+          if (img.dataset.done === '1') return;
+          img.removeAttribute('src'); img.src = src;  // wymuś ponowne pobranie
+          return;
+        }
+        // 2) trwały błąd URL → spróbuj rozwiązać z frazy (inny plik)
+        if (q && img.dataset.triedQuery !== '1') {
+          img.dataset.triedQuery = '1';
+          const u = await wikiResolve(q);
+          if (u && u !== src) { img.dataset.retry = '0'; img.src = u; return; }
+        }
+        // 3) koniec możliwości → placeholder (bez pętli — data: nie wywołuje error)
+        img.dataset.done = '1';
+        img.src = FALLBACK_IMG;
+      });
+      if (img.dataset.baked !== '1' && q)          // brak URL z generatora → rozwiąż (staggerowane)
+        sleep(idx * 250 + Math.random() * 200).then(() => wikiResolve(q)).then(u => { if (u) img.src = u; });
+    });
+
+    /* ---- panel logów rutyny ---- */
+    const logi = Array.isArray(D.logi) ? D.logi : [];
+    function logHtml(entry) {
+      const poziom = (entry && typeof entry === 'object' ? (entry.poziom || 'info') : 'info').toLowerCase();
+      const lvl = ['error', 'warning', 'info'].includes(poziom) ? poziom : 'info';
+      const raw = typeof entry === 'string' ? entry : (entry.wiadomosc || '');
+      const msg = esc(raw).replace(/(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      const label = { error: 'Błąd', warning: 'Ostrzeż.', info: 'Info' }[lvl];
+      return `<div class="log-entry log-entry--${lvl}"><span class="lvl">${label}</span><span class="msg">${msg}</span></div>`;
+    }
+    const logiPanel = document.createElement('section');
+    logiPanel.id = 'logi-panel';
+    logiPanel.className = 'hidden';
+    logiPanel.innerHTML =
+      '<div class="logi-head">Logi z generowania wydania</div>' +
+      '<div class="logi-sub">Ostrzeżenia, błędy i uwagi z uruchomienia rutyny — pomagają ulepszać gazetę ' +
+      '(np. źródła niedostępne dla bota, braki w kategoriach, nieudane obrazy).</div>' +
+      (logi.length
+        ? `<div class="log-list">${logi.map(logHtml).join('')}</div>`
+        : '<div class="logi-empty">Brak zdarzeń — wydanie złożone bez błędów i ostrzeżeń.</div>');
+    main.after(logiPanel);
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('') +
+      `<button class="filtr filtr--logs" data-cat="__logi__">Logs${logi.length ? ' (' + logi.length + ')' : ''}</button>`;
+    main.before(filtryEl);
+    function ustawFiltr(cat) {
+      const widokLogow = cat === '__logi__';
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      logiPanel.classList.toggle('hidden', !widokLogow);
+      main.classList.toggle('hidden', widokLogow);   // ukryj siatkę gazety w trybie logów
+      if (widokLogow) return;
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
+    });
+    ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
