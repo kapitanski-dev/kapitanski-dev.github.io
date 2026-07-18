@@ -86,6 +86,30 @@
     letter-spacing: 2px;
   }
   #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  #pogoda:empty { display: none; }
+
+  /* ===== Nawigacja między wydaniami ===== */
+  .nav-wydania {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 36px; padding: 16px 0 4px;
+  }
+  .nav-wydania:empty { display: none; }
+  .nav-wydania a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 20px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-wydania .nav-spacer { flex: 1; }
+
+  /* ===== Badge kontynuacji tematu ===== */
+  .badge-update {
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 3px;
+    background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
+    letter-spacing: 1px; vertical-align: middle;
+  }
 
   /* ===== Artykuł hero ===== */
   .hero { margin: 40px 0 10px; }
@@ -326,11 +350,13 @@
       <h1 id="tytul-gazety">Gazeta Codzienna</h1>
       <div class="date-bar">
         <span id="numer-wydania"></span>
+        <span id="pogoda" title="Prognoza Open-Meteo"></span>
         <span id="data-wydania"></span>
         <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
       </div>
     </header>
     <main id="gazeta"></main>
+    <nav id="nav-wydania" class="nav-wydania"></nav>
     <footer id="stopka"></footer>
   </div>
 
@@ -395,7 +421,7 @@ __DANE__
       const paras = a.akapity.map((p, j) =>
         `<p class="${j === 0 ? 'lede' : ''}">${esc(p)}</p>`).join('');
       const body =
-        `<span class="cat-label">${esc(a.kategoria)}</span>` +
+        `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
         `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
         `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}</span>` +
         (stats ? `<div class="stats">${stats}</div>` : '') +
@@ -498,6 +524,40 @@ __DANE__
       if (btn) ustawFiltr(btn.dataset.cat);
     });
     ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
+    const POGODA_MIASTO = { nazwa: 'Warszawa', lat: 52.2297, lon: 21.0122 };  // <- zmień, by mieć inną lokalizację
+    (async () => {
+      try {
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
+          + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+          + '&timezone=auto&forecast_days=1';
+        const w = await (await fetch(u)).json();
+        const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
+          : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
+        const cur = w.current, d = w.daily;
+        document.getElementById('pogoda').textContent =
+          `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
+          ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')';
+      } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
+    })();
+
+    /* ---- nawigacja poprzednie/następne wydanie (z archiwum w index.html) ---- */
+    (async () => {
+      try {
+        const html = await (await fetch('/index.html', { cache: 'no-cache' })).text();
+        const wydania = [...html.matchAll(/href="(wydania\/[^"]+\.html)"/g)].map(m => m[1]); // najnowsze pierwsze
+        const tu = 'wydania/' + decodeURIComponent(location.pathname.split('/').pop());
+        const i = wydania.indexOf(tu);
+        if (i === -1) return;
+        const nowsze = i > 0 ? wydania[i - 1] : null, starsze = i < wydania.length - 1 ? wydania[i + 1] : null;
+        document.getElementById('nav-wydania').innerHTML =
+          (starsze ? `<a href="/${starsze}">← Poprzednie wydanie</a>` : '<span></span>') +
+          '<span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span>' +
+          (nowsze ? `<a href="/${nowsze}">Następne wydanie →</a>` : '<span></span>');
+      } catch (e) { /* podgląd z file:// → nav się nie pokazuje */ }
+    })();
 
     /* ---- stopka ---- */
     const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');

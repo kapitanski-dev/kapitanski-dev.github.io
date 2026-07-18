@@ -58,6 +58,22 @@ technologia, nauka). To ma być „news numer jeden". **Nie powielaj** tej samej
 wiadomości w żadnej innej kategorii — jeśli najważniejszy news jest np.
 polityczny, w kategorii Polityka daj inne tematy.
 
+**Deduplikacja względem poprzedniego wydania (OBOWIĄZKOWA).** Zanim zaczniesz
+research, przeczytaj NAJNOWSZY plik z `"$REPO/wydania/"` (sortowanie po nazwie,
+ostatni = poprzednie wydanie) i wynotuj jego tematy (tytuły + kategorie z JSON-a
+w `<script id="dane-gazety">`). To czytanie lokalne — nie kosztuje tokenów sieci.
+Reguły:
+- **Nie powtarzaj newsa z poprzedniego wydania**, jeśli nie wydarzyło się nic
+  nowego — wybierz inny temat.
+- **Temat wolno kontynuować tylko z wartością dodaną**: nowe fakty, liczby,
+  reakcje, skutki, dalszy rozwój. Artykuł-kontynuacja musi zaczynać się od tego,
+  co NOWE (nie streszczaj od zera), a w drugim akapicie krótko nawiązać do
+  poprzedniego stanu („po wczorajszym…”).
+- W artykule-kontynuacji ustaw pole **`"kontynuacja": true`** — gazeta pokaże
+  badge „Aktualizacja”.
+- Jeśli musiałeś odrzucić temat przez duplikację — to normalne, nie loguj tego;
+  zaloguj tylko, gdy przez deduplikację nie dało się wypełnić `liczba` kategorii.
+
 **Obrazy — NIE zajmujesz się nimi w rutynie.** Każdy artykuł dostanie automatycznie
 zdjęcie **swojej kategorii** (hostowane w repo, `/assets/kategorie/…`) — ładuje się
 ZAWSZE, bez sieci i bez tokenów. Warunek: `kategoria` artykułu musi **dokładnie**
@@ -224,9 +240,14 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
   "wykres": {"typ": "linia", "tytul": "S&P 500 — 10 sesji", "jednostka": " pkt",
              "etykiety": ["1.07","2.07","3.07","4.07","7.07","8.07","9.07","10.07","11.07","14.07"],
              "wartosci": [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512]},
-  "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."]
+  "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."],
+  "kontynuacja": false
 }
 ```
+
+`kontynuacja: true` **tylko** gdy artykuł rozwija temat z poprzedniego wydania
+(patrz KROK 1 — deduplikacja); wtedy gazeta pokazuje badge „Aktualizacja”.
+Przy zwykłych, nowych tematach pole pomiń albo ustaw `false`.
 
 Schemat wpisu logu (`dane["logi"]` — dodawany funkcją `log(poziom, wiadomosc)`):
 
