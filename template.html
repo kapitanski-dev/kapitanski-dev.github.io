@@ -338,8 +338,13 @@ __DANE__
       const el = document.createElement('article');
       el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
       el.dataset.kategoria = a.kategoria;
-      const imgSrc = esc(a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '');
-      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${imgSrc || FALLBACK_IMG}" alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+      const bakedUrl = a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '';
+      const query    = a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(bakedUrl) || FALLBACK_IMG}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + (bakedUrl ? ' data-baked="1"' : '')
+        + ` loading="lazy"></a></figure>`;
       const stats = (a.kluczowe_liczby || []).map(s =>
         `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
       const paras = a.akapity.map((p, j) =>
@@ -355,6 +360,74 @@ __DANE__
       el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
       main.appendChild(el);
       if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- Obrazy: odporne ładowanie z Wikimedia Commons ----
+       Dwa problemy, które to rozwiązuje:
+       (1) Generowanie w chmurze bywa blokowane (IP datacenter) → puste URL-e.
+           Dlatego trzymamy `data-query` i przeglądarka (IP czytelnika) sama rozwiąże
+           obraz, gdy generator nie zdążył.
+       (2) Przy dużych wydaniach (20+ zdjęć) Wikimedia zwraca 429 (Too Many Requests),
+           gdy przeglądarka pobiera wiele obrazów naraz. Dlatego: `loading="lazy"`
+           (rozkłada pobrania w czasie przewijania) + retry z narastającym opóźnieniem
+           i jitterem na błąd ładowania, a resolucja startowa jest staggerowana.
+       Kolejność ratunku dla każdego obrazka: baked URL → retry (429 przejściowe)
+       → rozwiąż z frazy → placeholder SVG. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      if (!query) return '';
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      const api = 'https://commons.wikimedia.org/w/api.php?' + p.toString();
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const r = await fetch(api);
+          if (r.status === 429) { await sleep(1000 * (attempt + 1) + Math.random() * 800); continue; }
+          const d = await r.json();
+          const pages = Object.values((d.query && d.query.pages) || {})
+            .sort((x, y) => (x.index || 99) - (y.index || 99));
+          for (const pg of pages) {
+            const ii = (pg.imageinfo || [{}])[0];
+            if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+              return ii.thumburl || ii.url || '';
+          }
+          return '';                               // odpowiedź OK, ale brak zdjęcia
+        } catch (e) { await sleep(600 * (attempt + 1) + Math.random() * 500); }
+      }
+      return '';
+    }
+
+    const imgs = [...main.querySelectorAll('figure img')];
+    imgs.forEach((img, idx) => {
+      const q = img.dataset.query || '';
+      img.addEventListener('error', async function onErr() {
+        if (img.dataset.done === '1') return;
+        const src = img.getAttribute('src') || '';
+        // 1) przejściowy błąd (najczęściej 429) na realnym URL → ponów z backoffem+jitterem
+        if (src && !src.startsWith('data:') && (img.dataset.retry | 0) < 4) {
+          const n = (img.dataset.retry | 0) + 1;
+          img.dataset.retry = String(n);
+          await sleep(800 * n + Math.random() * 900);
+          if (img.dataset.done === '1') return;
+          img.removeAttribute('src'); img.src = src;  // wymuś ponowne pobranie
+          return;
+        }
+        // 2) trwały błąd URL → spróbuj rozwiązać z frazy (inny plik)
+        if (q && img.dataset.triedQuery !== '1') {
+          img.dataset.triedQuery = '1';
+          const u = await wikiResolve(q);
+          if (u && u !== src) { img.dataset.retry = '0'; img.src = u; return; }
+        }
+        // 3) koniec możliwości → placeholder (bez pętli — data: nie wywołuje error)
+        img.dataset.done = '1';
+        img.src = FALLBACK_IMG;
+      });
+      if (img.dataset.baked !== '1' && q)          // brak URL z generatora → rozwiąż (staggerowane)
+        sleep(idx * 250 + Math.random() * 200).then(() => wikiResolve(q)).then(u => { if (u) img.src = u; });
     });
 
     /* ---- filtry kategorii ---- */

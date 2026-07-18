@@ -52,7 +52,9 @@ polityczny, w kategorii Polityka daj inne tematy.
 przed hotlinkingiem i nie załadują się na GitHub Pages). Zamiast tego dla każdego
 artykułu podaj pole `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
 wskazującą konkretny, fotografowalny obiekt związany z tematem. Skrypt w KROK 3
-sam zamieni ją na realne zdjęcie z Wikimedia Commons.
+zamieni ją na realne zdjęcie z Wikimedia Commons, a fraza `query` zostaje zapisana
+w wydaniu — jeśli API zawiedzie w chmurze, obraz rozwiąże sama przeglądarka
+czytelnika (IP domowe, bez limitów). **Zawsze podawaj sensowną, konkretną `query`.**
 
 Dobre `obraz.query` = konkretny obiekt, nie abstrakcja:
 - osoba: `Jerome Powell`, `Donald Tusk`, `Sam Altman`
@@ -120,15 +122,26 @@ dane = {
 # --- Rezolwer obrazów: fraza EN -> realny, hotlinkowalny URL z Wikimedia Commons ---
 import urllib.request, urllib.parse
 
+# Wikimedia wymaga opisowego User-Agenta z kontaktem; generyczne UA + IP datacenter
+# bywają blokowane (403/429) — to powodowało puste obrazy w poprzednich wydaniach.
+# Stąd: opisowy UA + kilka prób z odczekaniem. A gdyby i tak się nie udało — przeglądarka
+# rozwiąże brakujące obrazy klient-side z zachowanej frazy `query` (patrz template.html).
+import time
+WIKI_UA = 'GrzybTimes/1.0 (https://kapitanski-dev.github.io; tomasz.grzybowski94@gmail.com)'
+
 def wikimedia_image(query):
     if not query: return ""
     params = {'action':'query','generator':'search','gsrsearch':query,'gsrnamespace':'6',
               'gsrlimit':'8','prop':'imageinfo','iiprop':'url|mime','iiurlwidth':'1000','format':'json'}
     url = 'https://commons.wikimedia.org/w/api.php?' + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={'User-Agent':'GrzybTimes/1.0 (news bot)'})
-    try:
-        data = json.load(urllib.request.urlopen(req, timeout=20))
-    except Exception:
+    req = urllib.request.Request(url, headers={'User-Agent': WIKI_UA})
+    data = None
+    for attempt in range(3):                       # retry na wypadek 429/timeout
+        try:
+            data = json.load(urllib.request.urlopen(req, timeout=25)); break
+        except Exception:
+            time.sleep(1.5 * (attempt + 1))
+    if data is None:
         return ""
     pages = (data.get('query') or {}).get('pages') or {}
     for p in sorted(pages.values(), key=lambda p: p.get('index', 999)):
@@ -142,9 +155,11 @@ for a in dane["artykuly"]:
     q = obraz.get("query")
     if q is None:            # brak pola query -> użyj tytułu artykułu
         q = a["tytul"]
-    # q == "" (agent celowo pusty) -> URL pusty -> czysty placeholder SVG
-    a["obraz"] = {"url": wikimedia_image(q), "alt": obraz.get("alt") or a["tytul"]}
-    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(brak — placeholder SVG)'}")
+    # WAŻNE: zachowaj `query` w JSON — dzięki temu przeglądarka rozwiąże obraz nawet,
+    # gdy `url` tu wyjdzie pusty (blokada API w chmurze). q == "" (celowo) -> placeholder.
+    a["obraz"] = {"url": wikimedia_image(q), "query": q, "alt": obraz.get("alt") or a["tytul"]}
+    time.sleep(0.4)          # łagodne tempo — nie wywołuj rate-limitu Wikimedia
+    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(pusty — rozwiąże przeglądarka z query)'}")
 
 # --- Kontrola: liczba artykułów na kategorię wg config.yaml ---
 from collections import Counter
