@@ -33,11 +33,23 @@ pól `liczba` ze wszystkich kategorii.
 ## KROK 1 — Research
 
 Użyj WebSearch. Dla **każdej** kategorii z `config.yaml` (w kolejności) znajdź
-**dokładnie tyle artykułów, ile wynosi jej pole `liczba`** — najważniejsze
-wiadomości z ostatnich 12 h z domen z `zrodla_pierwotne`. W obrębie kategorii
-uporządkuj je od najważniejszego do najmniej istotnego. Jeśli w źródłach nie ma
-tylu sensownych materiałów dla kategorii — dodaj tyle, ile realnie jest (nie
+**dokładnie tyle artykułów, ile wynosi jej pole `liczba`** — wiadomości
+z ostatnich 12 h z domen z `zrodla_pierwotne`. Jeśli w źródłach nie ma tylu
+sensownych materiałów dla kategorii — dodaj tyle, ile realnie jest (nie
 duplikuj tematów i nie wychodź poza listę źródeł).
+
+**Jak wybierać, gdy kandydatów jest więcej niż `liczba` (RUBRYKA OCENY).**
+Oceń każdego kandydata w myślach (nie wypisuj punktacji — szkoda tokenów)
+według trzech kryteriów, w tej kolejności wag:
+1. **Realny skutek (waga 3)** — jak duży i trwały wpływ na ludzi, gospodarkę,
+   rynki. Fakty i podjęte decyzje > zapowiedzi, spekulacje i komentarze.
+2. **Skala i zasięg (waga 2)** — ilu ludzi / jak duży kapitał / ile krajów
+   dotyczy. Globalne > lokalne (chyba że temat wprost dotyczy Polski).
+3. **Nowość i przełomowość (waga 1)** — rzeczy bez precedensu lub zmieniające
+   trend > kolejny odcinek znanej historii.
+Wybierz top `liczba` wg łącznej oceny i uporządkuj malejąco. Rozstrzyganie
+remisów: wyżej to, co bardziej konkretne (zweryfikowane liczby, podjęte
+decyzje) — niżej „może / planuje / rozważa”.
 
 **Oszczędzaj tokeny — research ma być zwięzły:**
 - Celuj w **1 WebSearch na kategorię** (ewentualnie 1 dodatkowe, gdy pierwsze nie
