@@ -90,10 +90,34 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
     interaktywnym tooltipie i na osi Y. Wykres jest interaktywny (najechanie
     pokazuje wartość punktu), więc realne, gęste dane mają największą wartość.
 
+## KROK 2.5 — Zbieraj logi (sekcja „Logs” w gazecie)
+
+Przez **całe** wykonanie (KROK 1–3) notuj zdarzenia, które pomogą nam potem
+ulepszać gazetę, i dodawaj je do listy `dane["logi"]` jako obiekty
+`{"poziom": ..., "wiadomosc": ...}` (poziom: `"error"`, `"warning"` lub `"info"`).
+W skrypcie z KROK 3 służy do tego funkcja `log(poziom, wiadomosc)`.
+
+**Co logować (przykłady):**
+- **Błędy narzędzi** — dosłowną treść, np. z WebSearch/WebFetch:
+  `log("error", "API Error: 400 The following domains are not accessible to our user agent: ['reuters.com']. Read more: https://support.anthropic.com/...")`.
+- **Źródło niedostępne / zablokowane** dla bota, przekierowania, paywall, timeouty.
+- **Braki w kategoriach** — za mało sensownych materiałów, by wypełnić `liczba`
+  (np. `log("warning", "Kategoria „Wojna”: znaleziono 2 z 3 wymaganych artykułów.")`).
+- **Problemy z danymi** — brak wiarygodnych liczb do wykresu, rozbieżne wartości
+  między źródłami, brak aktualnego kursu walutowego do przeliczenia na PLN.
+- **Obrazy** — brak sensownego obiektu na `obraz.query`, nieudana resolucja.
+- **Info** — istotne decyzje redakcyjne, obejścia, nietypowe sytuacje warte uwagi.
+
+Zasady: notuj **konkretnie** (kategoria, artykuł, dosłowny komunikat błędu, URL
+pomocy jeśli był). Nie loguj rzeczy oczywistych ani szumu. Jeśli wszystko poszło
+gładko — zostaw `logi` puste (gazeta pokaże „Brak zdarzeń”). Część logów skrypt
+z KROK 3 dopisze automatycznie (nierozwiązane obrazy, rozbieżność liczby artykułów).
+
 ## KROK 3 — Wygeneruj plik wydania
 
 W poniższym skrypcie **ustaw `WYDANIE`** na wartość z promptu (`rano` albo `wieczor`),
-zbuduj listę `artykuly` (w kolejności kategorii z configu) i uruchom:
+zbuduj listę `artykuly` (w kolejności kategorii z configu), **dopisz `log(...)`
+dla problemów z KROK 1–2** (patrz KROK 2.5) i uruchom:
 
 ```python
 import json, pathlib, subprocess, datetime
@@ -125,8 +149,17 @@ dane = {
   "kicker": f"{etykieta} · Redagowane przez AI",
   "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}, {now.strftime('%H:%M')}",
   "numer": etykieta,
-  "artykuly": []   # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
+  "artykuly": [],  # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
+  "logi": []       # <-- zdarzenia z uruchomienia rutyny -> sekcja „Logs” w gazecie (patrz KROK 2.5)
 }
+
+def log(poziom, wiadomosc):
+    """Dodaj wpis do sekcji „Logs”. poziom: 'error' | 'warning' | 'info'."""
+    dane["logi"].append({"poziom": poziom, "wiadomosc": wiadomosc})
+    print(f"  LOG[{poziom}] {wiadomosc}")
+
+# >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
+#     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
 
 # --- Rezolwer obrazów: fraza EN -> realny, hotlinkowalny URL z Wikimedia Commons ---
 import urllib.request, urllib.parse
@@ -169,15 +202,19 @@ for a in dane["artykuly"]:
     a["obraz"] = {"url": wikimedia_image(q), "query": q, "alt": obraz.get("alt") or a["tytul"]}
     time.sleep(0.4)          # łagodne tempo — nie wywołuj rate-limitu Wikimedia
     print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(pusty — rozwiąże przeglądarka z query)'}")
+    if q and not a["obraz"]["url"]:   # obraz nierozwiązany przy generowaniu -> log (przeglądarka spróbuje ponownie)
+        log("warning", f"Obraz nierozwiązany przy generowaniu: [{a['kategoria']}] „{a['tytul']}” (query: {q!r}). Rozwiąże go przeglądarka czytelnika.")
 
-# --- Kontrola: liczba artykułów na kategorię wg config.yaml ---
+# --- Kontrola: liczba artykułów na kategorię wg config.yaml (rozbieżności -> log) ---
 from collections import Counter
 oczek = {k['nazwa']: k.get('liczba', 1) for k in cfg['kategorie']}
 masz = Counter(a['kategoria'] for a in dane['artykuly'])
 for kat, n in oczek.items():
     if masz.get(kat, 0) != n:
         print(f"  ⚠ {kat}: jest {masz.get(kat,0)}, config oczekuje {n}")
+        log("warning", f"Kategoria „{kat}”: złożono {masz.get(kat,0)} art., config oczekuje {n}.")
 print(f"Artykułów łącznie: {len(dane['artykuly'])} (config: {sum(oczek.values())})")
+print(f"Logów: {len(dane['logi'])}")
 
 out = tpl.replace('__DANE__', json.dumps(dane, ensure_ascii=False, indent=2))
 assert '__DANE__' not in out
@@ -200,6 +237,12 @@ Schemat artykułu (podajesz `obraz.query` — angielską frazę; skrypt sam doda
              "wartosci": [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512]},
   "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."]
 }
+```
+
+Schemat wpisu logu (`dane["logi"]` — dodawany funkcją `log(poziom, wiadomosc)`):
+
+```json
+{"poziom": "error", "wiadomosc": "API Error: 400 The following domains are not accessible to our user agent: ['reuters.com']. Read more: https://support.anthropic.com/..."}
 ```
 
 Weryfikacja poprawności JSON w pliku:
