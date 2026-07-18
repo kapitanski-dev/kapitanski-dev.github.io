@@ -120,6 +120,17 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
   i liczby; środkowe = kontekst, szczegóły, reakcje; ostatni = dlaczego to
   ważne / konsekwencje.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
+- **Sprzeczne narracje między źródłami:** gdy źródła opisują ten sam news inaczej,
+  fakty wspólne dla wszystkich pisz wprost, a rozbieżne twierdzenia i interpretacje
+  atrybuuj z nazwy w treści akapitu — np. „Bankier podaje, że…, natomiast Al Jazeera
+  opisuje to jako…”. Nie wybieraj po cichu jednej narracji. Przy sprzecznych
+  **liczbach** wybierz źródło oficjalne / bliższe zdarzenia i zaloguj rozbieżność
+  (KROK 2.5).
+- **Wiele źródeł w artykule:** jeśli treść akapitów pochodzi z więcej niż jednego
+  źródła (inne źródło pierwotne albo research wtórny), wypisz WSZYSTKIE dodatkowe
+  w polu `zrodla_dodatkowe: [{"nazwa": "...", "url": "..."}]` — gazeta pokaże je
+  przy artykule obok źródła bazowego. `zrodlo` pozostaje głównym źródłem
+  pierwotnym (link tytułu). Gdy całość pochodzi z jednego źródła — pomiń pole.
 - **Kwoty — ZAWSZE waluta + PLN w nawiasie:** każdą kwotę pieniężną w **tytule** i w
   **akapitach** podawaj w walucie oryginalnej, a bezpośrednio po niej dopisz w nawiasie
   przybliżoną wartość w złotych po **aktualnym kursie**, poprzedzoną tyldą — np.
@@ -256,7 +267,8 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
 {
   "kategoria": "Inwestowanie",
   "tytul": "Rzeczowy tytuł z liczbą",
-  "zrodlo": {"nazwa": "Reuters", "url": "https://...", "godzina": "07:30"},
+  "zrodlo": {"nazwa": "Bankier", "url": "https://...", "godzina": "07:30"},
+  "zrodla_dodatkowe": [{"nazwa": "Al Jazeera", "url": "https://..."}],
   "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
   "kluczowe_liczby": [{"wartosc": "2,3%", "opis": "spadek indeksu"}],
   "wykres": {"typ": "linia", "tytul": "S&P 500 — 10 sesji", "jednostka": " pkt",
@@ -268,6 +280,9 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
 ```
 
 Liczba elementów `akapity` = `wydanie.akapity` z configu (domyślnie 3).
+
+`zrodla_dodatkowe` — tylko gdy treść faktycznie korzysta z więcej niż jednego
+źródła (patrz KROK 2); przy jednym źródle pomiń pole.
 
 `kontynuacja: true` **tylko** gdy artykuł rozwija temat z poprzedniego wydania
 (patrz KROK 1 — deduplikacja); wtedy gazeta pokazuje badge „Aktualizacja”.

@@ -423,7 +423,7 @@ __DANE__
       const body =
         `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
         `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
-        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}</span>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''}</span>` +
         (stats ? `<div class="stats">${stats}</div>` : '') +
         (a.wykres ? chart(a.wykres, i) : '') +
         (i === 0 ? `<div class="cols">${paras}</div>` : paras);
@@ -560,7 +560,8 @@ __DANE__
     })();
 
     /* ---- stopka ---- */
-    const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');
+    const zrodla = [...new Set(D.artykuly.flatMap(a =>
+      [a.zrodlo.nazwa, ...(a.zrodla_dodatkowe || []).map(z => z.nazwa)]))].join(' · ');
     document.getElementById('stopka').textContent =
       `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
 

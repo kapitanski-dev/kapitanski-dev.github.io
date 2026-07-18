@@ -64,7 +64,9 @@ zrodla_pierwotne:
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — poza listę wolno wyjść WYŁĄCZNIE po to, by
 # zweryfikować liczby/fakty, dodać kontekst lub zebrać dane do
-# wykresu. Źródło wtórne NIGDY nie jest linkiem artykułu.
+# wykresu. Źródło wtórne NIGDY nie jest linkiem artykułu (zrodlo.url),
+# ale jeśli jego treść trafiła do akapitów — musi być wypisane
+# w `zrodla_dodatkowe` przy artykule.
 # ------------------------------------------------------------
 research_wtorny:
   dozwolony: true
