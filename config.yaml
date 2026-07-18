@@ -26,7 +26,11 @@ kategorie:
     wykres: preferowany
   - nazwa: Polityka
     liczba: 3
-    zakres: "ważne decyzje rządowe, wybory, dyplomacja"
+    zakres: "KONKRETNE decyzje z realnym skutkiem dla obywateli/gospodarki: uchwalone
+      ustawy i regulacje, budżet, podatki, polityka zagraniczna, umowy i sankcje.
+      NIE PISZ o: nominacjach i tym kto objął/został wybrany na jakie stanowisko;
+      sondażach; partyjnych sporach, kłótniach i przepychankach. Liczy się MERYTORYKA
+      i skutek, nie personalia i polityczne gierki."
     wykres: opcjonalny
   - nazwa: Wojna
     liczba: 2
