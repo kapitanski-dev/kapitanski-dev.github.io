@@ -72,6 +72,15 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
 - **Tytuł:** rzeczowy, bez emocji (❌ „Gigantyczny krach!” → ✅ „S&P 500 spadł o 2,3%”).
 - **Dokładnie 2 akapity:** (1) fakty i liczby; (2) dlaczego to ważne / konsekwencje.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
+- **Kwoty — ZAWSZE waluta + PLN w nawiasie:** każdą kwotę pieniężną w **tytule** i w
+  **akapitach** podawaj w walucie oryginalnej, a bezpośrednio po niej dopisz w nawiasie
+  przybliżoną wartość w złotych po **aktualnym kursie**, poprzedzoną tyldą — np.
+  „Apple wyceniono na 4,9 bln USD (~19,6 bln zł)”, „ropa Brent 85,92 USD (~312 zł)”.
+  - **Kurs pobierz w researchu** (WebSearch, kurs bieżący z dnia wydania) i użyj go
+    spójnie w całym wydaniu. Zaokrąglaj rozsądnie (2–3 cyfry znaczące).
+  - Wyjątek: kwota podana już w **PLN** — nie przeliczaj i nie dodawaj nawiasu.
+  - Ta sama zasada obowiązuje w `kluczowe_liczby`, jeśli wartość jest kwotą (np.
+    `"wartosc": "4,9 bln USD (~19,6 bln zł)"`).
 - **kluczowe_liczby:** 1–3 najważniejsze wartości liczbowe artykułu.
 - **wykres:** tylko gdy masz zweryfikowane realne dane; `typ` = `"linia"` lub
   `"slupki"`; przy kategorii z `wykres: nie` — pomiń. Nie wymyślaj danych.
