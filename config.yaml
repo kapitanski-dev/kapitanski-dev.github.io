@@ -21,23 +21,23 @@ kategorie:
     zakres: "NAJWAŻNIEJSZA informacja dnia — dowolny temat (rynki, polityka, wojna, technologia, nauka); ta, która trafia na okładkę. Nie powielaj tej wiadomości w innych kategoriach."
     wykres: opcjonalny
   - nazwa: Inwestowanie
-    liczba: 5
+    liczba: 3
     zakres: "rynki, akcje, M&A, decyzje banków centralnych"
     wykres: preferowany
   - nazwa: Polityka
-    liczba: 5
+    liczba: 3
     zakres: "ważne decyzje rządowe, wybory, dyplomacja"
     wykres: opcjonalny
   - nazwa: Wojna
-    liczba: 3
+    liczba: 2
     zakres: "konflikty zbrojne, geopolityka, bezpieczeństwo"
     wykres: opcjonalny
   - nazwa: Technologia
-    liczba: 5
+    liczba: 3
     zakres: "AI, innowacje, giganci technologiczni, humanoidy"
     wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
-    liczba: 3
+    liczba: 2
     zakres: "coś z natury, historii, nauki, biologii lub kosmosu — NIE technologia (od niej jest osobna kategoria)"
     wykres: nie
 
@@ -45,8 +45,10 @@ kategorie:
 # ŹRÓDŁA PIERWOTNE — zamknięta lista. Każdy artykuł MUSI
 # pochodzić z jednej z tych domen (link artykułu).
 # ------------------------------------------------------------
+# UWAGA: reuters.com USUNIĘTY — blokuje bota Claude-User w robots.txt (błąd 400
+# „domain not accessible”), więc jest bezużyteczny. Jeśli w Logs zobaczysz ten sam
+# błąd dla innej domeny — też ją stąd wyrzuć.
 zrodla_pierwotne:
-  - reuters.com
   - bloomberg.com
   - pap.pl
   - bankier.pl

@@ -38,6 +38,16 @@ uporządkuj je od najważniejszego do najmniej istotnego. Jeśli w źródłach n
 tylu sensownych materiałów dla kategorii — dodaj tyle, ile realnie jest (nie
 duplikuj tematów i nie wychodź poza listę źródeł).
 
+**Oszczędzaj tokeny — research ma być zwięzły:**
+- Celuj w **1 WebSearch na kategorię** (ewentualnie 1 dodatkowe, gdy pierwsze nie
+  wystarczyło). Nie przeszukuj w kółko tego samego.
+- **`WebFetch` tylko wtedy, gdy naprawdę musisz** odczytać konkretne liczby/cytat,
+  których nie ma w wynikach wyszukiwania. Nie pobieraj całych stron „na zapas”.
+- **Nie odpytuj domen, które blokują bota** (błąd 400 „domain not accessible”, np.
+  reuters.com). Jeśli trafisz na taką — zaloguj (KROK 2.5) i pomiń, nie ponawiaj.
+- **Research wtórny** (weryfikacja liczb / dane do wykresu) tylko gdy niezbędny;
+  pomiń wykres, jeśli dane wymagałyby wielu dodatkowych wyszukiwań.
+
 Kolejność w wynikowej liście `artykuly`: kategorie w kolejności z configu, a w
 obrębie każdej kategorii artykuły od najważniejszego. Pierwszy artykuł na liście
 (kategoria **Okładka**) = wielki artykuł okładkowy otwierający wydanie.
@@ -48,20 +58,23 @@ technologia, nauka). To ma być „news numer jeden". **Nie powielaj** tej samej
 wiadomości w żadnej innej kategorii — jeśli najważniejszy news jest np.
 polityczny, w kategorii Polityka daj inne tematy.
 
-**Obrazy — NIE pobieraj ich z artykułu** (zdjęcia Reuters/Bloomberg są chronione
-przed hotlinkingiem i nie załadują się na GitHub Pages). Zamiast tego dla każdego
-artykułu podaj pole `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
-wskazującą konkretny, fotografowalny obiekt związany z tematem. Skrypt w KROK 3
-zamieni ją na realne zdjęcie z Wikimedia Commons, a fraza `query` zostaje zapisana
-w wydaniu — jeśli API zawiedzie w chmurze, obraz rozwiąże sama przeglądarka
-czytelnika (IP domowe, bez limitów). **Zawsze podawaj sensowną, konkretną `query`.**
+**Obrazy — NIE zajmujesz się nimi w rutynie.** Każdy artykuł dostanie automatycznie
+zdjęcie **swojej kategorii** (hostowane w repo, `/assets/kategorie/…`) — ładuje się
+ZAWSZE, bez sieci i bez tokenów. Warunek: `kategoria` artykułu musi **dokładnie**
+pasować do nazwy z `config.yaml` (patrz KROK 2). To jest gwarancja obrazu.
+
+**Opcjonalnie** podaj `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
+wskazującą konkretny, fotografowalny obiekt tematu — przeglądarka czytelnika spróbuje
+wtedy w tle podmienić zdjęcie kategorii na trafniejsze z Wikimedia Commons. To czysty
+bonus: jak się uda, obraz jest konkretniejszy; jak nie — zostaje zdjęcie kategorii.
+**Nie rób dla tego researchu ani wywołań sieciowych** — po prostu wpisz dobrą frazę
+z głowy (lub `""`, jeśli brak oczywistego obiektu).
 
 Dobre `obraz.query` = konkretny obiekt, nie abstrakcja:
 - osoba: `Jerome Powell`, `Donald Tusk`, `Sam Altman`
 - miejsce/budynek: `Warsaw Stock Exchange`, `Federal Reserve building`, `Strait of Hormuz`
 - rzecz/logo: `Leopard 2 tank`, `NVIDIA logo`, `James Webb Space Telescope`
-❌ unikaj abstraktów (`inflation`, `economy growth`) — dają losowe wykresy.
-Jeśli naprawdę nie ma sensownego obiektu, ustaw `obraz.query` = `""`.
+❌ unikaj abstraktów (`inflation`, `economy growth`).
 
 Research wtórny (poza listą) tylko jeśli `research_wtorny.dozwolony: true` i
 wyłącznie do weryfikacji liczb, kontekstu lub danych do wykresu. Źródło wtórne
@@ -69,6 +82,9 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
 
 ## KROK 2 — Redakcja
 
+- **`kategoria` — DOKŁADNA nazwa z `config.yaml`:** wpisuj po polsku, znak w znak
+  (np. `Wojna`, nie `Война`/`War`; `Ciekawostka na dziś` w całości). Od tego zależy
+  zdjęcie kategorii i filtr w navbarze. Zła nazwa = błąd w Logs i domyślne zdjęcie.
 - **Tytuł:** rzeczowy, bez emocji (❌ „Gigantyczny krach!” → ✅ „S&P 500 spadł o 2,3%”).
 - **Dokładnie 2 akapity:** (1) fakty i liczby; (2) dlaczego to ważne / konsekwencje.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
@@ -161,49 +177,21 @@ def log(poziom, wiadomosc):
 # >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
 #     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
 
-# --- Rezolwer obrazów: fraza EN -> realny, hotlinkowalny URL z Wikimedia Commons ---
-import urllib.request, urllib.parse
-
-# Wikimedia wymaga opisowego User-Agenta z kontaktem; generyczne UA + IP datacenter
-# bywają blokowane (403/429) — to powodowało puste obrazy w poprzednich wydaniach.
-# Stąd: opisowy UA + kilka prób z odczekaniem. A gdyby i tak się nie udało — przeglądarka
-# rozwiąże brakujące obrazy klient-side z zachowanej frazy `query` (patrz template.html).
-import time
-WIKI_UA = 'GrzybTimes/1.0 (https://kapitanski-dev.github.io; tomasz.grzybowski94@gmail.com)'
-
-def wikimedia_image(query):
-    if not query: return ""
-    params = {'action':'query','generator':'search','gsrsearch':query,'gsrnamespace':'6',
-              'gsrlimit':'8','prop':'imageinfo','iiprop':'url|mime','iiurlwidth':'1000','format':'json'}
-    url = 'https://commons.wikimedia.org/w/api.php?' + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={'User-Agent': WIKI_UA})
-    data = None
-    for attempt in range(3):                       # retry na wypadek 429/timeout
-        try:
-            data = json.load(urllib.request.urlopen(req, timeout=25)); break
-        except Exception:
-            time.sleep(1.5 * (attempt + 1))
-    if data is None:
-        return ""
-    pages = (data.get('query') or {}).get('pages') or {}
-    for p in sorted(pages.values(), key=lambda p: p.get('index', 999)):
-        ii = (p.get('imageinfo') or [{}])[0]
-        if ii.get('mime') in ('image/jpeg','image/png','image/webp'):
-            return ii.get('thumburl') or ii.get('url','')
-    return ""
-
+# --- Obrazy: rutyna NIE pobiera zdjęć (to zawsze padało na IP datacenter i marnowało
+#     czas oraz tokeny). Każdy artykuł dostaje w przeglądarce zdjęcie SWOJEJ KATEGORII
+#     hostowane w repo (/assets/kategorie/…) — ten sam origin, więc ZAWSZE się ładuje.
+#     Jeśli podasz `obraz.query` (konkretna fraza EN), przeglądarka spróbuje w tle
+#     podmienić je na trafniejsze zdjęcie z Wikimedia Commons — czysty best-effort,
+#     bez wpływu na niezawodność. Tu tylko porządkujemy pole `obraz`. ---
 for a in dane["artykuly"]:
     obraz = a.get("obraz") or {}
-    q = obraz.get("query")
-    if q is None:            # brak pola query -> użyj tytułu artykułu
-        q = a["tytul"]
-    # WAŻNE: zachowaj `query` w JSON — dzięki temu przeglądarka rozwiąże obraz nawet,
-    # gdy `url` tu wyjdzie pusty (blokada API w chmurze). q == "" (celowo) -> placeholder.
-    a["obraz"] = {"url": wikimedia_image(q), "query": q, "alt": obraz.get("alt") or a["tytul"]}
-    time.sleep(0.4)          # łagodne tempo — nie wywołuj rate-limitu Wikimedia
-    print(f"  [{a['kategoria']}] {q!r} -> {a['obraz']['url'] or '(pusty — rozwiąże przeglądarka z query)'}")
-    if q and not a["obraz"]["url"]:   # obraz nierozwiązany przy generowaniu -> log (przeglądarka spróbuje ponownie)
-        log("warning", f"Obraz nierozwiązany przy generowaniu: [{a['kategoria']}] „{a['tytul']}” (query: {q!r}). Rozwiąże go przeglądarka czytelnika.")
+    a["obraz"] = {"query": obraz.get("query") or "", "alt": obraz.get("alt") or a["tytul"]}
+
+# --- Kontrola: kategorie muszą DOKŁADNIE pasować do config.yaml (łapie np. „Война”->„Wojna”) ---
+valid_cats = {k['nazwa'] for k in cfg['kategorie']}
+for a in dane["artykuly"]:
+    if a["kategoria"] not in valid_cats:
+        log("error", f"Nieznana kategoria „{a['kategoria']}” (artykuł „{a['tytul']}”). Użyj DOKŁADNEJ nazwy z config: {sorted(valid_cats)}.")
 
 # --- Kontrola: liczba artykułów na kategorię wg config.yaml (rozbieżności -> log) ---
 from collections import Counter
@@ -223,7 +211,8 @@ pathlib.Path('/tmp/grzyb_times.html').write_text(out, encoding='utf-8')
 print(f'OK — {len(out):,} bajtów | plik: {filename}')
 ```
 
-Schemat artykułu (podajesz `obraz.query` — angielską frazę; skrypt sam doda `obraz.url`):
+Schemat artykułu (`obraz.query` opcjonalna — angielska fraza dla ew. lepszego zdjęcia;
+gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
 
 ```json
 {
