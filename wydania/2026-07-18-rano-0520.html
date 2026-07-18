@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: 17px;
+    transition: background .4s ease, color .4s ease;
+  }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 20px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure { margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 6px; }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    transform: scale(1.02); transition: transform 6s ease;
+  }
+  .hero:hover img { transform: scale(1.08); }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 20px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure { margin: 0; overflow: hidden; border-radius: 6px; }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: saturate(.85); transition: filter .5s ease, transform .5s ease;
+  }
+  .article:hover img { filter: saturate(1.1); transform: scale(1.04); }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p { margin: 0 0 14px; text-align: justify; hyphens: auto; }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 4px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie poranne · Redagowane przez AI",
+  "data_wydania": "sobota, 18 lipca 2026, 05:19",
+  "numer": "Wydanie poranne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Siódma noc ataków USA–Iran: Teheran uderza w bazy w Bahrajnie, Kuwejcie i Jordanii",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/liveblog/2026/7/18/iran-war-live-us-and-iran-exchange-attacks-for-7th-consecutive-night",
+        "godzina": "06:15"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Cieśnina Ormuz – widok z satelity"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7",
+          "opis": "kolejna noc wzajemnych ataków USA–Iran"
+        },
+        {
+          "wartosc": "35+",
+          "opis": "ofiar śmiertelnych w Iranie od wznowienia walk"
+        },
+        {
+          "wartosc": "$85,92",
+          "opis": "cena baryłki ropy Brent (rekord miesięczny)"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Siły IRGC zaatakowały w nocy z 17 na 18 lipca instalacje wojskowe USA w Bahrajnie (baza Juffair), Kuwejcie (wyrzutnie HIMARS) i Jordanii (baza Prince Hassan), odpowiadając na kolejną falę amerykańskich nalotów na Iran. Irańskie ministerstwo zdrowia podało, że od wznowienia walk zginęły co najmniej 35 osób, a ponad 300 zostało rannych; uderzenia dotarły po raz pierwszy blisko Teheranu. Brent skoczył do 85,92 USD za baryłkę – najwyżej od miesiąca.",
+        "Eskalacja konfliktu nakłada się na już napiętą sytuację w Cieśninie Ormuz, przez którą przepływa ok. 20% światowej ropy. Iran zamknął cieśninę dla żeglugi handlowej, zmniejszając ruch o ponad 50% w ciągu tygodnia. Rynki energetyczne, linie lotnicze i armatorzy zmagają się z gwałtownie rosnącymi kosztami; NATO wzmocniło obserwację w rejonie Zatoki Perskiej. Możliwość przywrócenia zawieszenia broni pozostaje niepewna – obie strony zapowiadają kontynuację operacji."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Akcje półprzewodników wchodzą w bessę: indeks chip sektorowy traci 20% od czerwcowego szczytu",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/chips-stocks-tumble-into-bear-market-as-105-ai-rally-fizzles",
+        "godzina": "07:10"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Wafer krzemowy – produkcja półprzewodników"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-20%",
+          "opis": "spadek Philadelphia Semiconductor Index od szczytu"
+        },
+        {
+          "wartosc": "-5,7%",
+          "opis": "jednosesyjna strata indeksu w piątek 17 lipca"
+        },
+        {
+          "wartosc": "+105%",
+          "opis": "wcześniejszy wzrost od marcowego dołka"
+        }
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "Philadelphia Semiconductor Index – lipiec 2026",
+        "jednostka": " pkt",
+        "etykiety": [
+          "01.07",
+          "02.07",
+          "03.07",
+          "04.07",
+          "07.07",
+          "08.07",
+          "09.07",
+          "10.07",
+          "11.07",
+          "14.07",
+          "15.07",
+          "16.07",
+          "17.07"
+        ],
+        "wartosci": [
+          4710,
+          4650,
+          4580,
+          4520,
+          4320,
+          4180,
+          4100,
+          4050,
+          4080,
+          3960,
+          3900,
+          3860,
+          3810
+        ]
+      },
+      "akapity": [
+        "Philadelphia Semiconductor Index (SOX) stracił w piątek 17 lipca 5,7%, ściągając łączną korektę od czerwcowego szczytu powyżej 20% i wchodząc technicznie w bessę. Nvidia potaniała o ponad 3,5%, AMD o blisko 4%, a Marvell Technology i ARM Holdings – o ponad 30% od marcowych maksimów. Bezpośrednim impulsem były informacje o debiucie chińskiego modelu Kimi K3 firmy Moonshot, zbliżającego się wydajnością do czołowych modeli OpenAI i Anthropic.",
+        "Rynek półprzewodników przez cztery miesiące rósł na fali optymizmu wokół AI – indeks poszedł o 105% w górę od marcowego dołka. Teraz inwestorzy kwestionują, czy wydatki na infrastrukturę AI dają wystarczające zwroty. Sygnał ostrzegawczy z wyników IBM (akcje –25% po chybionych prognozach) i rotacja kapitału z sektora tech w kierunku spółek cyklicznych potęgują wyprzedaż."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Apple znowu najcenniejszą firmą świata: wycena 4,9 bln USD, Nvidia spada na drugie miejsce",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/apple-tops-nvidia-as-world-s-largest-company-amid-tech-rotation",
+        "godzina": "06:50"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Siedziba Apple w Cupertino – Apple Park"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "4,9 bln USD",
+          "opis": "kapitalizacja Apple"
+        },
+        {
+          "wartosc": "4,8 bln USD",
+          "opis": "kapitalizacja Nvidia"
+        },
+        {
+          "wartosc": "+0,4%",
+          "opis": "wzrost akcji Apple 17 lipca"
+        }
+      ],
+      "wykres": {
+        "typ": "slupki",
+        "tytul": "Kapitalizacja top 3 spółek świata (bln USD)",
+        "jednostka": " bln USD",
+        "etykiety": [
+          "Apple",
+          "Nvidia",
+          "Microsoft"
+        ],
+        "wartosci": [
+          4.9,
+          4.8,
+          3.6
+        ]
+      },
+      "akapity": [
+        "Apple odzyskał tytuł najcenniejszej spółki giełdowej świata, wyprzedzając Nvidia, której wycena spadła do 4,8 bln USD. Akcje Apple wzrosły o 0,4% w czwartek 17 lipca, windując kapitalizację do 4,9 bln USD. Nvidia utrzymywała pozycję lidera od maja 2025, napędzana popytem na układy AI.",
+        "Zmiana warty odzwierciedla rotację sektora technologicznego: inwestorzy uciekają od spółek intensywnie inwestujących w AI (Nvidia, spółki półprzewodnikowe) w kierunku firm z ugruntowanymi przychodami, takich jak Apple. Premia wycenowa Nvidii była pod presją po rozczarowujących wynikach IBM i debiucie konkurencyjnych chińskich modeli AI, które podważyły narrację o niezmiennie rosnącym popycie na akceleratory GPU."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ropa Brent przy 85,92 USD – najwyżej od miesiąca wobec blokady Cieśniny Ormuz",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/economy/2026/7/14/oil-hits-1-month-high-as-us-iran-fighting-clouds-strait-of-hormuz-outlook",
+        "godzina": "08:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Tankowiec naftowy na morzu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "85,92 USD",
+          "opis": "cena Brent (baryłka), stan na 08:00 GMT"
+        },
+        {
+          "wartosc": "-50%",
+          "opis": "spadek ruchu w Cieśninie Ormuz w ciągu tygodnia"
+        },
+        {
+          "wartosc": "20%",
+          "opis": "udział Cieśniny Ormuz w światowym handlu ropą"
+        }
+      ],
+      "wykres": {
+        "typ": "linia",
+        "tytul": "Ropa Brent – lipiec 2026 (USD/baryłka)",
+        "jednostka": " USD",
+        "etykiety": [
+          "01.07",
+          "04.07",
+          "07.07",
+          "08.07",
+          "09.07",
+          "10.07",
+          "11.07",
+          "12.07",
+          "13.07",
+          "14.07",
+          "15.07",
+          "16.07",
+          "17.07",
+          "18.07"
+        ],
+        "wartosci": [
+          72.3,
+          71.8,
+          73.1,
+          79.8,
+          80.5,
+          79.2,
+          81.0,
+          82.4,
+          83.7,
+          84.5,
+          84.0,
+          84.8,
+          85.2,
+          85.92
+        ]
+      },
+      "akapity": [
+        "Kontrakty terminowe na ropę Brent z dostawą we wrześniu osiągnęły 85,92 USD za baryłkę o 08:00 GMT, najwyższy poziom od 15 czerwca. Bezpośrednim katalizatorem jest ponowne zamknięcie Cieśniny Ormuz przez Iran; tygodniowa liczba tranzytów spadła o ponad 50% – z ok. 114 do 57 statków. USA anulowały tymczasowe zwolnienie z sankcji na irańską ropę po atakach IRGC na tankowce.",
+        "Analitycy ostrzegają, że przedłużający się konflikt może pchnąć Brent w okolice 95 USD, jeśli Iran całkowicie wstrzyma eksport z krajów Zatoki. Konsumenci ropy – m.in. Japonia, Korea Płd. i Indie – szukają alternatywnych tras dostaw przez Przylądek Dobrej Nadziei, co wydłuża czas transportu o ok. 2 tygodnie i podnosi koszty frachtów. Wzrost cen energii zwiększa też presję inflacyjną, komplikując decyzje banku centralnego USA."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "IBM traci 25% w jeden dzień – najgorszy wynik od lat 60.: klienci przestawiają się na infrastrukturę AI",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-14/ibm-says-second-quarter-sales-missed-as-customers-pulled-back",
+        "godzina": "09:30"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Siedziba IBM"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-25%",
+          "opis": "spadek akcji IBM 14 lipca – najgorszy od lat 60."
+        },
+        {
+          "wartosc": "28 000",
+          "opis": "miejsc pracy w tech i finansach likwidowanych miesięcznie przez AI"
+        },
+        {
+          "wartosc": "Q2 2026",
+          "opis": "kwartał, w którym IBM chybił prognoz przychodów"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Akcje IBM runęły o 25% 14 lipca po tym, jak spółka opublikowała wstępne wyniki za II kwartał 2026 poniżej oczekiwań analityków. IBM przyznał, że nie przewidział, iż klienci przekierują budżety IT na serwery, pamięci masowe i GPU potrzebne do AI, kosztem tradycyjnego oprogramowania i usług konsultingowych. Był to najgorszy jednosesyjny wynik IBM w historii notowań sięgającej lat 60. ubiegłego wieku.",
+        "Wyniki IBM odsłoniły przepaść między 'zwycięzcami AI' – producentami układów i chmury – a firmami sprzedającymi tradycyjne rozwiązania IT. Akcje spółek software i IT services zanurkowały w ślad za IBM, rynkowym sygnałem, że transformacja AI eliminuje dotychczasowych pośredników. Osobnym wskaźnikiem jest tempo likwidacji miejsc pracy: sektor tech i finansowy traci średnio 28 000 etatów miesięcznie – przyspieszenie wobec roku 2025."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Japoński Seven & i potwierdza rozmowy o przejęciu udziałów w Grupie Żabka",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/Seven-i-Holdings-potwierdza-ze-prowadzi-rozmowy-ws-inwestycji-w-Zabke-9169516.html",
+        "godzina": "10:55"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Sklep 7-Eleven – japoński właściciel rozważa przejęcie Żabki"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "+9,1%",
+          "opis": "wzrost akcji Żabki w momencie szczytu sesji"
+        },
+        {
+          "wartosc": "30,6 zł",
+          "opis": "kurs akcji Żabki o godz. 10:55"
+        },
+        {
+          "wartosc": "kilka mld USD",
+          "opis": "szacowana wartość transakcji"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Japoński koncern Seven & i Holdings, właściciel globalnej sieci 7-Eleven, potwierdził oficjalnie, że prowadzi rozmowy w sprawie nabycia kilkudziesięcioprocentowego pakietu udziałów w Grupie Żabka od funduszy i obecnych akcjonariuszy. Wycena pakietu ma sięgać kilkuset miliardów jenów, co czyni transakcję jedną z największych zagranicznych inwestycji w polskim handlu detalicznym. Akcje Żabki skoczyły o 9,1% do 30,6 zł, windując WIG20 blisko historycznego szczytu z 2007 roku.",
+        "Potencjalne przejęcie wpisuje się w globalną ekspansję Seven & i w segmencie convenience store i może dać Żabce dostęp do japońskiego know-how operacyjnego oraz kapitału na dalszy rozwój w Europie Środkowej. Transakcja wymaga zgody urzędów antymonopolowych; żadna ze stron nie potwierdziła jeszcze ostatecznych warunków ani harmonogramu zamknięcia."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Finał Mundialu jako szczyt: Trump przyjmuje Sheinbaum i Carneya – pierwsze spotkanie od miesięcy",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-18/sheinbaum-carney-to-watch-world-cup-final-with-trump",
+        "godzina": "07:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Trofeum Mistrzostw Świata FIFA"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "18.07.2026",
+          "opis": "data finału Mistrzostw Świata"
+        },
+        {
+          "wartosc": "3",
+          "opis": "liderzy Ameryki Północnej na jednej trybunie"
+        },
+        {
+          "wartosc": "grudzień 2025",
+          "opis": "ostatnie bezpośrednie spotkanie Carney–Trump"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Prezydent Meksyku Claudia Sheinbaum i premier Kanady Mark Carney przyjęli zaproszenie Donalda Trumpa na finał Mistrzostw Świata FIFA 2026, odbywający się w Stanach Zjednoczonych. Będzie to pierwsze bezpośrednie spotkanie trzech liderów Ameryki Północnej od miesięcy napiętych relacji handlowych i dyplomatycznych. FIFA prezydent Gianni Infantino zapowiedział, że razem z Trumpem wręczy trofeum zwycięskiej drużynie.",
+        "Wizyta stwarza okazję do nieformalnych rozmów dyplomatycznych na marginesie sportowego wydarzenia. Kancelaria Carneya zastrzegła, że nie planuje rozmów handlowych, niemniej eksperci wskazują, że bezpośredni kontakt liderów może złagodzić tarcia wokół umowy USMCA i polityki celnej, zaostrzonych przez Waszyngton na początku 2026 roku."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Fed Warsh: misja antyinflacyjna nie jest wykonana – rynek wycenia 50-proc. szansę podwyżki stóp w lipcu",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-14/warsh-says-inflation-mission-not-accomplished-hints-at-options",
+        "godzina": "08:30"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Siedziba Rezerwy Federalnej w Waszyngtonie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "50%",
+          "opis": "rynkowe prawdopodobieństwo podwyżki stóp w lipcu"
+        },
+        {
+          "wartosc": "<10%",
+          "opis": "prawdopodobieństwo podwyżki przed zeznaniem Warsha"
+        },
+        {
+          "wartosc": "0,25 pp",
+          "opis": "przewidywana ewentualna podwyżka"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Szef Rezerwy Federalnej Kevin Warsh podczas zeznań przed Kongresem oświadczył, że czerwcowe wyhamowanie inflacji nie oznacza misji wykonanej i że Fed nie ma tolerancji dla podwyższonych cen. Rynek kontraktów terminowych wycenił po tych słowach 50-procentową szansę na podwyżkę stóp o 25 punktów bazowych na posiedzeniu w lipcu; przed zeznaniem prawdopodobieństwo wynosiło poniżej 10%.",
+        "Warsh – nowy przewodniczący Fed, obejmujący urząd w 2026 roku – sygnalizuje 'zmianę reżimu' polityki pieniężnej: koniec z prospektywną komunikacją i skupienie na twardych danych. Rosnące ceny ropy naftowej spowodowane konfliktem w Zatoce Perskiej mogą dodatkowo podbić inflację CPI w lipcu, co zwiększa presję na decyzję o podwyżce pomimo ochłodzenia koniunktury w sektorze technologicznym."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Sejm uchwalił budżet 2026 w drugim czytaniu i wybrał nowego prezesa IPN",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/polityka-miedzynarodowa",
+        "godzina": "19:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Gmach Sejmu RP w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2026",
+          "opis": "rok budżetowy objęty uchwaloną ustawą"
+        },
+        {
+          "wartosc": "dr Mateusz Szpytma",
+          "opis": "nowo wybrany prezes IPN"
+        },
+        {
+          "wartosc": "2026–2030",
+          "opis": "horyzont nowej strategii polityki zagranicznej RP"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Sejm RP przeprowadził drugie czytanie projektu ustawy budżetowej na rok 2026, obejmującej m.in. przepisy o Funduszu Bezpieczeństwa i Obrony oraz reformę administracji rządowej. W tym samym posiedzeniu posłowie wybrali dr. Mateusza Szpytmę na stanowisko prezesa Instytutu Pamięci Narodowej. Izba przyjęła też przepisy regulujące krajowy rynek kryptowalut.",
+        "Debata budżetowa zdominowana była przez kwestie finansowania obronności; Polska utrzymuje jeden z najwyższych w NATO wskaźników wydatków na armię jako % PKB. Nowa strategia polityki zagranicznej RP na lata 2026–2030 ma formalnie potwierdzić priorytet atlantycki i flankę wschodnią, co stanowi bezpośrednią odpowiedź na eskalację konfliktu na Ukrainie i niestabilność na Bliskim Wschodzie."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Chiny budują alternatywne NATO dla AI: 29 krajów dołącza do Światowej Organizacji Współpracy w Dziedzinie AI",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-16/china-led-ai-body-enlists-global-south-states-to-rival-us",
+        "godzina": "11:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Xi Jinping podczas przemówienia na szczycie AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "29",
+          "opis": "krajów sygnatariuszy WAICO, w tym Rosja"
+        },
+        {
+          "wartosc": "60%",
+          "opis": "udział chińskich modeli AI wśród firm na platformie OpenRouter"
+        },
+        {
+          "wartosc": "3 dni",
+          "opis": "czas trwania Światowej Konferencji AI w Szanghaju"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Podczas Światowej Konferencji AI w Szanghaju (WAIC) Pekin ogłosił, że 29 państw – w tym Rosja, szereg krajów Globalnego Południa i kilka państw UE – podpisało deklarację przystąpienia do Światowej Organizacji Współpracy w Dziedzinie AI (WAICO). Organizacja ma stanowić odpowiedź na dominację USA w ustalaniu globalnych standardów AI i zasad bezpieczeństwa modeli.",
+        "Xi Jinping – w historycznym debiucie na flagowej chińskiej konferencji technologicznej – wygłosił przemówienie, w którym ogłosił wizję 'AI dla wszystkich' i zażądał otwartego, wielostronnego ładu technologicznego. Rosnący udział chińskich modeli w globalnym użyciu AI (60% na OpenRouter) i sukces Kimi K3 sygnalizują, że chiński sektor AI skutecznie zasypuje lukę technologiczną wobec Doliny Krzemowej."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Kongres USA zbiera podpisy pod projektem nowych sankcji na Rosję i dodatkowej pomocy wojskowej dla Ukrainy",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/index,1,571,polska.html-68",
+        "godzina": "06:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Budynek Kapitolu USA w Waszyngtonie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "1,4 mln",
+          "opis": "łączne straty Rosji od początku wojny wg CSIS"
+        },
+        {
+          "wartosc": "39 490",
+          "opis": "rosyjskie straty w czerwcu 2026 wg ukraińskiego sztabu"
+        },
+        {
+          "wartosc": "wystarczająca",
+          "opis": "liczba podpisów do wymuszonego głosowania"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Członkowie Kongresu USA zebrali wystarczającą liczbę podpisów, by wymusić głosowanie nad projektem ustawy nakładającym dodatkowe sankcje na Rosję i zapewniającym dodatkowe dostawy uzbrojenia dla Ukrainy. Inicjatywa legislacyjna jest reakcją na eskalację walk na froncie ukraińskim i rosnące obawy o stabilność wschodniej flanki NATO.",
+        "Projekt ten wskazuje na rosnący bipartyjny konsensus w Kongresie dotyczący wsparcia Ukrainy pomimo wewnętrznych napięć w Partii Republikańskiej. Równolegle Polska, jako kraj flankowy, forsuje przyspieszenie procedur dostaw systemów obrony powietrznej; eksperci oceniają, że inicjatywa ustawy może przyspieszyć decyzję o dostarczeniu kolejnych baterii Patriot."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Rosja przygotowuje szeroką mobilizację po wrześniowych wyborach: Kreml ostrzega przed 'nowymi potrzebami'",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/7/russia-touts-war-with-nato-amid-losses-in-ukraine",
+        "godzina": "07:45"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Rosyjski pobór wojskowy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "39 490",
+          "opis": "rosyjskich żołnierzy zabitych w czerwcu 2026"
+        },
+        {
+          "wartosc": "24–30 tys.",
+          "opis": "miesięczna zdolność poboru Rosji wg szacunków"
+        },
+        {
+          "wartosc": "18–20 września",
+          "opis": "termin wyborów parlamentarnych w Rosji"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Kreml coraz otwarcie sygnalizuje plan szerokiej mobilizacji zaplanowanej na okres po wyborach parlamentarnych (18–20 września), uzasadniając ją rosnącymi stratami na froncie ukraińskim. W czerwcu 2026 Rosja straciła szacunkowo 39 490 żołnierzy – blisko dwukrotnie więcej, niż wynosi jej miesięczna zdolność poboru oceniana na 24–30 tys. osób. Centrum CSIS szacuje łączne straty rosyjskie od 2022 roku na 1,4 miliona.",
+        "Ukraina konsekwentnie uderza w infrastrukturę logistyczną na terenie Rosji, co pogłębia niedobory paliwa i amunicji. Moskwa, nie chcąc destabilizować opinii publicznej przed wyborami, odkłada formalną mobilizację, lecz jednocześnie prowadzi zakulisowe akcje werbunkowe. Eksperci NATO przewidują, że jesienią 2026 r. Rosja może wystawić do 200 tys. nowych żołnierzy, co znacząco wpłynęłoby na dynamikę frontu."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Ukraina niszczy 20 rosyjskich jednostek pływających na Morzu Czarnym, w tym 17 tankowców",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/video/newsfeed/2026/7/15/ukraine-strikes-20-russian-vessels",
+        "godzina": "09:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Morski dron uderzeniowy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "20",
+          "opis": "zaatakowanych rosyjskich jednostek pływających"
+        },
+        {
+          "wartosc": "17",
+          "opis": "z nich tankowców naftowych"
+        },
+        {
+          "wartosc": "15.07",
+          "opis": "data uderzenia"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Ukraińskie siły zbrojne opublikowały nagranie uderzenia na 20 rosyjskich jednostek pływających na Morzu Czarnym; wśród zaatakowanych znalazło się 17 tankowców naftowych, które Rosja używa do obejścia zachodnich sankcji na eksport surowców. Operacja stanowi część systematycznej kampanii mającej na celu zniszczenie tzw. shadow fleet – floty cieni obsługującej handel ropą.",
+        "Zniszczenie kolejnych tankowców bezpośrednio uderza w rosyjskie wpływy z eksportu ropy, finansujące wysiłek wojenny Kremla. Operacja ta wpisuje się w szerszą strategię Ukrainy mającą na celu wyparcie rosyjskiej floty z Morza Czarnego; dotychczas Kijów zatopił lub poważnie uszkodził ponad 30 okrętów wojennych od początku 2024 roku, zmuszając Rosję do przeniesienia dużej części floty czarnomorskiej do portów krymskich."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Rosyjskie drony zaatakowały port w Mikołajowie: 2 zabitych marynarzy, kolejne ofiary w Odessie",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/17/ukraine-suffers-port-attacks-as-protests-persist-over-defence-shake-up",
+        "godzina": "08:10"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Mikołajów – ukraińskie miasto portowe"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2",
+          "opis": "zabitych ukraińskich marynarzy w Mikołajowie"
+        },
+        {
+          "wartosc": "3",
+          "opis": "uszkodzone statki pod obcą banderą"
+        },
+        {
+          "wartosc": "2+8",
+          "opis": "zabitych i rannych w Odessie po trafieniu rakietą w blok"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Rosyjskie drony uderzyły w infrastrukturę portową Mikołajowa na południu Ukrainy, uszkadzając trzy statki pod obcą banderą i zabijając dwoje marynarzy. W tym samym czasie w Odessie rakieta trafiła w budynek mieszkalny, zabijając dwie osoby i raniąc osiem. Łącznie w nocnych atakach w piątek 17 lipca zginęło 10 osób po obu stronach frontu.",
+        "Ataki na porty ukraińskie mają na celu destabilizację szlaków eksportu zboża i odbudowywanej infrastruktury handlowej, co bezpośrednio uderza w dochody z eksportu i dostawy żywności do krajów globalnego południa. Trwające protesty ukraińskich weteranów i żołnierzy z powodu reorganizacji dowódczej w armii stwarzają dodatkową presję wewnętrzną na rząd Zełenskiego."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Moonshot Kimi K3: chiński model AI dorównuje OpenAI i Anthropic, pokonuje wszystkich poza Claude Fable 5 i GPT-5.6",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/china-s-powerful-new-moonshot-ai-model-closes-gap-with-us-rivals",
+        "godzina": "06:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Wizualizacja sieci neuronowej AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "#3",
+          "opis": "pozycja Kimi K3 w globalnych benchmarkach"
+        },
+        {
+          "wartosc": "open-weight",
+          "opis": "dostępność modelu – wagi do pobrania publicznie"
+        },
+        {
+          "wartosc": "30 mld USD",
+          "opis": "wycena Moonshot AI z ostatniej rundy finansowania"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Chiński startup Moonshot AI opublikował model Kimi K3, który według wewnętrznych benchmarków przewyższa wszystkich globalnych rywali z wyjątkiem Claude Fable 5 firmy Anthropic i GPT-5.6 firmy OpenAI. Model jest open-weight, co oznacza dostępność wag do pobrania – krok odróżniający Moonshot od DeepSeek i znacząco obniżający bariery adopcji.",
+        "Premiera Kimi K3 wstrząsnęła rynkami finansowymi: indeks akcji półprzewodnikowych stracił 5,7% w piątek, a inwestorzy odczytali wiadomość jako sygnał, że chińskie AI nie potrzebuje już masowych zakupów procesorów Nvidii. Moonshot wyceniony był w ostatniej rundzie na 30 mld USD; model wzmacnia narrację, że chiński ekosystem AI osiąga wydajność klasy światowej przy niższych kosztach obliczeniowych niż zachodnie laboratoria."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Xi Jinping na debiucie w WAIC: 'AI dla wszystkich' i wezwanie do wielostronnego ładu technologicznego",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/xi-vows-to-make-ai-for-all-in-debut-at-china-s-top-tech-summit",
+        "godzina": "10:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Szanghaj – miejsce Światowej Konferencji AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "1.",
+          "opis": "pierwsze wystąpienie Xi na flagowej konferencji AI Chin"
+        },
+        {
+          "wartosc": "29",
+          "opis": "krajów w nowej organizacji WAICO"
+        },
+        {
+          "wartosc": "60%",
+          "opis": "udział chińskich modeli w globalnym użyciu AI na OpenRouter"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Prezydent Xi Jinping po raz pierwszy otworzył Światową Konferencję AI (WAIC) w Szanghaju, określając AI mianem 'nowej rewolucji przemysłowej' i wzywając do otwartego, wielostronnego ładu technologicznego. Xi ogłosił, że Chiny nie chcą być 'solistą', ale 'dyrygentem orkiestry' globalnej współpracy AI; zapowiedział udostępnienie chińskich modeli dla krajów rozwijających się.",
+        "Globalny udział chińskich modeli AI na popularnej platformie OpenRouter zbliżył się do rekordowych 60% – co oznacza, że większość firm na świecie korzysta z chińskiego AI częściej niż z rozwiązań OpenAI czy Google. Pekin konsekwentnie buduje alternatywny ekosystem AI, niezależny od USA, obejmujący infrastrukturę obliczeniową (Huawei Ascend), modele (DeepSeek, Kimi, Qwen) i standardy regulacyjne w ramach WAICO."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Chiny odpierają oskarżenia Anthropic o nielegalne destylowanie modeli AI",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-18/china-dismisses-claim-that-it-illicitly-extracts-foreign-ai-tech",
+        "godzina": "07:30"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Rywalizacja technologiczna USA–Chiny"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "Liu Bin",
+          "opis": "wiceminister spraw zagranicznych Chin"
+        },
+        {
+          "wartosc": "destylacja",
+          "opis": "technika trenowania modelu na wynikach innego modelu"
+        },
+        {
+          "wartosc": "18.07.2026",
+          "opis": "data konferencji WAIC w Szanghaju"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Chiński wiceminister spraw zagranicznych Liu Bin na marginesie WAIC odrzucił zarzuty, że Chiny nielegalnie ekstrahują wyniki top-tier modeli USA – w tym Claude Fable 5 Anthropic i GPT-5.6 OpenAI – w celu trenowania własnych systemów poprzez tzw. destylację. 'Niektóre kraje histeryzują na temat destylacji' – powiedział Liu Bin, nie wymieniając USA z nazwy.",
+        "Destylacja polega na traktowaniu odpowiedzi zaawansowanego modelu jako danych treningowych dla modelu ucznia, co drastycznie obniża koszty treningu. Firmy takie jak Anthropic twierdzą, że technika ta narusza warunki użytkowania i stanowi kradzież IP; chińskie startupy kontriują, że granica między inspiracją a naruszeniem jest niejasna. Spór stał się nowym frontem cyfrowej rywalizacji Waszyngton–Pekin, a US Commerce Department rozważa objęcie API-ów AI restrykcjami eksportowymi."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "AI likwiduje 28 000 miejsc pracy miesięcznie w sektorach tech i finansowym w USA",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-01/tech-and-finance-sectors-losing-28-000-jobs-monthly-show-ai-impact-on-labor",
+        "godzina": "09:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Pracownicy biurowi – miejsca pracy zagrożone przez AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "28 000",
+          "opis": "etatów likwidowanych miesięcznie w tech i finansach"
+        },
+        {
+          "wartosc": "2026",
+          "opis": "rok, w którym tempo redukcji jest najwyższe"
+        },
+        {
+          "wartosc": "250",
+          "opis": "pracowników – próg UE dla obowiązkowej analizy wpływu AI"
+        }
+      ],
+      "wykres": {
+        "typ": "slupki",
+        "tytul": "Miesięczne redukcje etatów w tech i finansach (tys.)",
+        "jednostka": " tys.",
+        "etykiety": [
+          "sty 25",
+          "lut 25",
+          "mar 25",
+          "kwi 25",
+          "maj 25",
+          "cze 25",
+          "lip 25",
+          "sie 25",
+          "wrz 25",
+          "paź 25",
+          "lis 25",
+          "gru 25",
+          "sty 26",
+          "lut 26",
+          "mar 26",
+          "kwi 26",
+          "maj 26",
+          "cze 26"
+        ],
+        "wartosci": [
+          12,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          25,
+          26,
+          27,
+          28
+        ]
+      },
+      "akapity": [
+        "Sektory technologiczny i finansowy w USA tracą przeciętnie 28 000 etatów miesięcznie – wynika z danych Bloomberg za czerwiec 2026. Tempo eliminacji stanowisk jest najwyższe odkąd AI weszło do masowego wdrożenia w korporacjach; wyprzedza ono tworzenie nowych ról przez technologię. Niedobory dotykają przede wszystkim programistów, analityków danych i pracowników back-office.",
+        "Firmy szybciej zastępują ludzi modelami językowymi (kodowanie, analiza dokumentów, obsługa klienta), niż tworzą nowe specjalizacje. Ekonomiści sygnalizują problem 'hollowing out': AI zastępuje pracowników średnio wykwalifikowanych, pogłębiając polaryzację dochodów. Rządy państw G7 pracują nad pakietami wsparcia dla przekwalifikowania; UE wdrożyła obowiązek analizy wpływu AI na zatrudnienie w firmach powyżej 250 osób."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "OpenAI ujawnia urządzenie Jony'ego Ive'a: przenośny głośnik bez ekranu z 'osobowością' budującą relacje z użytkownikiem",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/opinion/articles/2026-07-16/jony-ive-s-openai-speaker-wants-a-personal-relationship-with-users",
+        "godzina": "07:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Inteligentny głośnik AI – urządzenie domowe"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "0",
+          "opis": "ekranów – urządzenie jest głośnikiem bez wyświetlacza"
+        },
+        {
+          "wartosc": "Q4 2026",
+          "opis": "planowana premiera rynkowa"
+        },
+        {
+          "wartosc": "Jony Ive",
+          "opis": "projektant – były dyrektor ds. designu Apple"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "OpenAI ujawniło szczegóły długo oczekiwanego urządzenia zaprojektowanego przez Jony'ego Ive'a – twórcę iMaca, iPoda i iPhone'a. Produkt to przenośny głośnik bez ekranu, który można przenosić z pokoju do pokoju; jego najważniejszą cechą ma być 'osobowość' i zdolność do budowania długoterminowych relacji z użytkownikami.",
+        "Urządzenie jest wyrazem długofalowej strategii OpenAI zmierzającej do posiadania własnego hardware i bezpośredniego dostępu do konsumentów, bez pośrednictwa Apple czy Google. Brak ekranu to świadomy wybór designerski: głośnik ma być 'obecny w tle', podobnie jak inteligentny asystent domowy, ale z wyraźnym charakterem i ciągłością konwersacji. Premiera rynkowa planowana jest na koniec 2026 roku."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Po raz pierwszy wykryto atmosferę na skalistej planecie w strefie zamieszkiwalnej: LHS 1440b, 49 lat świetlnych od Ziemi",
+      "zrodlo": {
+        "nazwa": "money.pl",
+        "url": "https://tech.wp.pl/atmosfera-na-skalistej-egzoplanecie-w-ekosferze-przelomowe-obserwacje,7308386288187840a",
+        "godzina": "08:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Wizja artystyczna egzoplanety w strefie zamieszkiwalnej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "49",
+          "opis": "lat świetlnych od Ziemi"
+        },
+        {
+          "wartosc": "1,73 R⊕",
+          "opis": "promień planety (w promieniach Ziemi)"
+        },
+        {
+          "wartosc": "5,6 M⊕",
+          "opis": "masa planety (w masach Ziemi)"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Międzynarodowy zespół astronomów ogłosił przełomowe odkrycie: wykrycie atmosfery na skalistej egzoplanecie LHS 1440b, krążącej wokół czerwonego karła zaledwie 49 lat świetlnych od Ziemi. Planeta leży w strefie zamieszkiwalnej swojej gwiazdy, a obecność atmosfery – wykrytej metodą helowych emisji za pomocą teleskopu Magellan w Obserwatorium Las Campanas – czyni ją jednym z najbardziej obiecujących celów poszukiwań życia pozaziemskiego.",
+        "LHS 1440b ma 1,73 raza większy promień i 5,6 raza większą masę niż Ziemia, okrążając swoją gwiazdę w ciągu 25 dni. To pierwsze tak mocne dowody na atmosferę na planecie skalistej w ekosferze; dotychczasowe obserwacje dotyczyły planet gazowych lub skalistych poza strefą zamieszkiwalną. Naukowcy zaznaczają, że samo wykrycie atmosfery nie potwierdza obecności wody ani życia – potrzebne są dalsze obserwacje z Teleskopem Kosmicznym Jamesa Webba."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Ziemskie bakterie przeżyją na Marsie – jeśli będzie woda: wnioski z holenderskiej pracy doktorskiej",
+      "zrodlo": {
+        "nazwa": "money.pl",
+        "url": "https://nauka.wiara.pl/doc/9792047.Ziemskie-mikroby-moga-przezyc-na-Marsie",
+        "godzina": "09:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Powierzchnia Marsa – zdjęcie NASA"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "Radboud",
+          "opis": "Uniwersytet w Nijmegen (Holandia), autor badania"
+        },
+        {
+          "wartosc": "H₂O",
+          "opis": "kluczowy warunek przeżycia mikroorganizmów na Marsie"
+        },
+        {
+          "wartosc": "-63°C",
+          "opis": "średnia temperatura powierzchni Marsa"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Praca doktorska zrealizowana na Uniwersytecie Radboud w Nijmegen wykazała, że ziemskie mikroorganizmy są w stanie przetrwać na Marsie lub innych ciałach niebieskich, pod warunkiem że dostępna jest ciekła woda – choćby w postaci słonych solanek pod powierzchnią gruntu. Eksperymenty symulowały marsjańskie ciśnienie, temperaturę i promieniowanie, w których bakterie ekstremalne (ekstremofile) utrzymywały aktywność metaboliczną.",
+        "Odkrycie ma podwójne implikacje: z jednej strony sugeruje, że ewentualne misje z ludźmi na Marsa powinny rygorystycznie sterylizować sprzęt, by nie zanieczyścić planety ziemskim życiem; z drugiej – wskazuje, że Mars mógł wykształcić własne życie mikrobiologiczne, jeśli kiedykolwiek miał zbiorniki ciekłej wody. Planowane misje NASA i ESA do marsjańskich rejonów polarnych i jaskiń nabierają w tym kontekście szczególnego znaczenia."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Naukowcy odkryli ukryty mechanizm sprzężenia zwrotnego stabilizujący klimat Ziemi od 50 milionów lat",
+      "zrodlo": {
+        "nazwa": "money.pl",
+        "url": "https://www.sciencedaily.com/",
+        "godzina": "10:00"
+      },
+      "obraz": {
+        "url": "",
+        "alt": "Ziemia z orbity – atmosfera i cykl węglowy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "50 mln lat",
+          "opis": "okres działania odkrytego mechanizmu"
+        },
+        {
+          "wartosc": "CO₂",
+          "opis": "kluczowy gaz cieplarniany w mechanizmie"
+        },
+        {
+          "wartosc": "wietrzenie skał",
+          "opis": "proces pochłaniający CO₂ przy wzroście temperatury"
+        }
+      ],
+      "wykres": null,
+      "akapity": [
+        "Naukowcy zidentyfikowali ukryty mechanizm sprzężenia zwrotnego w geologicznym cyklu węglowym, który przez ostatnie 50 milionów lat zapobiegał trwałemu przegrzaniu lub wychłodzeniu Ziemi. Kiedy temperatura rośnie, wilgoć przyspiesza wietrzenie skał krzemianowych, pochłaniając CO₂; gdy spada – proces zwalnia, a CO₂ gromadzi się w atmosferze. To naturalny 'termostat planetarny'.",
+        "Odkrycie jest ważne dla zrozumienia granic odporności Ziemi na obecne zmiany klimatyczne. Mechanizm działa na skalę setek tysięcy do milionów lat – zbyt wolno, by samoczynnie zadziałać jako ratunek przed antropogenicznym ociepleniem w XXI wieku. Niemniej naukowcy twierdzą, że precyzyjne modelowanie tego mechanizmu poprawi dokładność długoterminowych prognoz klimatycznych i zwiększy wiarygodność modeli IPCC."
+      ]
+    }
+  ]
+}
+  </script>
+
+  <script>
+  (function () {
+    const D = JSON.parse(document.getElementById('dane-gazety').textContent);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.dataset.kategoria = a.kategoria;
+      const imgSrc = esc(a.obraz && a.obraz.url && !a.obraz.url.startsWith('data:') ? a.obraz.url : '');
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${imgSrc || FALLBACK_IMG}" alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${esc(p)}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}</span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map((c, i) =>
+      `<button class="filtr${i === 0 ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('');
+    main.before(filtryEl);
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (!btn) return;
+      const cat = btn.dataset.cat;
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b === btn));
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    });
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
