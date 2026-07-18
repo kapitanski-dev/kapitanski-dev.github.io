@@ -432,23 +432,27 @@ __DANE__
 
     /* ---- filtry kategorii ---- */
     const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
     const filtryEl = document.createElement('div');
     filtryEl.className = 'filtry';
-    filtryEl.innerHTML = cats.map((c, i) =>
-      `<button class="filtr${i === 0 ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
     ).join('');
     main.before(filtryEl);
-    filtryEl.addEventListener('click', e => {
-      const btn = e.target.closest('.filtr');
-      if (!btn) return;
-      const cat = btn.dataset.cat;
-      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b === btn));
+    function ustawFiltr(cat) {
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
       main.querySelectorAll('article').forEach(art =>
         art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
       const divider = main.querySelector('.divider');
       if (divider) divider.classList.toggle('hidden',
         cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
     });
+    ustawFiltr(domyslnaKat);          // start na okładce
 
     /* ---- stopka ---- */
     const zrodla = [...new Set(D.artykuly.map(a => a.zrodlo.nazwa))].join(' · ');
