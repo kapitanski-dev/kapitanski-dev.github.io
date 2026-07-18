@@ -25,7 +25,8 @@ echo "Repo: $REPO" && ls "$REPO"
 
 Przeczytaj `"$REPO/config.yaml"` (narzędzie Read). Stamtąd pochodzą:
 tytuł gazety, lista kategorii (kolejność = ważność, pierwsza = hero), **`liczba`
-artykułów dla każdej kategorii**, `zrodla_pierwotne`, reguły research wtórny.
+artykułów dla każdej kategorii**, **`wydanie.akapity`** (liczba akapitów na
+artykuł, domyślnie 3), `zrodla_pierwotne`, reguły research wtórny.
 **Nie zgaduj — użyj wartości z pliku.** Łączna liczba artykułów wydania = suma
 pól `liczba` ze wszystkich kategorii.
 
@@ -102,7 +103,10 @@ nigdy nie jest linkiem artykułu (`zrodlo.url`).
   (np. `Wojna`, nie `Война`/`War`; `Ciekawostka na dziś` w całości). Od tego zależy
   zdjęcie kategorii i filtr w navbarze. Zła nazwa = błąd w Logs i domyślne zdjęcie.
 - **Tytuł:** rzeczowy, bez emocji (❌ „Gigantyczny krach!” → ✅ „S&P 500 spadł o 2,3%”).
-- **Dokładnie 2 akapity:** (1) fakty i liczby; (2) dlaczego to ważne / konsekwencje.
+- **Liczba akapitów = `wydanie.akapity` z `config.yaml`** (gdy brak pola — 3).
+  Dokładnie tyle w każdym artykule. Struktura: pierwszy = najważniejsze fakty
+  i liczby; środkowe = kontekst, szczegóły, reakcje; ostatni = dlaczego to
+  ważne / konsekwencje.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
 - **Kwoty — ZAWSZE waluta + PLN w nawiasie:** każdą kwotę pieniężną w **tytule** i w
   **akapitach** podawaj w walucie oryginalnej, a bezpośrednio po niej dopisz w nawiasie
@@ -209,6 +213,12 @@ for a in dane["artykuly"]:
     if a["kategoria"] not in valid_cats:
         log("error", f"Nieznana kategoria „{a['kategoria']}” (artykuł „{a['tytul']}”). Użyj DOKŁADNEJ nazwy z config: {sorted(valid_cats)}.")
 
+# --- Kontrola: liczba akapitów wg config (wydanie.akapity, domyślnie 3) ---
+n_akapity = cfg['wydanie'].get('akapity', 3)
+for a in dane["artykuly"]:
+    if len(a.get("akapity") or []) != n_akapity:
+        log("warning", f"Artykuł „{a['tytul']}”: {len(a.get('akapity') or [])} akapitów, config wymaga {n_akapity}.")
+
 # --- Kontrola: liczba artykułów na kategorię wg config.yaml (rozbieżności -> log) ---
 from collections import Counter
 oczek = {k['nazwa']: k.get('liczba', 1) for k in cfg['kategorie']}
@@ -240,10 +250,12 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
   "wykres": {"typ": "linia", "tytul": "S&P 500 — 10 sesji", "jednostka": " pkt",
              "etykiety": ["1.07","2.07","3.07","4.07","7.07","8.07","9.07","10.07","11.07","14.07"],
              "wartosci": [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512]},
-  "akapity": ["Akapit 1 — fakty.", "Akapit 2 — konsekwencje."],
+  "akapity": ["Akapit 1 — fakty.", "Akapit 2 — kontekst i szczegóły.", "Akapit 3 — konsekwencje."],
   "kontynuacja": false
 }
 ```
+
+Liczba elementów `akapity` = `wydanie.akapity` z configu (domyślnie 3).
 
 `kontynuacja: true` **tylko** gdy artykuł rozwija temat z poprzedniego wydania
 (patrz KROK 1 — deduplikacja); wtedy gazeta pokazuje badge „Aktualizacja”.
