@@ -120,6 +120,24 @@ Reguły:
 - Jeśli musiałeś odrzucić temat przez duplikację — to normalne, nie loguj tego;
   zaloguj tylko, gdy przez deduplikację nie dało się wypełnić `liczba` kategorii.
 
+**Wątki do sprawdzenia (follow-up zapowiedzi — OBOWIĄZKOWY).** JSON poprzedniego
+wydania ma pole `watki` — listę zapowiedzianych wydarzeń, o których pisaliśmy
+(testy, starty, głosowania, decyzje, publikacje wyników). Dla KAŻDEGO wątku
+sprawdź w researchu, czy się rozstrzygnął:
+- **rozstrzygnął się** → mocny kandydat na artykuł (`kontynuacja: true`);
+  w rubryce oceny traktuj priorytetowo — obiecaliśmy czytelnikowi ciąg dalszy.
+  (Przykład wpadki, której to zapobiega: 16.07 zapowiedzieliśmy test Starship
+  Flight 13; start został odwołany — 4 z 33 silników nie odpaliły, kurs SpaceX
+  zanurkował — a gazeta nigdy do tematu nie wróciła.)
+- **wciąż otwarty** → przepisz go do `watki` bieżącego wydania;
+- **stracił aktualność / starszy niż 7 dni** → porzuć.
+Brak pola `watki` (starsze wydania) = zaczynasz listę od zera.
+
+**Budowanie `watki` bieżącego wydania:** po redakcji przejrzyj swoje artykuły —
+każda zapowiedź przyszłego wydarzenia z (przybliżoną) datą to wątek. Jedno
+zdanie z datą, np. `"Starship Flight 13 — start zapowiadany 16.07; sprawdzić
+wynik"`. Maksymalnie ~6 wątków, najważniejsze.
+
 **Obrazy — NIE zajmujesz się nimi w rutynie.** Każdy artykuł dostanie automatycznie
 zdjęcie **swojej kategorii** (hostowane w repo, `/assets/kategorie/…`) — ładuje się
 ZAWSZE, bez sieci i bez tokenów. Warunek: `kategoria` artykułu musi **dokładnie**
@@ -301,6 +319,7 @@ dane = {
   "numer": etykieta,
   "artykuly": [],  # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
   "logi": [],      # <-- zdarzenia z uruchomienia rutyny -> sekcja „Logs” w gazecie (patrz KROK 2.5)
+  "watki": [],     # <-- zapowiedzi do sprawdzenia w NASTĘPNYM wydaniu (patrz KROK 1 — wątki)
   "pogoda": cfg.get('pogoda') or {}  # lokalizacja + link prognozy z configu (pasek w nagłówku)
 }
 
