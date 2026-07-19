@@ -38,8 +38,16 @@ kategorie:
     zakres: "konflikty zbrojne, geopolityka, bezpieczeństwo"
     wykres: opcjonalny
   - nazwa: Technologia
-    liczba: 3
-    zakres: "AI, innowacje, giganci technologiczni, humanoidy"
+    liczba: 2
+    zakres: "technologia POZA AI: sprzęt i półprzewodniki, giganci technologiczni
+      (biznes, produkty), przemysł kosmiczny, cyberbezpieczeństwo, telekomunikacja,
+      oprogramowanie. Newsy o AI idą do osobnej kategorii AI."
+    wykres: opcjonalny
+  - nazwa: AI
+    liczba: 2
+    zakres: "sztuczna inteligencja: nowe modele i możliwości, laboratoria AI
+      (OpenAI, Anthropic, Google DeepMind, xAI, Meta), wdrożenia i produkty AI,
+      regulacje AI, chipy i infrastruktura pod AI, humanoidy i robotyka"
     wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
     liczba: 2
@@ -60,6 +68,14 @@ zrodla_pierwotne:
   - money.pl
   - zero.pl/kategoria/swiat
   - aljazeera.com
+  # Bliski Wschód / Iran — przeciwwaga dla narracji zachodniej:
+  - amwaj.media        # specjalista Iran/Zatoka, źródła wewnątrz irańskiej polityki
+  - middleeasteye.net  # reportaże z terenu, krytyczny wobec Izraela/Zachodu
+  # Technologia:
+  - theregister.com    # enterprise IT, sprzęt, security; jawnie zezwala botom Claude
+  - spidersweb.pl      # polski serwis tech
+  # AI:
+  - the-decoder.com    # serwis wyłącznie o AI: modele, laboratoria, wdrożenia
 
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — poza listę wolno wyjść WYŁĄCZNIE po to, by

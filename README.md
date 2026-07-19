@@ -64,6 +64,9 @@ kategorie:
 - Kolejność kategorii = ważność (pierwsza na górze gazety).
 - `liczba` = ile artykułów w danej kategorii. Łączna liczba wydania = suma `liczba`.
 - Kategorię możesz dodać, usunąć lub przestawić.
+- Nowa kategoria potrzebuje zdjęcia bazowego: wgraj `assets/kategorie/<nazwa>.jpg`
+  (≤1000px, JPEG) i dopisz wpis w mapie `KAT_OBRAZ` w `template.html` — inaczej
+  artykuły dostaną zdjęcie okładki (fallback).
 
 ### Źródła — `config.yaml`
 ```yaml
