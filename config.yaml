@@ -10,6 +10,17 @@ wydanie:
   akapity: 4          # liczba akapitów w każdym artykule (domyślnie 3)
 
 # ------------------------------------------------------------
+# POGODA — pasek w nagłówku (dane bieżące pobiera przeglądarka
+# czytelnika z Open-Meteo, zero tokenów). Kliknięcie w temperaturę
+# otwiera prognoza_url w nowej karcie.
+# ------------------------------------------------------------
+pogoda:
+  miasto: "Nowy Dwór Mazowiecki"
+  lat: 52.4306
+  lon: 20.7158
+  prognoza_url: "https://www.meteo.pl/um/php/mgram_search.php?NALL=52.4306&EALL=20.7158&lang=pl"
+
+# ------------------------------------------------------------
 # TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = okładka).
 # `liczba` = ile artykułów w danej kategorii (od najważniejszego).
 # Łączna liczba artykułów wydania = suma wszystkich `liczba`.
