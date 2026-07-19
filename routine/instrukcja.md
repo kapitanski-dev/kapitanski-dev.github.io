@@ -138,10 +138,15 @@ każda zapowiedź przyszłego wydarzenia z (przybliżoną) datą to wątek. Jedn
 zdanie z datą, np. `"Starship Flight 13 — start zapowiadany 16.07; sprawdzić
 wynik"`. Maksymalnie ~6 wątków, najważniejsze.
 
-**Obrazy — NIE zajmujesz się nimi w rutynie.** Każdy artykuł dostanie automatycznie
-zdjęcie **swojej kategorii** (hostowane w repo, `/assets/kategorie/…`) — ładuje się
-ZAWSZE, bez sieci i bez tokenów. Warunek: `kategoria` artykułu musi **dokładnie**
-pasować do nazwy z `config.yaml` (patrz KROK 2). To jest gwarancja obrazu.
+**Obrazy — NIE zajmujesz się nimi w rutynie** (żadnych wywołań narzędzi!).
+Warstwy, wszystkie automatyczne:
+1. Skrypt z KROK 3 sam pobierze **og:image artykułu źródłowego** (grafikę z newsa)
+   i zapisze do repo — to preferowany obraz.
+2. Gdy się nie uda — artykuł dostaje zdjęcie **swojej kategorii**
+   (`/assets/kategorie/…`, ładuje się ZAWSZE). Warunek: `kategoria` musi
+   **dokładnie** pasować do nazwy z `config.yaml` (patrz KROK 2).
+3. Przeglądarka czytelnika może jeszcze podmienić zdjęcie kategorii wg
+   `obraz.query` (Wikimedia, best-effort).
 
 **Opcjonalnie** podaj `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
 wskazującą konkretny, fotografowalny obiekt tematu — przeglądarka czytelnika spróbuje
@@ -358,15 +363,45 @@ log("info", "Model rutyny: <tu wpisz dokładną nazwę modelu, np. claude-opus-4
 # >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
 #     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
 
-# --- Obrazy: rutyna NIE pobiera zdjęć (to zawsze padało na IP datacenter i marnowało
-#     czas oraz tokeny). Każdy artykuł dostaje w przeglądarce zdjęcie SWOJEJ KATEGORII
-#     hostowane w repo (/assets/kategorie/…) — ten sam origin, więc ZAWSZE się ładuje.
-#     Jeśli podasz `obraz.query` (konkretna fraza EN), przeglądarka spróbuje w tle
-#     podmienić je na trafniejsze zdjęcie z Wikimedia Commons — czysty best-effort,
-#     bez wpływu na niezawodność. Tu tylko porządkujemy pole `obraz`. ---
+# --- Obrazy, warstwa 1: og:image artykułu źródłowego, pobierane TYM skryptem
+#     (mechanicznie, zero tokenów LLM) i zapisywane do repo => ten sam origin,
+#     ładuje się zawsze. Porażka któregokolwiek kroku = artykuł zostaje przy
+#     zdjęciu SWOJEJ KATEGORII (/assets/kategorie/…), a przeglądarka może je
+#     jeszcze podmienić przez Wikimedię wg `obraz.query`. Ty (model) nie robisz
+#     dla obrazów ŻADNYCH wywołań narzędzi — wszystko dzieje się w skrypcie. ---
 for a in dane["artykuly"]:
     obraz = a.get("obraz") or {}
     a["obraz"] = {"query": obraz.get("query") or "", "alt": obraz.get("alt") or a["tytul"]}
+
+try:
+    from PIL import Image
+except ImportError:
+    subprocess.run("pip install pillow -q", shell=True)
+    from PIL import Image
+import io, urllib.request
+_imgdir = repo / 'wydania' / 'img' / f"{today}-{WYDANIE}"
+_UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+for _i, _a in enumerate(dane["artykuly"]):
+    try:
+        _h = urllib.request.urlopen(urllib.request.Request(_a["zrodlo"]["url"], headers=_UA), timeout=12).read(400000).decode('utf-8', 'ignore')
+        _m = (re.search(r'property=["\']og:image["\'][^>]*content=["\']([^"\']+)', _h) or
+              re.search(r'content=["\']([^"\']+)["\'][^>]*property=["\']og:image["\']', _h))
+        if not _m: continue
+        _iu = _m.group(1).replace('&amp;', '&')
+        if _iu.startswith('//'): _iu = 'https:' + _iu
+        _raw = urllib.request.urlopen(urllib.request.Request(_iu, headers=_UA), timeout=12).read()
+        _im = Image.open(io.BytesIO(_raw)).convert('RGB')
+        if _im.width < 400 or _im.height < 220: continue   # logo/ikonka — pomiń
+        _im.thumbnail((900, 900))
+        _imgdir.mkdir(parents=True, exist_ok=True)
+        _im.save(_imgdir / f"art-{_i}.jpg", 'JPEG', quality=78, optimize=True)
+        _a["obraz"]["plik"] = f"/wydania/img/{today}-{WYDANIE}/art-{_i}.jpg"
+    except Exception:
+        pass   # fallback: zdjęcie kategorii (+ ew. Wikimedia w przeglądarce)
+_n_og = sum(1 for _a in dane["artykuly"] if _a["obraz"].get("plik"))
+print(f"Obrazy ze źródeł (og:image): {_n_og}/{len(dane['artykuly'])}")
+if _n_og < len(dane["artykuly"]):
+    log("info", f"Obrazy: {_n_og}/{len(dane['artykuly'])} pobrane ze źródeł (og:image); pozostałe = zdjęcia kategorii.")
 
 # --- Kontrola: kategorie muszą DOKŁADNIE pasować do config.yaml (łapie np. „Война”->„Wojna”) ---
 valid_cats = {k['nazwa'] for k in cfg['kategorie']}
@@ -547,7 +582,7 @@ git config user.email "grzyb-times@auto.bot"
 git config user.name "Grzyb Times Bot"
 mkdir -p wydania
 cp /tmp/grzyb_times.html wydania/${DATE}-${WYDANIE}-${TIME}.html
-git add wydania/${DATE}-${WYDANIE}-${TIME}.html index.html
+git add wydania index.html   # wydania/ obejmuje też pobrane obrazy (wydania/img/…)
 git commit -m "Grzyb Times — ${WYDANIE} ${DATE} ${TIME}"
 git push origin main
 echo "Opublikowano: https://kapitanski-dev.github.io/wydania/${DATE}-${WYDANIE}-${TIME}.html"

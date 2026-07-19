@@ -593,11 +593,17 @@ __DANE__
       const czyt = Math.max(1, Math.round(a.akapity.join(' ').split(/\s+/).length / 200));
       const uwagaUrl = UWAGI_REPO + '?title=' + encodeURIComponent('[Uwaga] ' + a.tytul)
         + '&body=' + encodeURIComponent('Wydanie: ' + location.pathname + '\nArtykuł: ' + a.tytul + '\n\n(opisz swoją uwagę)');
-      const query = a.obraz && a.obraz.query ? a.obraz.query : '';
-      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${katObraz(a.kategoria)}"`
+      /* Baza obrazu: og:image ze źródła (obraz.plik, w repo) > zdjęcie kategorii.
+         Fallback w onerror: plik -> kategoria -> SVG. Podmiana Wikimedia (data-query)
+         tylko, gdy nie ma plika — plik jest trafniejszy niż cokolwiek z Commons. */
+      const plik = a.obraz && a.obraz.plik ? a.obraz.plik : '';
+      const kat = katObraz(a.kategoria);
+      const query = !plik && a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(plik || kat)}"`
         + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (plik ? ` data-kat="${esc(kat)}"` : '')
         + (query ? ` data-query="${esc(query)}"` : '')
-        + ` loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+        + ` loading="lazy" onerror="if(this.dataset.kat){this.src=this.dataset.kat;delete this.dataset.kat}else{this.onerror=null;this.src='${FALLBACK_IMG}'}"></a></figure>`;
       const stats = (a.kluczowe_liczby || []).map(s =>
         `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
       const paras = a.akapity.map((p, j) =>
