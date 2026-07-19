@@ -13,106 +13,112 @@ składają wydanie i wypychają je z powrotem do repo.
 
 | Plik / katalog | Rola |
 |---|---|
-| `config.yaml` | **Konfiguracja, którą edytujesz Ty.** Kategorie, ile artykułów na kategorię, źródła. |
-| `template.html` | Szablon wydania (HTML + CSS + JS). Placeholder `__DANE__` = miejsce na dane. |
+| `config.yaml` | **Konfiguracja, którą edytujesz Ty.** Kategorie i liczby artykułów, źródła, liczba akapitów, pogoda, tryb researchu wtórnego. |
+| `template.html` | Szablon wydania (HTML+CSS+JS). Placeholder `__DANE__` = dane wydania. Otwarty bez danych pokazuje **podgląd Lorem Ipsum** (blok DEMO — rutyna wycina go z wydań). |
 | `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → generacja → publikacja. |
-| `index.html` | Auto-generowane archiwum wszystkich wydań (strona główna). |
-| `wydania/` | Gotowe wydania: `RRRR-MM-DD-{rano\|wieczor}-GGMM.html`. |
+| `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
+| `index.html` | Auto-generowane archiwum wydań (strona główna, grupowanie po dniach). |
+| `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Opublikowanych wydań nie edytujemy.** |
+| `assets/kategorie/` | Zdjęcia bazowe kategorii (2–3 na kategorię, rotacja przeciw duplikatom). |
+| `raport-finansowy/` | Osobna rutyna: cotygodniowe przeglądy rynku (niezależne od gazety). |
 
-**Cała logika jest w repo.** Rutyny to tylko cienki bootstrap („znajdź repo →
-przeczytaj `routine/instrukcja.md` → wykonaj"). Zmiana czegokolwiek = commit do
-repo, bez ruszania rutyn.
+**Cała logika jest w repo.** Rutyny to cienki bootstrap („znajdź repo → przeczytaj
+`routine/instrukcja.md` → wykonaj"). Zmiana czegokolwiek = commit, bez ruszania rutyn.
 
 ---
 
 ## Jak to działa
 
 ```
-cron (7:00 / 19:00)  →  rutyna klonuje repo  →  czyta config.yaml + template.html
-                                                        + routine/instrukcja.md
-        ↓
-  research w sieci (WebSearch) wg kategorii i źródeł z config.yaml
-        ↓
-  składa JSON z artykułami, wstrzykuje do template.html (podmiana __DANE__)
-        ↓
-  zapisuje wydania/RRRR-MM-DD-…​.html, aktualizuje index.html
-        ↓
-  git commit + push  →  GitHub Pages publikuje
+cron (7:00 / 19:00) → rutyna klonuje repo → config.yaml + template.html + instrukcja.md
+      ↓
+uwagi czytelników (GitHub Issues „[Uwaga] …”) + wątki z poprzedniego wydania (follow-upy)
+      ↓
+research (WebSearch) wg kategorii i źródeł; rubryka ocen: realny skutek > skala > nowość
+      ↓
+redakcja: 4 akapity, skróty, kwoty z ~PLN, tooltipy {{termin|wyjaśnienie}}, timestampy źródeł
+      ↓
+skrypt: JSON → template (__DANE__), og:image artykułów do wydania/img/, pogoda z Interii,
+        walidacje (kategorie, liczby, akapity) → logi
+      ↓
+index.html + git commit + push → GitHub Pages
 ```
 
-Obrazy artykułów pochodzą z **Wikimedia Commons** (rutyna zamienia angielską frazę
-`obraz.query` na hotlinkowalny URL). Zdjęć z serwisów newsowych nie da się użyć —
-blokują hotlinking.
+### Obrazy (trzy warstwy, wszystkie automatyczne)
+1. **og:image artykułu źródłowego** — skrypt pobiera grafikę newsa i commituje do
+   `wydania/img/…` (ten sam origin ⇒ ładuje się zawsze; zero tokenów LLM).
+2. Fallback: **zdjęcie kategorii** z `assets/kategorie/` (rotacja 2–3 zdjęć).
+3. Bonus: przeglądarka czytelnika może podmienić zdjęcie kategorii na trafniejsze
+   z Wikimedia Commons (`obraz.query`).
+
+### Funkcje wydania
+„W skrócie" (jednozdaniowe streszczenia z kotwicami) · filtry kategorii (start:
+Okładka) · badge „Aktualizacja" przy kontynuacjach · interaktywne wykresy (tylko
+gdy źródło daje komplet danych) · kluczowe liczby · tooltipy trudnych terminów ·
+czas czytania · timestamp publikacji u źródła · „Zgłoś uwagę" (GitHub Issue,
+rutyna czyta je przy kolejnym wydaniu) · pogoda z Interii (klik → pełna prognoza) ·
+nawigacja poprzednie/następne · sekcja **Logs** (diagnostyka rutyny, w tym model
+generujący wydanie) · motyw jasny/ciemny · design „paper & ink" (mobile/tablet/desktop + druk).
 
 ---
 
 ## Jak zmieniać gazetę
 
-Edytujesz plik, robisz `git commit` + `git push`. Najbliższe wydanie użyje nowej
-wersji. Nie musisz dotykać rutyn.
+Edytujesz plik → `git commit` + `git push`. Najbliższe wydanie użyje nowej wersji.
 
-### Kategorie i liczba artykułów — `config.yaml`
+### Kategorie — `config.yaml`
 ```yaml
 kategorie:
-  - nazwa: Okładka          # pierwsza = wielki artykuł otwierający (najważniejszy news dnia)
-    liczba: 1
   - nazwa: Inwestowanie
-    liczba: 3               # 3 artykuły w tej kategorii
-    zakres: "rynki, akcje, decyzje banków centralnych"
+    liczba: 3               # ile artykułów; suma liczb = wielkość wydania
+    zakres: "co obejmuje… (i czego NIE — zakazy pisz wprost)"
     wykres: preferowany     # preferowany | opcjonalny | nie
 ```
-- Kolejność kategorii = ważność (pierwsza na górze gazety).
-- `liczba` = ile artykułów w danej kategorii. Łączna liczba wydania = suma `liczba`.
-- Kategorię możesz dodać, usunąć lub przestawić.
-- Nowa kategoria potrzebuje zdjęcia bazowego: wgraj `assets/kategorie/<nazwa>.jpg`
-  (≤1000px, JPEG) i dopisz wpis w mapie `KAT_OBRAZ` w `template.html` — inaczej
-  artykuły dostaną zdjęcie okładki (fallback).
+- Kolejność = ważność; pierwsza kategoria (Okładka, `liczba: 1`) = artykuł otwierający.
+- Nowa kategoria wymaga zdjęcia: `assets/kategorie/<nazwa>.jpg` (≤1000px JPEG)
+  + wpis w mapie `KAT_OBRAZ` w `template.html` (lista = rotacja).
 
 ### Źródła — `config.yaml`
-```yaml
-zrodla_pierwotne:      # link każdego artykułu MUSI pochodzić z jednej z tych domen
-  - reuters.com
-  - bloomberg.com
-```
+Zamknięta lista `zrodla_pierwotne` (link artykułu musi z niej pochodzić).
+**Przed dodaniem domeny sprawdź jej `robots.txt`** — jeśli blokuje `Claude-User`,
+jest bezużyteczna (tak wypadły reuters.com, apnews.com, cnbc.com, theverge.com).
+Research wtórny: `research_wtorny.tryb` = `nigdy | wyjatkowo | swobodnie`.
 
-### Wygląd — `template.html`
-Motyw jasny/ciemny, siatka artykułów, filtry kategorii, interaktywne wykresy
-(tooltip po najechaniu), animacje. Zmiana stylu = edycja CSS w `<style>`.
+### Pogoda — `config.yaml`
+`pogoda.prognoza_url` (strona Interii dla miasta; skrypt parsuje z niej aktualny
+stan, klik w pasek pogody ją otwiera) + `lat`/`lon` (fallback Open-Meteo).
 
-### Proces redakcyjny — `routine/instrukcja.md`
-Ton, długość, zasady doboru zdjęć, format wykresów. To „brief redakcyjny" dla AI.
+### Wygląd — `template.html` · Proces redakcyjny — `routine/instrukcja.md`
 
 ---
 
-## Publikacja ręczna / lokalny podgląd
+## Czyszczenie starych wydań
 
-Podgląd: otwórz dowolny plik z `wydania/` w przeglądarce.
+Repo rośnie ~1 MB na wydanie (grafiki). Gdy chcesz przyciąć:
 
-Zmiany wypychasz normalnie:
 ```bash
-git add -A
-git commit -m "opis zmiany"
-git push
+python3 routine/czysc_stare.py --dni 60        # usuń wydania starsze niż 60 dni
+python3 routine/czysc_stare.py --dni 60 --dry  # najpierw zobacz, co usunie
+git add -A && git commit -m "Czyszczenie starych wydań" && git push
 ```
-> Uwaga: `&&`, nie `&` — `git commit -m "x" && git push`.
 
-Repo używa uwierzytelniania SSH (`git@github.com:…`). Jeśli `git push` zwraca
-`Permission denied (publickey)`, Twój klucz z tej maszyny nie jest dodany na
-GitHubie — dodaj klucz publiczny w Settings → SSH keys (albo jako deploy key
-z prawem zapisu).
+Skrypt usuwa pliki wydań **wraz z ich katalogami grafik** i odbudowuje
+`index.html` (tą samą logiką, której używa rutyna — czyta ją z instrukcji).
+Uwaga: pełne odchudzenie repo wymagałoby przepisania historii gita — zwykłe
+usunięcie wystarcza, by strona była czysta.
 
 ---
 
 ## Rutyny chmurowe
 
-| Wydanie | Godzina (cron) | Publikuje |
+| Wydanie | Cron | Publikuje |
 |---|---|---|
 | Poranne | 7:00 (`0 5 * * *` UTC) | `wydania/…-rano-GGMM.html` |
 | Wieczorne | 19:00 (`0 17 * * *` UTC) | `wydania/…-wieczor-GGMM.html` |
 
-Znacznik `GGMM` w nazwie pliku pozwala opublikować **kilka wydań tego samego typu**
-w ciągu dnia. Rutynami zarządza się przez API Claude Code (RemoteTrigger) — zmiana
-potrzebna tylko przy zmianie godziny lub typu wydania.
+Model generujący każde wydanie jest logowany w sekcji **Logs** tego wydania.
+Do repo pushują też inne rutyny (raport-finansowy) — dlatego zawsze
+`git pull --rebase` przed własnym pushem.
 
 ---
 
