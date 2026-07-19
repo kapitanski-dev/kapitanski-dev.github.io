@@ -50,9 +50,13 @@ kategorie:
     wykres: opcjonalny
   - nazwa: Technologia
     liczba: 2
-    zakres: "technologia POZA AI: sprzęt i półprzewodniki, giganci technologiczni
-      (biznes, produkty), przemysł kosmiczny, cyberbezpieczeństwo, telekomunikacja,
-      oprogramowanie. Newsy o AI idą do osobnej kategorii AI."
+    zakres: "NOWINKI techniczne i realny POSTĘP: nowe urządzenia i premiery,
+      przełomy inżynieryjne i materiałowe, półprzewodniki, przemysł kosmiczny,
+      cyberbezpieczeństwo, telekomunikacja, oprogramowanie.
+      NIE PISZ o: AI, chipach AI i centrach danych (od tego jest osobna kategoria
+      AI); pozwach, procesach, ugodach i sporach prawnych firm; sprawach
+      antymonopolowych. Liczy się technika i postęp, nie sądy i korporacyjne
+      przepychanki."
     wykres: opcjonalny
   - nazwa: AI
     liczba: 2
