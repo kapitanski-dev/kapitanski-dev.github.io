@@ -733,16 +733,20 @@ __DANE__
     ustawFiltr(domyslnaKat);          // start na okładce
 
     /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
-    /* Lokalizacja i link prognozy z config.yaml (rutyna wstrzykuje D.pogoda);
-       fallback = Nowy Dwór Mazowiecki + meteogram ICM. */
+    /* Pogoda: rutyna parsuje aktualny stan z Interii (D.pogoda.aktualna) —
+       pokazujemy go wprost. Fallback (brak pola / stary format): Open-Meteo
+       w przeglądarce. Klik zawsze prowadzi do pełnej prognozy (Interia). */
     const PG = D.pogoda || {};
     const POGODA_MIASTO = {
       nazwa: PG.miasto || 'Nowy Dwór Mazowiecki',
       lat: PG.lat ?? 52.4306, lon: PG.lon ?? 20.7158
     };
     const PROGNOZA_URL = PG.prognoza_url ||
-      'https://www.meteo.pl/um/php/mgram_search.php?NALL=52.4306&EALL=20.7158&lang=pl';
-    (async () => {
+      'https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541';
+    const pokazPogode = txt => document.getElementById('pogoda').innerHTML =
+      `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener"${PG.opis ? ` title="${esc(PG.opis)}"` : ''}>${esc(txt)}</a>`;
+    if (PG.aktualna) pokazPogode(PG.aktualna);
+    else (async () => {
       try {
         const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
           + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
@@ -751,12 +755,10 @@ __DANE__
         const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
           : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
         const cur = w.current, d = w.daily;
-        const txt =
+        pokazPogode(
           `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
           ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
-          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')';
-        document.getElementById('pogoda').innerHTML =
-          `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener">${esc(txt)}</a>`;
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')');
       } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
     })();
 

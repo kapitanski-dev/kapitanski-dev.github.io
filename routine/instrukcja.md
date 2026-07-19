@@ -304,6 +304,29 @@ dane = {
   "pogoda": cfg.get('pogoda') or {}  # lokalizacja + link prognozy z configu (pasek w nagłówku)
 }
 
+# --- Pogoda z Interii: parsowanie HTML w skrypcie (zero tokenów LLM).
+#     Gdy się nie uda — pole zostaje puste, przeglądarka użyje Open-Meteo. ---
+import urllib.request
+try:
+    _pu = dane["pogoda"].get("prognoza_url", "")
+    if "pogoda.interia.pl" in _pu:
+        _rq = urllib.request.Request(_pu, headers={"User-Agent": "Mozilla/5.0"})
+        _h = urllib.request.urlopen(_rq, timeout=15).read().decode("utf-8", "ignore")
+        _t = re.search(r'weather-currently-temp-strict">\s*(-?\d+)°C', _h)
+        _o = re.search(r'weather-currently-icon[^"]*"\s*\n?\s*title="([^"]+)"', _h)
+        if _t:
+            _op = (_o.group(1) if _o else "").strip()
+            _l = _op.lower()
+            _e = ("⛈️" if "burz" in _l else "🌧️" if "deszcz" in _l or "opady" in _l else
+                  "🌨️" if "śnieg" in _l else "🌫️" if "mgł" in _l else
+                  "☀️" if "słonecznie" in _l or "bezchmurnie" in _l else
+                  "🌤️" if "małe" in _l else "⛅" if "umiarkowane" in _l else
+                  "☁️" if "zachmurzenie" in _l or "pochmurno" in _l else "")
+            dane["pogoda"]["aktualna"] = f"{dane['pogoda'].get('miasto','')} {_e} {_t.group(1)}°C".replace("  ", " ").strip()
+            if _op: dane["pogoda"]["opis"] = _op
+except Exception as _ex:
+    log("info", f"Pogoda z Interii nieudana ({_ex}) — przeglądarka użyje Open-Meteo.")
+
 def log(poziom, wiadomosc):
     """Dodaj wpis do sekcji „Logs”. poziom: 'error' | 'warning' | 'info'."""
     dane["logi"].append({"poziom": poziom, "wiadomosc": wiadomosc})
