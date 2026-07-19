@@ -128,7 +128,9 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
 - **Liczba akapitów = `wydanie.akapity` z `config.yaml`** (gdy brak pola — 3).
   Dokładnie tyle w każdym artykule. Struktura: pierwszy = najważniejsze fakty
   i liczby; środkowe = kontekst, szczegóły, reakcje; ostatni = dlaczego to
-  ważne / konsekwencje.
+  ważne / konsekwencje. Dodatkowe akapity wypełniaj kontekstem i analizą
+  z JUŻ zebranego materiału — nie rób dodatkowego researchu tylko po to,
+  by wydłużyć artykuł.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
 - **Sprzeczne narracje między źródłami:** gdy źródła opisują ten sam news inaczej,
   fakty wspólne dla wszystkich pisz wprost, a rozbieżne twierdzenia i interpretacje

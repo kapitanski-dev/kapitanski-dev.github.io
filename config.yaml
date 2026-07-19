@@ -7,7 +7,7 @@
 wydanie:
   tytul: "Grzyb Times"
   jezyk: pl
-  akapity: 3          # liczba akapitów w każdym artykule (domyślnie 3)
+  akapity: 4          # liczba akapitów w każdym artykule (domyślnie 3)
 
 # ------------------------------------------------------------
 # TEMATY / KATEGORIE — kolejność ma znaczenie (pierwsza = okładka).
