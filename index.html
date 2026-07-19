@@ -1,14 +1,48 @@
 <!DOCTYPE html>
 <html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grzyb Times</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<style>:root{--paper:#faf7f0;--ink:#17150f;--soft:#55503f;--rule:#d8d2c2;--accent:#8a1c1c}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,sans-serif;background:var(--paper);color:var(--ink);padding:48px 24px 80px}.wrap{max-width:720px;margin:0 auto}h1{font-family:Fraunces,serif;font-weight:900;font-size:clamp(2.8em,8vw,4.5em);letter-spacing:-2px;line-height:1;margin-bottom:6px}.sub{font-size:.7em;text-transform:uppercase;letter-spacing:4px;color:var(--soft)}hr{border:none;border-top:3px double var(--ink);margin:32px 0 24px}.section{font-size:.68em;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--soft);margin-bottom:14px}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:#fff;border:1px solid var(--rule);border-radius:8px;margin-bottom:8px;text-decoration:none;color:var(--ink);transition:border-color .2s,transform .15s}.item:hover{border-color:var(--accent);transform:translateX(3px)}.item--latest{border:2px solid var(--accent)}.item-label{font-weight:600;font-size:.88em;display:flex;align-items:center;gap:10px}.item-date{font-size:.8em;color:var(--soft);flex-shrink:0}.badge{background:var(--accent);color:#fff;font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;border-radius:3px}footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:uppercase;letter-spacing:1px;margin-top:60px}@media(max-width:600px){body{padding:32px 16px 60px}.item{flex-direction:column;align-items:flex-start;gap:4px}}</style></head>
-<body><div class="wrap"><h1>Grzyb Times</h1><p class="sub">Archiwum wydań</p><hr><div class="section">Wszystkie wydania</div>
-<a href="wydania/2026-07-19-rano-0531.html" class="item item--latest"><span class="item-label">☀️ Wydanie poranne · 05:31<span class=badge>Najnowsze</span></span><span class="item-date">Niedziela, 19 lipca 2026</span></a>
-<a href="wydania/2026-07-18-wieczor-1736.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 17:36</span><span class="item-date">Sobota, 18 lipca 2026</span></a>
-<a href="wydania/2026-07-18-rano-0520.html" class="item"><span class="item-label">☀️ Wydanie poranne · 05:20</span><span class="item-date">Sobota, 18 lipca 2026</span></a>
-<a href="wydania/2026-07-17-wieczor-1803.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 18:03</span><span class="item-date">Piątek, 17 lipca 2026</span></a>
-<a href="wydania/2026-07-17-rano-0511.html" class="item"><span class="item-label">☀️ Wydanie poranne · 05:11</span><span class="item-date">Piątek, 17 lipca 2026</span></a>
-<a href="wydania/2026-07-16-wieczor-1819.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 18:19</span><span class="item-date">Czwartek, 16 lipca 2026</span></a>
-<a href="wydania/2026-07-16-rano.html" class="item"><span class="item-label">☀️ Wydanie poranne</span><span class="item-date">Czwartek, 16 lipca 2026</span></a>
+<title>Grzyb Times — archiwum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#faf7f0;--ink:#17150f;--soft:#55503f;--rule:#d8d2c2;--accent:#8a1c1c;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--paper:#14130f;--ink:#ece7da;--soft:#a39d8b;--rule:#35322a;--accent:#e0655a;--card:#1d1b16}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--paper);color:var(--ink);padding:48px 24px 80px;
+  background-image:radial-gradient(ellipse 120% 60% at 50% -5%,color-mix(in srgb,#fff 45%,var(--paper)),var(--paper) 70%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@media(prefers-color-scheme:dark){body{background-image:none}body::before{opacity:.06;mix-blend-mode:screen}}
+.wrap{max-width:720px;margin:0 auto}
+header{text-align:center}
+.kicker{font-size:.7em;text-transform:uppercase;letter-spacing:4px;color:var(--soft);
+  display:flex;align-items:center;justify-content:center;gap:16px}
+.kicker::before,.kicker::after{content:"";height:1px;width:clamp(30px,8vw,90px);background:var(--rule)}
+h1{font-family:Fraunces,serif;font-weight:900;font-size:clamp(2.8em,8vw,4.5em);letter-spacing:-1px;line-height:1;margin:10px 0 4px}
+h1 a{color:inherit;text-decoration:none}
+.bar{border-top:1px solid var(--rule);border-bottom:3px double var(--ink);padding:10px 0;margin-top:20px;
+  font-size:.72em;text-transform:uppercase;letter-spacing:2px;font-weight:600;color:var(--soft)}
+.day{margin-top:30px}
+.day-head{font-family:Fraunces,serif;font-weight:700;font-size:1.05em;padding-bottom:8px;margin-bottom:10px;
+  border-bottom:1px solid var(--rule)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;
+  background:color-mix(in srgb,var(--card) 45%,var(--paper));border:1px solid var(--rule);border-radius:2px;
+  margin-bottom:8px;text-decoration:none;color:var(--ink);transition:border-color .2s}
+.item:hover{border-color:var(--accent)}
+.item:hover .item-go{color:var(--accent)}
+.item--latest{border-left:3px solid var(--accent)}
+.item-label{font-weight:600;font-size:.88em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.item-go{font-size:.72em;color:var(--soft);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;flex-shrink:0}
+.badge{background:var(--accent);color:#fff;font-size:.65em;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;padding:2px 7px;border-radius:2px}
+footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:uppercase;letter-spacing:1px;
+  margin-top:60px;border-top:3px double var(--ink);padding-top:16px}
+@media(max-width:600px){body{padding:32px 14px 60px}.item{padding:11px 12px}.item-go{display:none}}
+</style></head>
+<body><div class="wrap">
+<header><div class="kicker">Archiwum wydań</div><h1><a href="/">Grzyb Times</a></h1>
+<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne</div></header>
+<div class="day"><div class="day-head">Niedziela, 19 lipca 2026</div><a href="wydania/2026-07-19-rano-0531.html" class="item item--latest"><span class="item-label">☀️ Wydanie poranne · 05:31<span class=badge>Najnowsze</span></span><span class="item-go">Czytaj &rarr;</span></a></div>
+<div class="day"><div class="day-head">Sobota, 18 lipca 2026</div><a href="wydania/2026-07-18-wieczor-1736.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 17:36</span><span class="item-go">Czytaj &rarr;</span></a><a href="wydania/2026-07-18-rano-0520.html" class="item"><span class="item-label">☀️ Wydanie poranne · 05:20</span><span class="item-go">Czytaj &rarr;</span></a></div>
+<div class="day"><div class="day-head">Piątek, 17 lipca 2026</div><a href="wydania/2026-07-17-wieczor-1803.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 18:03</span><span class="item-go">Czytaj &rarr;</span></a><a href="wydania/2026-07-17-rano-0511.html" class="item"><span class="item-label">☀️ Wydanie poranne · 05:11</span><span class="item-go">Czytaj &rarr;</span></a></div>
+<div class="day"><div class="day-head">Czwartek, 16 lipca 2026</div><a href="wydania/2026-07-16-wieczor-1819.html" class="item"><span class="item-label">🌙 Wydanie wieczorne · 18:19</span><span class="item-go">Czytaj &rarr;</span></a><a href="wydania/2026-07-16-rano.html" class="item"><span class="item-label">☀️ Wydanie poranne</span><span class="item-go">Czytaj &rarr;</span></a></div>
 <footer>Grzyb Times &mdash; redagowane przez AI</footer></div></body></html>

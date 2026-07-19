@@ -56,6 +56,14 @@ z ostatnich 12 h z domen z `zrodla_pierwotne`. Jeśli w źródłach nie ma tylu
 sensownych materiałów dla kategorii — dodaj tyle, ile realnie jest (nie
 duplikuj tematów i nie wychodź poza listę źródeł).
 
+- **Weekend/święta (Inwestowanie):** gdy giełdy są zamknięte, okno dla
+  Inwestowania rozszerza się do 48 h (podsumowania tygodnia, zapowiedzi).
+  Nie sięgaj po newsy starsze niż 48 h — lepiej mniej artykułów.
+- **`zrodlo.url` = KONKRETNY artykuł, nie strona główna.** Jeśli wyniki
+  wyszukiwania nie dają bezpośredniego URL-a, wybierz inny temat/źródło,
+  które go ma. Link do strony głównej lub kategorii serwisu — tylko w
+  ostateczności i z wpisem `log("warning", ...)`.
+
 **Jak wybierać, gdy kandydatów jest więcej niż `liczba` (RUBRYKA OCENY).**
 Oceń każdego kandydata w myślach (nie wypisuj punktacji — szkoda tokenów)
 według trzech kryteriów, w tej kolejności wag:
@@ -124,11 +132,17 @@ bonus: jak się uda, obraz jest konkretniejszy; jak nie — zostaje zdjęcie kat
 **Nie rób dla tego researchu ani wywołań sieciowych** — po prostu wpisz dobrą frazę
 z głowy (lub `""`, jeśli brak oczywistego obiektu).
 
-Dobre `obraz.query` = konkretny obiekt, nie abstrakcja:
+Dobre `obraz.query` = **JEDEN konkretny obiekt** (2–4 słowa), nie kombinacja pojęć.
+Wyszukiwarka Wikimedia traktuje słowa jako AND — fraza wielotematyczna zwraca
+0 wyników i artykuł zostaje przy zdjęciu kategorii. Test: „czy istnieje zdjęcie,
+które ktoś podpisałby dokładnie tak?”
 - osoba: `Jerome Powell`, `Donald Tusk`, `Sam Altman`
 - miejsce/budynek: `Warsaw Stock Exchange`, `Federal Reserve building`, `Strait of Hormuz`
 - rzecz/logo: `Leopard 2 tank`, `NVIDIA logo`, `James Webb Space Telescope`
-❌ unikaj abstraktów (`inflation`, `economy growth`).
+❌ abstrakty (`inflation`, `economy growth`)
+❌ kombinacje pojęć (`Shein Temu parcels customs Europe`,
+   `European farmers tractor protest fertilizer` — 0 wyników; lepiej:
+   `Temu parcel`, `tractor protest Brussels`).
 
 **Research wtórny (poza listą źródeł) — tryb WYJĄTKOWY** (`research_wtorny.tryb`
 w configu: `nigdy` | `wyjatkowo` | `swobodnie`). Przy `wyjatkowo` wolno z niego
@@ -234,6 +248,15 @@ gładko — zostaw `logi` puste (gazeta pokaże „Brak zdarzeń”). Część l
 z KROK 3 dopisze automatycznie (złe nazwy kategorii, rozbieżność liczby
 artykułów i akapitów).
 
+**Higiena logów — publikowane są tylko logi z OSTATNIEGO, poprawnego przebiegu:**
+- Jeśli uruchamiasz skrypt KROK 3 kilka razy (poprawki, debug), lista `logi`
+  za każdym razem startuje od zera — **nie przenoś** wpisów z nieudanych prób.
+- Wpis o problemie, który NAPRAWIŁEŚ przed publikacją (np. poprawiona nazwa
+  kategorii), **usuń** — czytelnika interesuje stan opublikowanego wydania.
+- **Nie pisz własnych logów kontrolnych** (liczba akapitów, liczba artykułów,
+  nazwy kategorii) — te kontrole skrypt loguje sam i tylko przy rozbieżności.
+- Używaj skryptu z instrukcji **bez przerabiania logiki kontroli**.
+
 ## KROK 3 — Wygeneruj plik wydania
 
 W poniższym skrypcie **ustaw `WYDANIE`** na wartość z promptu (`rano` albo `wieczor`),
@@ -313,6 +336,12 @@ for kat, n in oczek.items():
     if masz.get(kat, 0) != n:
         print(f"  ⚠ {kat}: jest {masz.get(kat,0)}, config oczekuje {n}")
         log("warning", f"Kategoria „{kat}”: złożono {masz.get(kat,0)} art., config oczekuje {n}.")
+# --- Higiena logów: dedup + wpisy kontrolne tylko dla realnych rozbieżności ---
+_seen = set()
+dane["logi"] = [l for l in dane["logi"]
+                if (l["poziom"], l["wiadomosc"]) not in _seen
+                and not _seen.add((l["poziom"], l["wiadomosc"]))]
+
 print(f"Artykułów łącznie: {len(dane['artykuly'])} (config: {sum(oczek.values())})")
 print(f"Logów: {len(dane['logi'])}")
 

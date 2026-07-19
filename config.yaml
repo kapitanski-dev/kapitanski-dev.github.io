@@ -87,6 +87,10 @@ zrodla_pierwotne:
   - spidersweb.pl      # polski serwis tech
   # AI:
   - the-decoder.com    # serwis wyłącznie o AI: modele, laboratoria, wdrożenia
+  # Nauka (dla „Ciekawostka na dziś" — wcześniej brakowało źródeł naukowych
+  # na liście i rutyna musiała wychodzić poza nią):
+  - sciencedaily.com
+  - phys.org
 
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — tryb WYJĄTKOWY, nie rutynowy. Poza listę

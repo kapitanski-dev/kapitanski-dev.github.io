@@ -556,16 +556,23 @@ __DANE__
 
     // Zdjęcie bazowe per kategoria — hostowane w repo (ten sam origin => ZAWSZE się ładuje,
     // bez limitów i tokenów). Ścieżki root-relative, więc działają i z /wydania/.
+    /* Kilka zdjęć bazowych na kategorię — artykuły tej samej kategorii rotują
+       po liście, żeby przy nieudanych podmianach z Wikimedii nie było duplikatów. */
     const KAT_OBRAZ = {
-      'Okładka': '/assets/kategorie/okladka.jpg',
-      'Inwestowanie': '/assets/kategorie/inwestowanie.jpg',
-      'Polityka': '/assets/kategorie/polityka.jpg',
-      'Wojna': '/assets/kategorie/wojna.jpg',
-      'Technologia': '/assets/kategorie/technologia.jpg',
-      'AI': '/assets/kategorie/ai.jpg',
-      'Ciekawostka na dziś': '/assets/kategorie/ciekawostka.jpg'
+      'Okładka': ['/assets/kategorie/okladka.jpg'],
+      'Inwestowanie': ['/assets/kategorie/inwestowanie.jpg', '/assets/kategorie/inwestowanie-2.jpg', '/assets/kategorie/inwestowanie-3.jpg'],
+      'Polityka': ['/assets/kategorie/polityka.jpg', '/assets/kategorie/polityka-2.jpg', '/assets/kategorie/polityka-3.jpg'],
+      'Wojna': ['/assets/kategorie/wojna.jpg', '/assets/kategorie/wojna-2.jpg'],
+      'Technologia': ['/assets/kategorie/technologia.jpg', '/assets/kategorie/technologia-2.jpg'],
+      'AI': ['/assets/kategorie/ai.jpg', '/assets/kategorie/ai-2.jpg'],
+      'Ciekawostka na dziś': ['/assets/kategorie/ciekawostka.jpg', '/assets/kategorie/ciekawostka-2.jpg']
     };
-    const katObraz = k => KAT_OBRAZ[k] || '/assets/kategorie/okladka.jpg';
+    const _katUzycia = {};
+    const katObraz = k => {
+      const lista = KAT_OBRAZ[k] || KAT_OBRAZ['Okładka'];
+      const n = _katUzycia[k] = (_katUzycia[k] ?? -1) + 1;
+      return lista[n % lista.length];
+    };
 
     const UWAGI_REPO = 'https://github.com/kapitanski-dev/kapitanski-dev.github.io/issues/new';
     D.artykuly.forEach((a, i) => {
@@ -653,8 +660,14 @@ __DANE__
 
     [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
       sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
-        .then(() => wikiResolve(img.dataset.query))
-        .then(async url => { if (url && await preload(url)) img.src = url; });
+        .then(async () => {
+          const q = img.dataset.query;
+          let url = await wikiResolve(q);
+          // Fallback: fraza wielosłowna bez trafień -> spróbuj 2 pierwszych słów
+          const slowa = q.split(/\s+/);
+          if (!url && slowa.length > 2) url = await wikiResolve(slowa.slice(0, 2).join(' '));
+          if (url && await preload(url)) img.src = url;
+        });
     });
 
     /* ---- panel logów rutyny ---- */
