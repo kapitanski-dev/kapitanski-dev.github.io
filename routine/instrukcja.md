@@ -132,6 +132,17 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   z JUŻ zebranego materiału — nie rób dodatkowego researchu tylko po to,
   by wydłużyć artykuł.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
+- **Trudne terminy — marker `{{termin|wyjaśnienie}}` w akapitach.** Czytelnik to
+  programista: żargon branżowy spoza IT (finanse, wojskowość, prawo, nauka), mało
+  znane miejscowości, instytucje czy instrumenty oznaczaj w treści akapitu
+  markerem `{{...|...}}` — gazeta pokaże podkreślenie z tooltipem po
+  najechaniu/kliknięciu. Zasady:
+  - wyjaśnienie krótkie (≤ 12 słów), po polsku, bez kropki na końcu;
+  - termin wpisuj w odmianie, w jakiej stoi w zdaniu (np.
+    `{{kontraktach terminowych|umowy kupna/sprzedaży z ustaloną ceną i przyszłą datą}}`);
+  - oznaczaj tylko PIERWSZE wystąpienie, maksymalnie ~3 na artykuł;
+  - nie oznaczaj rzeczy oczywistych (USA, NATO, inflacja, GPU) ani niczego
+    w tytułach i `kluczowe_liczby` — marker działa tylko w `akapity`.
 - **Sprzeczne narracje między źródłami:** gdy źródła opisują ten sam news inaczej,
   fakty wspólne dla wszystkich pisz wprost, a rozbieżne twierdzenia i interpretacje
   atrybuuj z nazwy w treści akapitu — np. „Bankier podaje, że…, natomiast Al Jazeera
@@ -296,7 +307,7 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
   "wykres": {"typ": "linia", "tytul": "S&P 500 — 10 sesji", "jednostka": " pkt",
              "etykiety": ["1.07","2.07","3.07","4.07","7.07","8.07","9.07","10.07","11.07","14.07"],
              "wartosci": [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512]},
-  "akapity": ["Akapit 1 — fakty.", "Akapit 2 — kontekst i szczegóły.", "Akapit 3 — konsekwencje."],
+  "akapity": ["Akapit 1 — fakty, np. z {{backwardacji|sytuacja, gdy cena natychmiastowa przewyższa terminową}}.", "Akapit 2 — kontekst i szczegóły.", "Akapit 3 — konsekwencje."],
   "kontynuacja": false
 }
 ```
