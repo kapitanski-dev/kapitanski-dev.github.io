@@ -164,6 +164,12 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   (np. `Wojna`, nie `Война`/`War`; `Ciekawostka na dziś` w całości). Od tego zależy
   zdjęcie kategorii i filtr w navbarze. Zła nazwa = błąd w Logs i domyślne zdjęcie.
 - **Tytuł:** rzeczowy, bez emocji (❌ „Gigantyczny krach!” → ✅ „S&P 500 spadł o 2,3%”).
+- **`zrodlo.opublikowano` — timestamp publikacji U ŹRÓDŁA:** data i godzina,
+  kiedy źródło opublikowało informację, format `"19.07.2026 06:45"` (czas polski,
+  24h). Wyniki wyszukiwania zwykle podają czas publikacji („3 hours ago”, datę) —
+  przelicz na konkretny timestamp. Gdy znasz tylko datę — samo `"19.07.2026"`.
+  Nie zgaduj co do minuty; lepsza sama data niż zmyślona godzina. Gazeta pokaże
+  to przy artykule (czytelnik widzi, jak świeży jest news).
 - **`skrot` — jedno zdanie do sekcji „W skrócie”:** każdy artykuł ma pole `skrot`
   (≤ 20 słów) — samodzielne, rzeczowe streszczenie z najważniejszą liczbą, jeśli
   jest. Gazeta pokazuje je jako listę na górze wydania z linkami do artykułów.
@@ -363,7 +369,7 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
   "kategoria": "Inwestowanie",
   "tytul": "Rzeczowy tytuł z liczbą",
   "skrot": "Jedno zdanie (≤20 słów) do sekcji „W skrócie” — z kluczową liczbą.",
-  "zrodlo": {"nazwa": "Bankier", "url": "https://...", "godzina": "07:30"},
+  "zrodlo": {"nazwa": "Bankier", "url": "https://...", "opublikowano": "19.07.2026 06:45"},
   "zrodla_dodatkowe": [{"nazwa": "Al Jazeera", "url": "https://..."}],
   "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
   "kluczowe_liczby": [{"wartosc": "2,3%", "opis": "spadek indeksu"}],

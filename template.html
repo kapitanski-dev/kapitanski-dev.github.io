@@ -477,7 +477,7 @@ __DANE__
         { kategoria: "Okładka",
           tytul: "Lorem ipsum dolor sit amet: consectetur adipiscing elit o 12,4% (~47 mld zł)",
           skrot: "Lorem ipsum wzrósł o 12,4% (~47 mld zł) — najwyżej od czterech kwartałów.",
-          zrodlo: { nazwa: "Ipsum Press", url: "#", godzina: "06:30" },
+          zrodlo: { nazwa: "Ipsum Press", url: "#", opublikowano: "1.01.2026 06:30" },
           zrodla_dodatkowe: [{ nazwa: "Dolor Daily", url: "#" }],
           obraz: { query: "", alt: "Podgląd — zdjęcie okładki" },
           kluczowe_liczby: [
@@ -495,7 +495,7 @@ __DANE__
         { kategoria: "Inwestowanie",
           tytul: "Sed ut perspiciatis unde omnis iste natus: 4,9 bln USD (~19,6 bln zł)",
           skrot: "Perspiciatis wyceniono na 4,9 bln USD (~19,6 bln zł) po rekordowym kwartale.",
-          zrodlo: { nazwa: "Lorem Journal", url: "#", godzina: "07:15" },
+          zrodlo: { nazwa: "Lorem Journal", url: "#", opublikowano: "1.01.2026 07:15" },
           obraz: { query: "", alt: "Podgląd — Inwestowanie" },
           kluczowe_liczby: [{ wartosc: "+3,6%", opis: "lorem ipsum" }],
           wykres: { typ: "slupki", tytul: "Ipsum kwartalnie", jednostka: " mld",
@@ -509,7 +509,7 @@ __DANE__
         { kategoria: "Technologia",
           tytul: "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet",
           skrot: "Neque porro pokazał quisquam nowej generacji — dolorem spadł o połowę.",
-          zrodlo: { nazwa: "Ipsum Tech", url: "#", godzina: "05:50" },
+          zrodlo: { nazwa: "Ipsum Tech", url: "#", opublikowano: "31.12.2025" },
           obraz: { query: "", alt: "Podgląd — Technologia" },
           kluczowe_liczby: [{ wartosc: "2,8 bln", opis: "parametrów lorem" }],
           akapity: [
@@ -595,7 +595,7 @@ __DANE__
       const body =
         `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
         `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
-        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · ${czyt} min · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.opublikowano ? ` · <span title="Czas publikacji u źródła">opubl. ${esc(a.zrodlo.opublikowano)}</span>` : (a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : '')}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · ${czyt} min · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
         (stats ? `<div class="stats">${stats}</div>` : '') +
         (a.wykres ? chart(a.wykres, i) : '') +
         (i === 0 ? `<div class="cols">${paras}</div>` : paras);
