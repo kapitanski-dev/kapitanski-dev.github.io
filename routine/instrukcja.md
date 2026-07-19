@@ -153,13 +153,18 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   - Ta sama zasada obowiązuje w `kluczowe_liczby`, jeśli wartość jest kwotą (np.
     `"wartosc": "4,9 bln USD (~19,6 bln zł)"`).
 - **kluczowe_liczby:** 1–3 najważniejsze wartości liczbowe artykułu.
-- **wykres:** tylko gdy masz zweryfikowane realne dane; `typ` = `"linia"` lub
-  `"slupki"`; przy kategorii z `wykres: nie` — pomiń. Nie wymyślaj danych.
-  - Dąż do **szczegółowości**: podawaj **8–15 punktów** danych (np. notowania z
-    kolejnych dni/godzin), nie 3–4. Etykiety (`etykiety`) dla każdego punktu.
+- **wykres — TYLKO gdy źródło samo daje komplet danych.** Dodaj wykres wyłącznie
+  wtedy, gdy artykuł źródłowy sam prezentuje wykres albo podaje dane, które da
+  się wprost przedstawić na wykresie lub w tabeli (np. seria notowań, wartości
+  rok po roku). **NIE doszukuj danych osobnym researchem** — brak kompletu =
+  brak wykresu, bez żalu (to normalna sytuacja, nie loguj jej). Przy kategorii
+  z `wykres: nie` — pomiń zawsze. Nie wymyślaj i nie interpoluj danych.
+  - `typ` = `"linia"` lub `"slupki"`; etykiety (`etykiety`) dla każdego punktu.
+  - Liczba punktów = tyle, ile daje źródło. Jeśli daje 8–15 — świetnie (wykres
+    jest interaktywny, gęste dane wyglądają najlepiej), ale 4 realne punkty ze
+    źródła > 10 doszukanych.
   - Dodaj `jednostka` (np. `"%"`, `" pkt"`, `" USD"`, `" mld"`) — pokaże się w
-    interaktywnym tooltipie i na osi Y. Wykres jest interaktywny (najechanie
-    pokazuje wartość punktu), więc realne, gęste dane mają największą wartość.
+    tooltipie i na osi Y.
 
 ## KROK 2.5 — Zbieraj logi (sekcja „Logs” w gazecie)
 
@@ -174,15 +179,20 @@ W skrypcie z KROK 3 służy do tego funkcja `log(poziom, wiadomosc)`.
 - **Źródło niedostępne / zablokowane** dla bota, przekierowania, paywall, timeouty.
 - **Braki w kategoriach** — za mało sensownych materiałów, by wypełnić `liczba`
   (np. `log("warning", "Kategoria „Wojna”: znaleziono 2 z 3 wymaganych artykułów.")`).
-- **Problemy z danymi** — brak wiarygodnych liczb do wykresu, rozbieżne wartości
-  między źródłami, brak aktualnego kursu walutowego do przeliczenia na PLN.
-- **Obrazy** — brak sensownego obiektu na `obraz.query`, nieudana resolucja.
+- **Problemy z danymi** — rozbieżne wartości między źródłami, brak aktualnego
+  kursu walutowego do przeliczenia na PLN. (Brak danych do wykresu NIE jest
+  zdarzeniem — po prostu pomiń wykres, patrz KROK 2.)
 - **Info** — istotne decyzje redakcyjne, obejścia, nietypowe sytuacje warte uwagi.
+
+**NIE loguj obrazów.** Zdjęcie kategorii ładuje się zawsze (repo, ten sam origin),
+a podmiana na Wikimedia to cichy best-effort w przeglądarce czytelnika —
+„nierozwiązany obraz” nie istnieje w tej architekturze i nie jest zdarzeniem.
 
 Zasady: notuj **konkretnie** (kategoria, artykuł, dosłowny komunikat błędu, URL
 pomocy jeśli był). Nie loguj rzeczy oczywistych ani szumu. Jeśli wszystko poszło
 gładko — zostaw `logi` puste (gazeta pokaże „Brak zdarzeń”). Część logów skrypt
-z KROK 3 dopisze automatycznie (nierozwiązane obrazy, rozbieżność liczby artykułów).
+z KROK 3 dopisze automatycznie (złe nazwy kategorii, rozbieżność liczby
+artykułów i akapitów).
 
 ## KROK 3 — Wygeneruj plik wydania
 
