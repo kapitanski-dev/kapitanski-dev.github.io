@@ -30,6 +30,24 @@ artykuł, domyślnie 3), `zrodla_pierwotne`, reguły research wtórny.
 **Nie zgaduj — użyj wartości z pliku.** Łączna liczba artykułów wydania = suma
 pól `liczba` ze wszystkich kategorii.
 
+## KROK 0.5 — Uwagi czytelników (GitHub Issues)
+
+Czytelnicy zgłaszają uwagi przyciskiem „Zgłoś uwagę” przy artykule (tworzy issue
+z tytułem `[Uwaga] …`). Pobierz otwarte zgłoszenia (jedno tanie wywołanie,
+publiczne API bez tokena):
+
+```bash
+curl -s "https://api.github.com/repos/kapitanski-dev/kapitanski-dev.github.io/issues?state=open&per_page=20" \
+ | python3 -c "import json,sys; [print('-', i['title'], '::', (i.get('body') or '')[:300].replace(chr(10),' ')) for i in json.load(sys.stdin) if i['title'].startswith('[Uwaga]')]"
+```
+
+- **Uwzględnij zasadne uwagi** w bieżącym wydaniu (wskazany błąd merytoryczny,
+  prośba o temat/doprecyzowanie). Każdą uwzględnioną zaloguj:
+  `log("info", "Uwaga czytelnika uwzględniona: <tytuł issue> — <co zrobiono>")`.
+- Uwagę bezzasadną lub nie na teraz po prostu pomiń (bez logowania).
+- **Nie odpowiadaj na issue i nie zamykaj ich** — to robi użytkownik.
+- Brak zgłoszeń = idź dalej, nic nie loguj.
+
 ## KROK 1 — Research
 
 Użyj WebSearch. Dla **każdej** kategorii z `config.yaml` (w kolejności) znajdź
@@ -50,6 +68,13 @@ według trzech kryteriów, w tej kolejności wag:
 Wybierz top `liczba` wg łącznej oceny i uporządkuj malejąco. Rozstrzyganie
 remisów: wyżej to, co bardziej konkretne (zweryfikowane liczby, podjęte
 decyzje) — niżej „może / planuje / rozważa”.
+
+**Paywall — link artykułu ma być czytelny.** Czytelnik klika `zrodlo.url`, żeby
+doczytać — link za twardym paywallem (np. **bloomberg.com**) jest dla niego
+bezwartościowy. Gdy temat jest dostępny w kilku źródłach z listy, na `zrodlo.url`
+wybierz link czytelny bez paywalla, a źródło paywallowane dopisz w
+`zrodla_dodatkowe`. Jeśli temat jest TYLKO w źródle paywallowanym — użyj go
+(lepszy paywall niż brak tematu).
 
 **Oszczędzaj tokeny — research ma być zwięzły:**
 - Celuj w **1 WebSearch na kategorię** (ewentualnie 1 dodatkowe, gdy pierwsze nie
@@ -125,6 +150,10 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   (np. `Wojna`, nie `Война`/`War`; `Ciekawostka na dziś` w całości). Od tego zależy
   zdjęcie kategorii i filtr w navbarze. Zła nazwa = błąd w Logs i domyślne zdjęcie.
 - **Tytuł:** rzeczowy, bez emocji (❌ „Gigantyczny krach!” → ✅ „S&P 500 spadł o 2,3%”).
+- **`skrot` — jedno zdanie do sekcji „W skrócie”:** każdy artykuł ma pole `skrot`
+  (≤ 20 słów) — samodzielne, rzeczowe streszczenie z najważniejszą liczbą, jeśli
+  jest. Gazeta pokazuje je jako listę na górze wydania z linkami do artykułów.
+  Bez markerów `{{...}}` i bez powtarzania tytułu słowo w słowo.
 - **Liczba akapitów = `wydanie.akapity` z `config.yaml`** (gdy brak pola — 3).
   Dokładnie tyle w każdym artykule. Struktura: pierwszy = najważniejsze fakty
   i liczby; środkowe = kontekst, szczegóły, reakcje; ostatni = dlaczego to
@@ -304,6 +333,7 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
 {
   "kategoria": "Inwestowanie",
   "tytul": "Rzeczowy tytuł z liczbą",
+  "skrot": "Jedno zdanie (≤20 słów) do sekcji „W skrócie” — z kluczową liczbą.",
   "zrodlo": {"nazwa": "Bankier", "url": "https://...", "godzina": "07:30"},
   "zrodla_dodatkowe": [{"nazwa": "Al Jazeera", "url": "https://..."}],
   "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
@@ -366,17 +396,61 @@ for f in files:
     editions.append({'url': f'wydania/{f.name}', 'label': label + time_str, 'icon': icon, 'date': date_fmt, 'first': False})
 
 if editions: editions[0]['first'] = True
+
+# Grupowanie po dniach (najnowszy dzień pierwszy; w dniu wieczór przed rankiem — jak w `files`)
+from collections import OrderedDict
+dni = OrderedDict()
+for e in editions: dni.setdefault(e['date'], []).append(e)
 cards = ''.join(
-    f'<a href="{e["url"]}" class="item{" item--latest" if e["first"] else ""}">'
-    + f'<span class="item-label">{e["icon"]} {e["label"]}{"<span class=badge>Najnowsze</span>" if e["first"] else ""}</span>'
-    + f'<span class="item-date">{e["date"]}</span></a>\n' for e in editions
+    f'<div class="day"><div class="day-head">{date}</div>' + ''.join(
+        f'<a href="{e["url"]}" class="item{" item--latest" if e["first"] else ""}">'
+        + f'<span class="item-label">{e["icon"]} {e["label"]}{"<span class=badge>Najnowsze</span>" if e["first"] else ""}</span>'
+        + '<span class="item-go">Czytaj &rarr;</span></a>' for e in items) + '</div>\n'
+    for date, items in dni.items()
 )
 html = '''<!DOCTYPE html>
 <html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Grzyb Times</title>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,900&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-<style>:root{--paper:#faf7f0;--ink:#17150f;--soft:#55503f;--rule:#d8d2c2;--accent:#8a1c1c}*{box-sizing:border-box;margin:0;padding:0}body{font-family:Inter,sans-serif;background:var(--paper);color:var(--ink);padding:48px 24px 80px}.wrap{max-width:720px;margin:0 auto}h1{font-family:Fraunces,serif;font-weight:900;font-size:clamp(2.8em,8vw,4.5em);letter-spacing:-2px;line-height:1;margin-bottom:6px}.sub{font-size:.7em;text-transform:uppercase;letter-spacing:4px;color:var(--soft)}hr{border:none;border-top:3px double var(--ink);margin:32px 0 24px}.section{font-size:.68em;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:var(--soft);margin-bottom:14px}.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 18px;background:#fff;border:1px solid var(--rule);border-radius:8px;margin-bottom:8px;text-decoration:none;color:var(--ink);transition:border-color .2s,transform .15s}.item:hover{border-color:var(--accent);transform:translateX(3px)}.item--latest{border:2px solid var(--accent)}.item-label{font-weight:600;font-size:.88em;display:flex;align-items:center;gap:10px}.item-date{font-size:.8em;color:var(--soft);flex-shrink:0}.badge{background:var(--accent);color:#fff;font-size:.65em;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 7px;border-radius:3px}footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:uppercase;letter-spacing:1px;margin-top:60px}@media(max-width:600px){body{padding:32px 16px 60px}.item{flex-direction:column;align-items:flex-start;gap:4px}}</style></head>
-<body><div class="wrap"><h1>Grzyb Times</h1><p class="sub">Archiwum wydań</p><hr><div class="section">Wszystkie wydania</div>
+<title>Grzyb Times — archiwum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#faf7f0;--ink:#17150f;--soft:#55503f;--rule:#d8d2c2;--accent:#8a1c1c;--card:#fff}
+@media(prefers-color-scheme:dark){:root{--paper:#14130f;--ink:#ece7da;--soft:#a39d8b;--rule:#35322a;--accent:#e0655a;--card:#1d1b16}}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Inter,sans-serif;background:var(--paper);color:var(--ink);padding:48px 24px 80px;
+  background-image:radial-gradient(ellipse 120% 60% at 50% -5%,color-mix(in srgb,#fff 45%,var(--paper)),var(--paper) 70%)}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:90;opacity:.045;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+@media(prefers-color-scheme:dark){body{background-image:none}body::before{opacity:.06;mix-blend-mode:screen}}
+.wrap{max-width:720px;margin:0 auto}
+header{text-align:center}
+.kicker{font-size:.7em;text-transform:uppercase;letter-spacing:4px;color:var(--soft);
+  display:flex;align-items:center;justify-content:center;gap:16px}
+.kicker::before,.kicker::after{content:"";height:1px;width:clamp(30px,8vw,90px);background:var(--rule)}
+h1{font-family:Fraunces,serif;font-weight:900;font-size:clamp(2.8em,8vw,4.5em);letter-spacing:-1px;line-height:1;margin:10px 0 4px}
+h1 a{color:inherit;text-decoration:none}
+.bar{border-top:1px solid var(--rule);border-bottom:3px double var(--ink);padding:10px 0;margin-top:20px;
+  font-size:.72em;text-transform:uppercase;letter-spacing:2px;font-weight:600;color:var(--soft)}
+.day{margin-top:30px}
+.day-head{font-family:Fraunces,serif;font-weight:700;font-size:1.05em;padding-bottom:8px;margin-bottom:10px;
+  border-bottom:1px solid var(--rule)}
+.item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;
+  background:color-mix(in srgb,var(--card) 45%,var(--paper));border:1px solid var(--rule);border-radius:2px;
+  margin-bottom:8px;text-decoration:none;color:var(--ink);transition:border-color .2s}
+.item:hover{border-color:var(--accent)}
+.item:hover .item-go{color:var(--accent)}
+.item--latest{border-left:3px solid var(--accent)}
+.item-label{font-weight:600;font-size:.88em;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.item-go{font-size:.72em;color:var(--soft);text-transform:uppercase;letter-spacing:1.5px;font-weight:700;flex-shrink:0}
+.badge{background:var(--accent);color:#fff;font-size:.65em;font-weight:700;text-transform:uppercase;
+  letter-spacing:1px;padding:2px 7px;border-radius:2px}
+footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:uppercase;letter-spacing:1px;
+  margin-top:60px;border-top:3px double var(--ink);padding-top:16px}
+@media(max-width:600px){body{padding:32px 14px 60px}.item{padding:11px 12px}.item-go{display:none}}
+</style></head>
+<body><div class="wrap">
+<header><div class="kicker">Archiwum wydań</div><h1><a href="/">Grzyb Times</a></h1>
+<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne</div></header>
 ''' + cards + '''<footer>Grzyb Times &mdash; redagowane przez AI</footer></div></body></html>'''
 (repo / 'index.html').write_text(html, encoding='utf-8')
 print(f'index.html OK — {len(editions)} wydań')

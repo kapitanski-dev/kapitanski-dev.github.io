@@ -130,6 +130,26 @@
     letter-spacing: 1px; vertical-align: middle;
   }
 
+  /* ===== „W skrócie” ===== */
+  .w-skrocie {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 2px; padding: 14px 20px 10px; margin: 26px 0 4px;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .ws-head {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .w-skrocie ul { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: 40px; }
+  .w-skrocie li {
+    margin: 0 0 7px; font-size: .92em; line-height: 1.45;
+    break-inside: avoid; padding-left: 15px; position: relative;
+  }
+  .w-skrocie li::before { content: "▪"; position: absolute; left: 0; color: var(--accent); font-size: .8em; top: .15em; }
+  .w-skrocie a { color: var(--ink); text-decoration: none; }
+  .w-skrocie a:hover { color: var(--accent); }
+
   /* ===== Artykuł hero ===== */
   .hero { margin: 40px 0 10px; }
   .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
@@ -378,6 +398,10 @@
     .filtry::-webkit-scrollbar { display: none; }
     .filtr { flex-shrink: 0; }
 
+    /* W skrócie — jedna kolumna */
+    .w-skrocie ul { column-count: 1; }
+    .w-skrocie { padding: 12px 14px 8px; margin: 18px 0 4px; }
+
     /* Hero */
     .hero { margin: 28px 0 8px; }
     .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
@@ -452,6 +476,7 @@ __DANE__
       artykuly: [
         { kategoria: "Okładka",
           tytul: "Lorem ipsum dolor sit amet: consectetur adipiscing elit o 12,4% (~47 mld zł)",
+          skrot: "Lorem ipsum wzrósł o 12,4% (~47 mld zł) — najwyżej od czterech kwartałów.",
           zrodlo: { nazwa: "Ipsum Press", url: "#", godzina: "06:30" },
           zrodla_dodatkowe: [{ nazwa: "Dolor Daily", url: "#" }],
           obraz: { query: "", alt: "Podgląd — zdjęcie okładki" },
@@ -469,6 +494,7 @@ __DANE__
           kontynuacja: false },
         { kategoria: "Inwestowanie",
           tytul: "Sed ut perspiciatis unde omnis iste natus: 4,9 bln USD (~19,6 bln zł)",
+          skrot: "Perspiciatis wyceniono na 4,9 bln USD (~19,6 bln zł) po rekordowym kwartale.",
           zrodlo: { nazwa: "Lorem Journal", url: "#", godzina: "07:15" },
           obraz: { query: "", alt: "Podgląd — Inwestowanie" },
           kluczowe_liczby: [{ wartosc: "+3,6%", opis: "lorem ipsum" }],
@@ -482,6 +508,7 @@ __DANE__
           kontynuacja: true },
         { kategoria: "Technologia",
           tytul: "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet",
+          skrot: "Neque porro pokazał quisquam nowej generacji — dolorem spadł o połowę.",
           zrodlo: { nazwa: "Ipsum Tech", url: "#", godzina: "05:50" },
           obraz: { query: "", alt: "Podgląd — Technologia" },
           kluczowe_liczby: [{ wartosc: "2,8 bln", opis: "parametrów lorem" }],
@@ -540,10 +567,15 @@ __DANE__
     };
     const katObraz = k => KAT_OBRAZ[k] || '/assets/kategorie/okladka.jpg';
 
+    const UWAGI_REPO = 'https://github.com/kapitanski-dev/kapitanski-dev.github.io/issues/new';
     D.artykuly.forEach((a, i) => {
       const el = document.createElement('article');
       el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.id = 'art-' + i;
       el.dataset.kategoria = a.kategoria;
+      const czyt = Math.max(1, Math.round(a.akapity.join(' ').split(/\s+/).length / 200));
+      const uwagaUrl = UWAGI_REPO + '?title=' + encodeURIComponent('[Uwaga] ' + a.tytul)
+        + '&body=' + encodeURIComponent('Wydanie: ' + location.pathname + '\nArtykuł: ' + a.tytul + '\n\n(opisz swoją uwagę)');
       const query = a.obraz && a.obraz.query ? a.obraz.query : '';
       const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${katObraz(a.kategoria)}"`
         + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
@@ -556,7 +588,7 @@ __DANE__
       const body =
         `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
         `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
-        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''}</span>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · ${czyt} min · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
         (stats ? `<div class="stats">${stats}</div>` : '') +
         (a.wykres ? chart(a.wykres, i) : '') +
         (i === 0 ? `<div class="cols">${paras}</div>` : paras);
@@ -565,6 +597,25 @@ __DANE__
       main.appendChild(el);
       if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
     });
+
+    /* ---- „W skrócie” — jednozdaniowe streszczenia z kotwicami ---- */
+    const skroty = D.artykuly.map((a, i) => ({ s: a.skrot, i })).filter(x => x.s);
+    if (skroty.length) {
+      const box = document.createElement('section');
+      box.className = 'w-skrocie';
+      box.innerHTML = '<div class="ws-head">W skrócie</div><ul>' +
+        skroty.map(x => `<li><a href="#art-${x.i}" data-idx="${x.i}">${esc(x.s)}</a></li>`).join('') +
+        '</ul>';
+      main.prepend(box);
+      box.addEventListener('click', e => {
+        const lnk = e.target.closest('a[data-idx]');
+        if (!lnk) return;
+        e.preventDefault();
+        ustawFiltr('Wszystkie');   // artykuł może być schowany za filtrem kategorii
+        document.getElementById('art-' + lnk.dataset.idx)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
 
     /* ---- Obrazy ----
        Baza = zdjęcie kategorii z repo (już ustawione jako src). Ten sam origin, więc
