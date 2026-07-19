@@ -351,6 +351,10 @@ def log(poziom, wiadomosc):
     dane["logi"].append({"poziom": poziom, "wiadomosc": wiadomosc})
     print(f"  LOG[{poziom}] {wiadomosc}")
 
+# >>> OBOWIĄZKOWO: zaloguj model, który generuje to wydanie (podaj SWOJĄ dokładną
+#     nazwę/ID modelu — wiesz, kim jesteś):
+log("info", "Model rutyny: <tu wpisz dokładną nazwę modelu, np. claude-opus-4-8>")
+
 # >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
 #     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
 
