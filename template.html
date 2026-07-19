@@ -36,12 +36,25 @@
   body {
     font-family: 'Newsreader', serif;
     background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
     color: var(--ink);
     margin: 0;
     line-height: 1.65;
-    font-size: 17px;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
     transition: background .4s ease, color .4s ease;
   }
+  /* Faktura papieru — ziarno nad całością (czysty CSS, zero requestów) */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
   /* ===== Pasek postępu czytania ===== */
   #progress {
@@ -61,6 +74,10 @@
     font-family: 'Inter', sans-serif;
     font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
     color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
   }
   .masthead h1 {
     font-family: 'Fraunces', serif;
@@ -81,7 +98,7 @@
     padding: 10px 0; margin-top: 22px;
   }
   #theme-toggle {
-    background: none; border: 1px solid var(--rule); border-radius: 20px;
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
     color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
     letter-spacing: 2px;
   }
@@ -98,7 +115,7 @@
   .nav-wydania:empty { display: none; }
   .nav-wydania a {
     color: var(--ink-soft); text-decoration: none;
-    border: 1px solid var(--rule); border-radius: 20px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
     transition: all .2s; white-space: nowrap;
   }
   .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
@@ -106,7 +123,7 @@
 
   /* ===== Badge kontynuacji tematu ===== */
   .badge-update {
-    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 3px;
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 2px;
     background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
     letter-spacing: 1px; vertical-align: middle;
   }
@@ -115,12 +132,14 @@
   .hero { margin: 40px 0 10px; }
   .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
   .hero .cat-label::before { width: 34px; }
-  .hero figure { margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 6px; }
+  .hero figure {
+    margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 5px; background: var(--card);
+  }
   .hero img {
     width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
-    transform: scale(1.02); transition: transform 6s ease;
+    filter: sepia(.06) saturate(.92) contrast(1.02);
   }
-  .hero:hover img { transform: scale(1.08); }
   .hero h2 {
     font-family: 'Fraunces', serif; font-weight: 700;
     font-size: clamp(1.8em, 4.5vw, 2.9em);
@@ -149,7 +168,7 @@
   .filtr {
     font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
     text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
-    border: 1px solid var(--rule); border-radius: 20px;
+    border: 1px solid var(--rule); border-radius: 2px;
     background: transparent; color: var(--ink-soft); cursor: pointer;
     transition: all .2s;
   }
@@ -175,7 +194,7 @@
     display: flex; gap: 12px; align-items: flex-start;
     font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
     font-size: .82em; line-height: 1.5;
-    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 8px;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 2px;
     border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
     word-break: break-word;
   }
@@ -205,12 +224,14 @@
   }
   .article:nth-child(even) { grid-template-columns: 1fr 340px; }
   .article:nth-child(even) figure { order: 2; }
-  .article figure { margin: 0; overflow: hidden; border-radius: 6px; }
+  .article figure {
+    margin: 0; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 4px; background: var(--card);
+  }
   .article img {
     width: 100%; height: 230px; object-fit: cover; display: block;
-    filter: saturate(.85); transition: filter .5s ease, transform .5s ease;
+    filter: sepia(.06) saturate(.9) contrast(1.02);
   }
-  .article:hover img { filter: saturate(1.1); transform: scale(1.04); }
   .article h3 {
     font-family: 'Fraunces', serif; font-weight: 700;
     font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
@@ -221,7 +242,15 @@
     display: block; margin-bottom: 14px;
   }
   .meta a { color: var(--ink-soft); }
-  .article p, .hero p { margin: 0 0 14px; text-align: justify; hyphens: auto; }
+  .article p, .hero p {
+    margin: 0 0 14px; text-align: justify; hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+  }
+  /* Znak końca artykułu (tombstone) — klasyka druku */
+  .article p:last-of-type::after, .hero .cols p:last-of-type::after {
+    content: "◼"; font-size: .55em; color: var(--accent);
+    margin-left: 7px; vertical-align: .12em;
+  }
 
   /* ===== Trudne terminy — podkreślenie + tooltip ===== */
   .term {
@@ -237,7 +266,7 @@
     line-height: 1.45; text-align: left; text-transform: none;
     letter-spacing: 0; white-space: normal; hyphens: none;
     width: max-content; max-width: min(260px, 72vw);
-    padding: 8px 11px; border-radius: 6px;
+    padding: 8px 11px; border-radius: 3px;
     opacity: 0; visibility: hidden; transition: opacity .15s;
     pointer-events: none; z-index: 40;
   }
@@ -262,7 +291,7 @@
 
   /* ===== Wykresy ===== */
   .chart-box {
-    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    background: color-mix(in srgb, var(--card) 45%, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
     padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
   }
   .chart-box svg { cursor: crosshair; }
@@ -313,6 +342,25 @@
     text-align: center; letter-spacing: 1px; text-transform: uppercase;
   }
 
+  /* ===== TABLET (769–1024) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .article, .article:nth-child(even) { gap: 28px; }
+    .article { grid-template-columns: 270px 1fr; }
+    .article:nth-child(even) { grid-template-columns: 1fr 270px; }
+    .article img { height: 200px; }
+    .hero img { height: clamp(300px, 38vh, 420px); }
+    .hero .cols { column-gap: 32px; }
+  }
+
+  /* ===== DRUK — gazeta na papierze naprawdę ===== */
+  @media print {
+    #progress, .filtry, #theme-toggle, .nav-wydania, #logi-panel { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    article { break-inside: avoid; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+
   /* ===== MOBILE (tablet + telefon) ===== */
   @media (max-width: 768px) {
     body { font-size: 15px; }
@@ -330,7 +378,7 @@
 
     /* Hero */
     .hero { margin: 28px 0 8px; }
-    .hero figure { margin: 0 0 16px; border-radius: 4px; }
+    .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
     .hero img { height: 220px; }
     .hero h2 { font-size: 1.6em; }
     .hero .cols { column-count: 1; }
@@ -341,7 +389,7 @@
     /* Pozostałe artykuły */
     .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
     .article:nth-child(even) figure { order: 0; }
-    .article figure { margin: 0 0 14px; border-radius: 4px; }
+    .article figure { margin: 0 0 14px; border-radius: 2px; padding: 3px; }
     .article img { height: 180px; }
     .article h3 { font-size: 1.35em; margin: 6px 0; }
     .lede::first-letter { font-size: 2.6em; }
