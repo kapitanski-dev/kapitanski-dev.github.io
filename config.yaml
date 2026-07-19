@@ -65,9 +65,18 @@ kategorie:
       (OpenAI, Anthropic, Google DeepMind, xAI, Meta), wdrożenia i produkty AI,
       regulacje AI, chipy i infrastruktura pod AI, humanoidy i robotyka"
     wykres: opcjonalny
+  - nazwa: Nauka
+    liczba: 2
+    zakres: "twarde doniesienia naukowe: opublikowane badania i odkrycia (medycyna,
+      fizyka, biologia, chemia, klimat, astronomia), przełomy badawcze. Konkrety:
+      co odkryto, w jakim badaniu / czasopiśmie, co z tego wynika. NIE technologia
+      konsumencka i NIE AI (osobne kategorie)."
+    wykres: opcjonalny
   - nazwa: Ciekawostka na dziś
     liczba: 2
-    zakres: "coś z natury, historii, nauki, biologii lub kosmosu — NIE technologia (od niej jest osobna kategoria)"
+    zakres: "lekka ciekawostka na koniec — natura, historia, niezwykłe zjawiska,
+      miejsca i rekordy. NIE poważne doniesienia badawcze (od nich jest kategoria
+      Nauka) i NIE technologia."
     wykres: nie
 
 # ------------------------------------------------------------
@@ -92,10 +101,11 @@ zrodla_pierwotne:
   - spidersweb.pl      # polski serwis tech
   # AI:
   - the-decoder.com    # serwis wyłącznie o AI: modele, laboratoria, wdrożenia
-  # Nauka (dla „Ciekawostka na dziś" — wcześniej brakowało źródeł naukowych
-  # na liście i rutyna musiała wychodzić poza nią):
+  # Nauka + Ciekawostka na dziś:
   - sciencedaily.com
   - phys.org
+  - sciencenews.org    # dziennikarstwo naukowe (Society for Science), bez paywalla
+  - livescience.com    # codzienny popularnonaukowy; lżejsze tematy też pod Ciekawostkę
   # Uzupełnienie braków (audyt logów 19.07.2026):
   - marketwatch.com    # globalne rynki, działa też w weekendy (Inwestowanie)
   - interia.pl         # polskie newsy z konkretnymi URL-ami (Polityka)
