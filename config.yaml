@@ -95,6 +95,10 @@ zrodla_pierwotne:
   # na liście i rutyna musiała wychodzić poza nią):
   - sciencedaily.com
   - phys.org
+  # Uzupełnienie braków (audyt logów 19.07.2026):
+  - marketwatch.com    # globalne rynki, działa też w weekendy (Inwestowanie)
+  - interia.pl         # polskie newsy z konkretnymi URL-ami (Polityka)
+  - newatlas.com       # nowinki techniczne i przełomy inżynieryjne (Technologia)
 
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — tryb WYJĄTKOWY, nie rutynowy. Poza listę
