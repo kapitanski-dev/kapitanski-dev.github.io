@@ -58,8 +58,8 @@ decyzje) — niżej „może / planuje / rozważa”.
   których nie ma w wynikach wyszukiwania. Nie pobieraj całych stron „na zapas”.
 - **Nie odpytuj domen, które blokują bota** (błąd 400 „domain not accessible”, np.
   reuters.com). Jeśli trafisz na taką — zaloguj (KROK 2.5) i pomiń, nie ponawiaj.
-- **Research wtórny** (weryfikacja liczb / dane do wykresu) tylko gdy niezbędny;
-  pomiń wykres, jeśli dane wymagałyby wielu dodatkowych wyszukiwań.
+- **Research wtórny — tylko WYJĄTKOWO** (reguła niżej). Wykres buduj z danych,
+  które już masz ze źródła pierwotnego — jeśli wymagałby osobnego researchu, pomiń go.
 
 Kolejność w wynikowej liście `artykuly`: kategorie w kolejności z configu, a w
 obrębie każdej kategorii artykuły od najważniejszego. Pierwszy artykuł na liście
@@ -105,9 +105,19 @@ Dobre `obraz.query` = konkretny obiekt, nie abstrakcja:
 - rzecz/logo: `Leopard 2 tank`, `NVIDIA logo`, `James Webb Space Telescope`
 ❌ unikaj abstraktów (`inflation`, `economy growth`).
 
-Research wtórny (poza listą) tylko jeśli `research_wtorny.dozwolony: true` i
-wyłącznie do weryfikacji liczb, kontekstu lub danych do wykresu. Źródło wtórne
-nigdy nie jest linkiem artykułu (`zrodlo.url`).
+**Research wtórny (poza listą źródeł) — tryb WYJĄTKOWY** (`research_wtorny.tryb`
+w configu: `nigdy` | `wyjatkowo` | `swobodnie`). Przy `wyjatkowo` wolno z niego
+skorzystać TYLKO w dwóch przypadkach:
+- **(a)** w materiale źródłowym brakuje naprawdę istotnej informacji, bez której
+  artykuł byłby niepełny lub mylący;
+- **(b)** informacje źródła wydają się nierzetelne lub sprzeczne i wymagają
+  weryfikacji.
+NIE używaj go do wzbogacania kontekstu, zbierania danych do wykresu ani
+wydłużania akapitów. Stały wyjątek: bieżący kurs walut do przeliczeń na PLN
+(KROK 2). Każde użycie zaloguj:
+`log("info", "Research wtórny: <artykuł> — <powód (a)/(b)>")`.
+Źródło wtórne nigdy nie jest linkiem artykułu (`zrodlo.url`); jeśli jego treść
+trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
 
 ## KROK 2 — Redakcja
 

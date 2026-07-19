@@ -78,11 +78,17 @@ zrodla_pierwotne:
   - the-decoder.com    # serwis wyłącznie o AI: modele, laboratoria, wdrożenia
 
 # ------------------------------------------------------------
-# RESEARCH WTÓRNY — poza listę wolno wyjść WYŁĄCZNIE po to, by
-# zweryfikować liczby/fakty, dodać kontekst lub zebrać dane do
-# wykresu. Źródło wtórne NIGDY nie jest linkiem artykułu (zrodlo.url),
-# ale jeśli jego treść trafiła do akapitów — musi być wypisane
+# RESEARCH WTÓRNY — tryb WYJĄTKOWY, nie rutynowy. Poza listę
+# źródeł wolno wyjść TYLKO gdy:
+#  (a) w materiale brakuje naprawdę istotnej informacji, bez
+#      której artykuł byłby niepełny lub mylący, albo
+#  (b) informacje źródła wydają się nierzetelne/sprzeczne
+#      i wymagają weryfikacji.
+# NIE dla ozdobnego kontekstu, danych do wykresu ani wydłużania
+# akapitów. Stały wyjątek: bieżący kurs walut do przeliczeń PLN.
+# Źródło wtórne NIGDY nie jest linkiem artykułu (zrodlo.url), ale
+# jeśli jego treść trafiła do akapitów — musi być wypisane
 # w `zrodla_dodatkowe` przy artykule.
 # ------------------------------------------------------------
 research_wtorny:
-  dozwolony: true
+  tryb: wyjatkowo   # nigdy | wyjatkowo | swobodnie
