@@ -32,6 +32,8 @@
   * { box-sizing: border-box; }
 
   html { scroll-behavior: smooth; }
+  /* Nic (np. ukryte tooltipy) nie może rozpychać strony w poziomie */
+  html, body { overflow-x: hidden; overflow-x: clip; }
 
   body {
     font-family: 'Newsreader', serif;
@@ -397,6 +399,14 @@
                padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
     .filtry::-webkit-scrollbar { display: none; }
     .filtr { flex-shrink: 0; }
+
+    /* Tooltip terminu jako dolna karta — nie wystaje poza ekran, czytelny po tapnięciu */
+    .term::after {
+      position: fixed; left: 14px; right: 14px; bottom: 14px; top: auto;
+      width: auto; max-width: none; transform: none;
+      padding: 12px 14px; font-size: .85em;
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
 
     /* W skrócie — jedna kolumna */
     .w-skrocie ul { column-count: 1; }
