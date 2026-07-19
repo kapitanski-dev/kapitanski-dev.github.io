@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  /* Faktura papieru — ziarno nad całością (czysty CSS, zero requestów) */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  #pogoda:empty { display: none; }
+  #pogoda a { color: inherit; text-decoration: none; }
+  #pogoda a:hover { color: var(--accent); }
+
+  /* ===== Nawigacja między wydaniami ===== */
+  .nav-wydania {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 36px; padding: 16px 0 4px;
+  }
+  .nav-wydania:empty { display: none; }
+  .nav-wydania a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-wydania .nav-spacer { flex: 1; }
+
+  /* ===== Badge kontynuacji tematu ===== */
+  .badge-update {
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 2px;
+    background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
+    letter-spacing: 1px; vertical-align: middle;
+  }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure {
+    margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 5px; background: var(--card);
+  }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.92) contrast(1.02);
+  }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 2px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+  .filtr--logs { margin-left: auto; }
+  .filtr--logs.active { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* ===== Panel logów rutyny ===== */
+  #logi-panel { padding: 24px 0 8px; }
+  #logi-panel.hidden { display: none !important; }
+  #gazeta.hidden { display: none !important; }
+  .logi-head {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .logi-sub { font-size: .82em; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .82em; line-height: 1.5;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 2px;
+    border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
+    word-break: break-word;
+  }
+  .log-entry .lvl {
+    flex-shrink: 0; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .82em; padding-top: 1px;
+  }
+  .log-entry .msg { white-space: pre-wrap; }
+  .log-entry .msg a { color: inherit; }
+  .log-entry--error   { border-left-color: var(--accent); }
+  .log-entry--error   .lvl { color: var(--accent); }
+  .log-entry--warning { border-left-color: #b8860b; }
+  .log-entry--warning .lvl { color: #b8860b; }
+  .log-entry--info    { border-left-color: var(--ink-soft); }
+  .log-entry--info    .lvl { color: var(--ink-soft); }
+  .logi-empty { font-size: .9em; color: var(--ink-soft); font-style: italic; }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure {
+    margin: 0; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 4px; background: var(--card);
+  }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.9) contrast(1.02);
+  }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p {
+    margin: 0 0 14px; text-align: justify; hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+  }
+  /* Znak końca artykułu (tombstone) — klasyka druku */
+  .article p:last-of-type::after, .hero .cols p:last-of-type::after {
+    content: "◼"; font-size: .55em; color: var(--accent);
+    margin-left: 7px; vertical-align: .12em;
+  }
+
+  /* ===== Trudne terminy — podkreślenie + tooltip ===== */
+  .term {
+    text-decoration: underline dotted var(--accent) 1.5px;
+    text-underline-offset: 3px; cursor: help; position: relative;
+  }
+  .term::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .78em; font-weight: 400;
+    line-height: 1.45; text-align: left; text-transform: none;
+    letter-spacing: 0; white-space: normal; hyphens: none;
+    width: max-content; max-width: min(260px, 72vw);
+    padding: 8px 11px; border-radius: 3px;
+    opacity: 0; visibility: hidden; transition: opacity .15s;
+    pointer-events: none; z-index: 40;
+  }
+  .term:hover::after, .term:focus::after, .term.open::after {
+    opacity: 1; visibility: visible;
+  }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: color-mix(in srgb, var(--card) 45%, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== TABLET (769–1024) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .article, .article:nth-child(even) { gap: 28px; }
+    .article { grid-template-columns: 270px 1fr; }
+    .article:nth-child(even) { grid-template-columns: 1fr 270px; }
+    .article img { height: 200px; }
+    .hero img { height: clamp(300px, 38vh, 420px); }
+    .hero .cols { column-gap: 32px; }
+  }
+
+  /* ===== DRUK — gazeta na papierze naprawdę ===== */
+  @media print {
+    #progress, .filtry, #theme-toggle, .nav-wydania, #logi-panel { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    article { break-inside: avoid; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 2px; padding: 3px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="pogoda" title="Kliknij, aby otworzyć pełną prognozę"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <nav id="nav-wydania" class="nav-wydania"></nav>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie poranne · Redagowane przez AI",
+  "data_wydania": "niedziela, 19 lipca 2026, 05:29",
+  "numer": "Wydanie poranne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Siódma noc nalotów USA na Iran: 2 żołnierzy zginęło w Jordanii, Teheran grozi rozlaniem wojny",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/liveblog/2026/7/18/iran-war-live-us-and-iran-exchange-attacks-for-7th-consecutive-night",
+        "godzina": "04:15"
+      },
+      "obraz": {
+        "query": "US military strikes Iran night",
+        "alt": "Eksplozje podczas nocnych nalotów na irańską infrastrukturę"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7 nocy z rzędu",
+          "opis": "naloty USA na Iran (przez 18/19 lipca)"
+        },
+        {
+          "wartosc": "2 zabitych + 1 zaginiony",
+          "opis": "żołnierze USA w Jordanii (18 lipca)"
+        },
+        {
+          "wartosc": "10 000 osób",
+          "opis": "bez wody po irańskim ataku na odsalarnię Jask"
+        }
+      ],
+      "akapity": [
+        "Siły USA przeprowadziły w nocy z 18 na 19 lipca 2026 r. siódmą z rzędu rundę nalotów na Iran. {{CENTCOM|US Central Command — Centralne Dowództwo USA odpowiedzialne za region Bliskiego Wschodu}} potwierdził śmierć dwóch żołnierzy i zaginięcie trzeciego w Jordanii, gdzie {{proxy forces|milicje zbrojone i finansowane przez Iran, działające w jego imieniu}} zaatakowały bazę koalicji. Równolegle Iran uderzył w instalacje odsalania wody w Jask (prowincja Hormozgan), odcinając dostawy wody dla ok. 10 000 mieszkańców 20 wiosek.",
+        "Po wczorajszym impasie — konflikt trwa od 8 lipca, gdy Trump oświadczył, że tymczasowy rozejm z Teheranem jest zakończony — obie strony eskalują zakres ataków. USA biją w irańską infrastrukturę energetyczną i petrochemiczną; Iran odpowiada uderzeniami w bazy USA w Jordanii, Bahrajnie i Kuwejcie oraz {{shadow tankers|tankowce nieobjęte standardowymi ubezpieczeniami, przewożące irańską ropę z ominięciem sankcji}} w Cieśninie Ormuz.",
+        "Najwyższy przywódca Mojtaba Chamenei ogłosił, że podpis Trumpa pod jakimkolwiek porozumieniem \"jest bez wartości i nieważny\", zamykając drogę do dyplomacji. Iran oficjalnie ostrzegł, że \"jeśli ataki nie ustaną, wojna rozleje się na inne kraje regionu\" — co analitycy odczytują jako zapowiedź uderzeń w kolejnych bazach USA na Bliskim Wschodzie. Arabskie państwa Zatoki wydały alerty dla żeglugi cywilnej.",
+        "Śmierć żołnierzy USA w Jordanii — sojuszniku nieposiadającym formalnego paktu obronnego w stylu NATO, ale goszczącym setki żołnierzy koalicji — wywołała presję w Kongresie na eskalację odpowiedzi lub pilne rokowania. Przez Cieśninę Ormuz przepływa ok. 21% globalnego eksportu ropy naftowej; jej częściowe zablokowanie winduje ceny surowców i bezpośrednio uderza w rynki finansowe na całym świecie."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Apple wyprzedziło Nvidia z wyceną 4,88 bln USD (~18,5 bln zł) — AI rotation od chipów do urządzeń",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/apple-tops-nvidia-as-world-s-largest-company-amid-tech-rotation",
+        "godzina": "16:30"
+      },
+      "obraz": {
+        "query": "Apple logo Nasdaq stock exchange",
+        "alt": "Logo Apple na tle tablicy notowań giełdowych"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "4,88 bln USD (~18,5 bln zł)",
+          "opis": "szczytowa kapitalizacja Apple, 17 lipca 2026"
+        },
+        {
+          "wartosc": "-3,9%",
+          "opis": "intraday spadek akcji Nvidia w piątek"
+        },
+        {
+          "wartosc": "~4,91 bln USD (~18,7 bln zł)",
+          "opis": "kapitalizacja Nvidia na zamknięciu — nieznacznie powyżej Apple"
+        }
+      ],
+      "akapity": [
+        "Akcje Apple osiągnęły w piątek 17 lipca 2026 r. szczytową wycenę 4,88 bln USD (~18,5 bln zł), wyprzedzając Nvidia i stając się przez kilka godzin najcenniejszą spółką świata. Nvidia przecenił się w tym czasie o 3,9% do ok. 4,82 bln USD (~18,3 bln zł), po czym odbił i zamknął sesję na poziomie ~4,91 bln USD (~18,7 bln zł) — utrzymując tytuł, choć minimalną przewagą.",
+        "Rotacja odzwierciedla zmianę narracji inwestycyjnej: rynek zaczął premiować firmy zdolne do monetyzacji AI przez sprzedaż urządzeń konsumenckich (iPhone, Mac, Apple Watch), a nie wyłącznie producentów chipów. Apple podkreśla plan wdrożenia funkcji AI na 2,5 mld aktywnych urządzeniach bez pełnego transferu danych do chmury, co odpowiada na rosnące obawy o prywatność. Nvidia trzyma tytuł lidera od czerwca 2025 r., gdy wyprzedziło Microsoft.",
+        "Kontekst szerszy: obie spółki razem odpowiadają za prawie 10% {{market cap|całkowita wartość giełdowa spółki — liczba akcji pomnożona przez cenę}} indeksu S&P 500. Każde 1% wahanie ich wycen to ruch o kilkadziesiąt miliardów dolarów w funduszach indeksowych — w tym PPK i IKE milionów Polaków. Analitycy Goldman Sachs wskazują, że przy obecnych wycenach obu firm każda korekta wymaga \"historycznego\" uzasadnienia fundamentalnego.",
+        "Rynek coraz wyraźniej różnicuje między infrastrukturą AI (chipy, centra danych — Nvidia, TSMC) a warstwą dystrybucji AI do konsumentów (urządzenia, ekosystemy — Apple, Samsung). Ta rotacja może być przejściowa lub sygnalizować trwałą zmianę dominującego narratywu inwestycyjnego. Kolejne tygodnie przyniosą wyniki kwartalne obu firm — te liczby rozstrzygną, która z narracji ma silniejsze fundamenty."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "GPW kończy tydzień wzrostami: WIG20 +0,17% do 3 675 pkt, mWIG40 +0,99%; DAX bije rekord wszech czasów",
+      "zrodlo": {
+        "nazwa": "Bankier",
+        "url": "https://www.bankier.pl/wiadomosc/Koniec-jastrzebiego-strachu-GPW-konczy-tydzien-wzrostami-DAX-bije-historyczne-rekordy-9163432.html",
+        "godzina": "17:30"
+      },
+      "obraz": {
+        "query": "Warsaw Stock Exchange GPW building",
+        "alt": "Budynek Giełdy Papierów Wartościowych w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3 674,68 pkt",
+          "opis": "WIG20 na zamknięciu piątkowej sesji (+0,17%)"
+        },
+        {
+          "wartosc": "+0,99%",
+          "opis": "wzrost mWIG40 do 9 772 pkt"
+        },
+        {
+          "wartosc": "all-time high",
+          "opis": "DAX ustanowił nowy historyczny rekord w piątek"
+        }
+      ],
+      "akapity": [
+        "Piątkowa sesja (17 lipca) na GPW zakończyła pomyślny tydzień: WIG20 wzrósł o 0,17% do 3 674,68 pkt, a szeroki indeks WIG zyskał 0,35% do ok. 139 151 pkt. Największym beneficjentem tygodnia były spółki średniej kapitalizacji — mWIG40 wzrósł o 0,99% do 9 772 pkt, sygnalizując ożywienie popytu poza blue chipami.",
+        "Na zachód od Polski frankfurcki {{DAX|indeks 40 największych spółek na giełdzie XETRA — barometr niemieckiej gospodarki}} ustanowił nowy historyczny rekord wszech czasów, kontynuując hossę napędzaną optymizmem wokół europejskiej reindustrializacji i rekordowych wydatków zbrojeniowych. Inne europejskie indeksy były mieszane: CAC 40 stracił 0,45%, FTSE 100 zyskał 0,12%, FTSE 250 stracił 0,50%.",
+        "Kluczowym impulsem dla optymizmu były słabsze od oczekiwań dane makroekonomiczne z USA, które osłabiły obawy przed kolejnymi podwyżkami stóp przez Fed. CME FedWatch wycenia teraz ok. 17% szans na podwyżkę o 25 pb na posiedzeniu 29 lipca. Analitycy oceniają, że wakacyjna pauza w zacieśnianiu jest coraz bardziej prawdopodobna, co faworyzuje spółki wzrostowe.",
+        "Polska giełda ma za sobą statystycznie jeden z najlepszych sezonowych okresów: pierwsza połowa lipca tradycyjnie przynosi ponadprzeciętne stopy zwrotu. Analitycy ostrzegają jednak przed korektą po kilku tygodniach wzrostów — szczególnie wobec ryzyka geopolitycznego z Bliskiego Wschodu, które może podbić ceny ropy i wzmocnić presję inflacyjną, komplikując narrację o końcu zacieśniania."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Amazon wyemitował obligacje za 25 mld USD (~95 mld zł) — największa korporacyjna emisja 2026 na AI",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-07/amazon-returns-to-us-bond-market-to-fund-ai-infrastructure-build",
+        "godzina": "19:00"
+      },
+      "obraz": {
+        "query": "Amazon Web Services data center server hall",
+        "alt": "Centrum danych Amazon Web Services"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "25 mld USD (~95 mld zł)",
+          "opis": "wartość emisji obligacji Amazon (7 lipca 2026)"
+        },
+        {
+          "wartosc": "62 mld USD",
+          "opis": "szczytowy popyt — 2,5× oversubscribed"
+        },
+        {
+          "wartosc": "200 mld USD (~760 mld zł)",
+          "opis": "całoroczny capex Amazon na AI/AWS w 2026 r."
+        }
+      ],
+      "akapity": [
+        "Amazon powrócił na rynek długu korporacyjnego 7 lipca 2026 r. z emisją obligacji w ośmiu transzach o łącznej wartości co najmniej 25 mld USD (~95 mld zł) — największą pojedynczą emisją korporacyjną roku. Popyt inwestorów sięgnął szczytowo 62 mld USD, zanim banki zwęziły oferowany {{spread|różnica między rentownością obligacji korporacyjnej a rządową — miara ryzyka emitenta}} i popyt finalne wyniósł ok. 41 mld USD, czyli 1,6× wartości emisji.",
+        "Pozyskane środki trafią niemal w całości na rozbudowę infrastruktury AI: centra danych, specjalistyczne chipy oraz Amazon Web Services. Amazon zaplanował na 2026 r. nakłady kapitałowe rzędu 200 mld USD (~760 mld zł) — konkurując z Microsoft Azure i Google Cloud w wyścigu o dominację w chmurze dla modeli AI. Prowadzącymi emisję były Barclays, Goldman Sachs, JPMorgan i Morgan Stanley.",
+        "Najdłuższa transza (zapadalność 2066 r.) wyceniono ze spreadem 1,45 pp ponad {{US Treasuries|obligacje skarbowe rządu USA — globalny punkt odniesienia dla wyceny długu korporacyjnego}}. Emisja Amazona wpisuje się w szerszy trend: Google, Meta i Microsoft w I połowie 2026 r. również emitowały obligacje, by finansować wyścig AI — razem czterech hiperscalerów planuje na rok 2026 ponad 500 mld USD (~1 900 mld zł) capexu.",
+        "Z perspektywy inwestora detalicznego emisja ta jest widoczna pośrednio: fundusze obligacji korporacyjnych (dostępne przez IKE, IKZE lub ETF) posiadają papiery dłużne tych spółek. Rosnące potrzeby pożyczkowe gigantów tech zwiększają podaż obligacji i mogą stopniowo podnosić wymagane rentowności — co jest sygnałem do monitorowania przez inwestorów alokujących w fundusze dłużne."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "UE nałożyła cło 3 EUR (~13 zł) na paczki z Chin — 5,9 mld importów rocznie objętych opłatą od 1 lipca",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://pap.pl/aktualnosci/index,1,,sejm.html",
+        "godzina": "09:00"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Euronews",
+          "url": "https://www.euronews.com/my-europe/2026/07/01/eu-slaps-3-duty-fee-on-shein-temu-and-aliexpress-imports"
+        }
+      ],
+      "obraz": {
+        "query": "Shein Temu parcels customs Europe",
+        "alt": "Paczki e-commerce na taśmie sortującej europejskiego centrum logistycznego"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3 EUR (~13 zł)",
+          "opis": "nowe cło per rodzaj produktu w paczce (od 1 lipca 2026)"
+        },
+        {
+          "wartosc": "5,9 mld",
+          "opis": "paczek rocznie wchodziło do UE bez cła w 2025 r."
+        },
+        {
+          "wartosc": "740 000 m²",
+          "opis": "centrum logistyczne Shein pod Wrocławiem (grudzień 2025)"
+        }
+      ],
+      "akapity": [
+        "Od 1 lipca 2026 r. Unia Europejska zniosła tzw. {{de minimis|zwolnienie celne dla przesyłek poniżej progu wartości — do tej pory 150 EUR}} i zastąpiła je płaską opłatą 3 EUR (~13 zł) za każdy rodzaj produktu w paczce. Zamówienie zawierające np. smartfon, ładowarkę i słuchawki generuje łącznie 9 EUR (~39 zł) cła zamiast zera. Regulacja uderza bezpośrednio w Shein, Temu i AliExpress.",
+        "Skala zmiany jest ogromna: w 2025 r. do UE trafiło ok. 5,9 mld drobnych przesyłek (ok. 12 mln dziennie) z krajów trzecich — bez grosza cła. Europejskie firmy płacące pełne należności celne od lat wskazywały tę asymetrię jako główną przyczynę niemożności cenowego konkurowania z chińskimi platformami. Nowe przepisy wyrównują to pole gry.",
+        "Shein i Temu przygotowały się z wyprzedzeniem. Shein otworzył w grudniu 2025 r. centrum logistyczne o powierzchni 740 000 m² pod Wrocławiem i kolejny magazyn w Anglii — towar przechowywany na terenie UE nie podlega nowemu cłu, bo wewnątrzunijna wysyłka go nie dotyczy. Temu rozbudowało sieć lokalnych dostawców w kilku krajach UE.",
+        "Regulacja przyniesie wpływy budżetowe szacowane przez Komisję na kilka miliardów EUR rocznie i jednocześnie wzrost cen dla kupujących na tych platformach. Polska, gdzie zakupy cross-border z Chin są wyjątkowo popularne, odczuje zmianę wyraźnie. Centrum Shein pod Wrocławiem pozostaje natomiast nowym hubem logistycznym tworzącym miejsca pracy w regionie."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "PE głosuje nad pomocą dla rolników: ceny nawozów w górę po zamknięciu Cieśniny Ormuz przez wojnę USA–Iran",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://pap.pl/aktualnosci/index,1,,sejm.html",
+        "godzina": "10:00"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "EP Thinktank",
+          "url": "https://epthinktank.eu/2026/07/03/european-parliament-plenary-session-july-2026/"
+        }
+      ],
+      "obraz": {
+        "query": "European farmers tractor protest fertilizer",
+        "alt": "Traktory europejskich rolników podczas protestu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "21%",
+          "opis": "globalnego eksportu ropy przepływa przez Cieśninę Ormuz"
+        },
+        {
+          "wartosc": "ponad +40%",
+          "opis": "wzrost cen nawozów azotowych w najbardziej dotkniętych regionach"
+        },
+        {
+          "wartosc": "6 miesięcy",
+          "opis": "tymczasowy charakter planowanego wsparcia CAP"
+        }
+      ],
+      "akapity": [
+        "W ostatnim posiedzeniu plenarnym przed przerwą wakacyjną Parlament Europejski przegłosował uruchomienie tymczasowego wsparcia w ramach {{CAP|Wspólna Polityka Rolna — system dopłat i regulacji UE dla sektora rolno-spożywczego}} dla rolników dotkniętych gwałtownym wzrostem cen nawozów. Wzrost wynika z kryzysu na Bliskim Wschodzie: zamknięcie Cieśniny Ormuz przerwało morski transport amoniaku i gazu ziemnego (surowców do nawozów azotowych) z krajów Zatoki Perskiej.",
+        "Ceny nawozów azotowych wzrosły od początku konfliktu USA–Iran o kilkadziesiąt procent — w najbardziej dotkniętych obszarach nawet o ponad 40% rok do roku. Rolnicy, którzy zakontraktowali dostawy i sprzedaż zbiorów po starych cenach, znaleźli się pod podwójną presją: wyższe koszty wejściowe przy ustalonych przychodach ze sprzedaży zbóż i warzyw.",
+        "Mechanizm wsparcia będzie działał analogicznie do instrumentów awaryjnych uruchamianych w czasie pandemii Covid-19 i po ataku Rosji na Ukrainę w 2022 r. Komisja Europejska przygotuje szczegółowe kryteria kwalifikowalności i przedłoży je Radzie UE. Polska jako jeden z największych producentów rolnych w Unii — szczególnie zbóż, rzepaku i warzyw — byłaby jednym z głównych beneficjentów.",
+        "Decyzja Parlamentu wpisuje się w priorytety Irlandzkiej Prezydencji UE (od 1 lipca 2026 r.), która uczyniła stabilizację rolnictwa jednym ze swoich głównych celów. Kryzys nawozowy wywołał też szerszą dyskusję o suwerenności żywnościowej Europy i dywersyfikacji dostaw surowców rolnych — podobnie jak pandemia wzmocniła narrację o dywersyfikacji łańcuchów produkcji leków."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Irlandzka Prezydencja UE 2026: rozszerzenie na Ukrainę, wdrożenie AI Act i reforma rolna jako priorytety",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://pap.pl/aktualnosci/index,1,,sejm.html",
+        "godzina": "09:30"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "EP Thinktank",
+          "url": "https://epthinktank.eu/2026/07/03/european-parliament-plenary-session-july-2026/"
+        }
+      ],
+      "obraz": {
+        "query": "EU Council Presidency Ireland Dublin",
+        "alt": "Siedziba Rady UE w Brukseli z irlandzką flagą"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "6 miesięcy",
+          "opis": "czas trwania Prezydencji (1 lipca – 31 grudnia 2026)"
+        },
+        {
+          "wartosc": "sierpień 2026",
+          "opis": "start obowiązków AI Act dla systemów wysokiego ryzyka"
+        },
+        {
+          "wartosc": "5",
+          "opis": "priorytetów ogłoszonych przez Prezydencję irlandzką"
+        }
+      ],
+      "akapity": [
+        "Z dniem 1 lipca 2026 r. Irlandia objęła rotacyjną Prezydencję Rady Unii Europejskiej, wyznaczając pięć priorytetów na nadchodzące sześć miesięcy: postęp procesu rozszerzenia UE (Ukraina, Mołdowa, Bałkany Zachodnie), wdrożenie przepisów {{AI Act|pierwsze na świecie kompleksowe rozporządzenie UE regulujące sztuczną inteligencję — uchwalone w 2024 r.}}, reforma polityki rolnej wobec kryzysu nawozowego, modernizacja praw pasażerów w transporcie oraz utrzymanie jedności geopolitycznej UE.",
+        "Na froncie rozszerzenia Prezydencja planuje otwarcie co najmniej dwóch dodatkowych rozdziałów akcesyjnych z Ukrainą i Mołdową. Irlanczycy chcą zamknąć rok z widocznym postępem formalnym, zanim w 2027 r. ruszą w kilku krajach UE kampanie wyborcze, które mogą skomplikować polityczny klimat dla rozszerzenia.",
+        "AI Act wchodzi w etap realnej egzekucji: od sierpnia 2026 r. zaczynają obowiązywać przepisy dla systemów AI \"wysokiego ryzyka\" w obszarach ochrony zdrowia, infrastruktury krytycznej i wymiaru sprawiedliwości. Prezydencja zapowiedziała koordynację prac unijnego {{AISA|AI Supervisory Authority — planowany organ nadzoru nad AI w skali UE, uruchomienie pełne w 2027 r.}}, który ma zapewnić jednolite stosowanie przepisów.",
+        "Dla Polski irlandzka agenda jest korzystna: rolnictwo i ukraińskie rozszerzenie to tematy, w których polskie stanowisko jest zbieżne z Dublinem. Ubiegłotygodniowa uchwała wołyńska Sejmu — deklaracja woli dialogu z Kijowem w kwestii ekshumacji — sygnalizuje, że Polska chce aktywnie uczestniczyć w procesie akcesji Ukrainy, nie blokując go kwestiami historycznymi."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Ukraińskie drony uderzyły w 13 statków rosyjskiej \"shadow fleet\" na Morzu Czarnym i Azowskim",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://pap.pl/aktualnosci/index,1,,sejm.html",
+        "godzina": "06:00"
+      },
+      "obraz": {
+        "query": "Black Sea Ukrainian naval drone attack",
+        "alt": "Ukraiński dron morski na tle Morza Czarnego"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "13 statków",
+          "opis": "rosyjskiej floty cieni uderzonych w noc 18 lipca"
+        },
+        {
+          "wartosc": "276 starć",
+          "opis": "na froncie lądowym w ciągu jednej doby (17 lipca)"
+        },
+        {
+          "wartosc": "1 427 410",
+          "opis": "łączne straty osobowe Rosji od 24 lutego 2022 r."
+        }
+      ],
+      "akapity": [
+        "W nocy z 17 na 18 lipca 2026 r. ukraińskie Siły Bezzałogowe (Unmanned Systems Forces) przeprowadziły skoordynowany atak na {{shadow fleet|rosyjska flota tankowców i frachtowców omijających zachodnie sankcje, często bez standardowych ubezpieczeń}} na Morzu Czarnym i Azowskim. Trafiono 13 jednostek: 8 masowców, 1 tankowiec, 1 gazowiec, 1 holownik i 2 dźwigi pływające — łącznie jeden z największych jednorazowych uderzeń w rosyjski transport morski od początku pełnoskalowej inwazji.",
+        "Po wczorajszym uderzeniu w rosyjskie magazyny Wildberries (9 zabitych, 370 dronów nad Moskwą) ukraińskie dowództwo potwierdziło, że cel ataku morskiego to uszkodzenie zdolności logistycznych Rosji do eksportu surowców i zaopatrzenia wojsk przez Morze Azowskie. Część trafionych jednostek transportowała produkty naftowe, których sprzedaż finansuje rosyjski budżet wojenny.",
+        "Na froncie lądowym w ciągu 17 lipca doszło do 276 starć — najgorętsza była rubież Pokrowsk i Hułajpole. Ukraińska obrona powietrzna neutralizowała w tym czasie jedną rakietę Kh-59/69 i 69 dronów różnych typów wystrzelonych przez Rosję poprzedniej nocy. Łączne straty rosyjskie od 24 lutego 2022 r. oceniane są na ok. 1 427 410 żołnierzy.",
+        "Ataki na shadow fleet mają strategiczne znaczenie poza czysto wojskowym: każdy unieruchomiony statek to utrata przychodów walutowych dla Kremla szacowanych na miliony dolarów dziennie. Równocześnie destabilizacja floty cieni zmusza więcej kupujących rosyjskie paliwa do korzystania z alternatywnych tras — co podnosi koszty i utrudnia obchodzenie zachodnich sankcji naftowych."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "USA tracą żołnierzy w Jordanii — proirańskie milicje otwierają nowy front w wojnie USA–Iran",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/liveblog/2026/7/18/iran-war-live-us-and-iran-exchange-attacks-for-7th-consecutive-night",
+        "godzina": "05:00"
+      },
+      "obraz": {
+        "query": "US military base Jordan Muwaffaq Salti",
+        "alt": "Baza wojskowa USA w Jordanii"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2 zabitych + 1 zaginiony",
+          "opis": "żołnierze USA w Jordanii (18 lipca 2026)"
+        },
+        {
+          "wartosc": "7 krajów",
+          "opis": "regionu goszczących bazy USA potencjalnie w zasięgu ataków"
+        },
+        {
+          "wartosc": "8 zabitych",
+          "opis": "Iranczyków w ostatnich uderzeniach USA na infrastrukturę w Jask"
+        }
+      ],
+      "akapity": [
+        "W sobotę 18 lipca 2026 r. CENTCOM potwierdził śmierć dwóch żołnierzy Sił Zbrojnych USA stacjonujących w Jordanii — jeden kolejny jest poszukiwany. Atak przeprowadziły proirańskie siły partnerskie z użyciem rakiet balistycznych i dronów. Jordania nie jest członkiem NATO, ale od lat pełni funkcję kluczowego węzła logistyczno-wywiadowczego USA i Izraela w regionie.",
+        "Śmierć żołnierzy otwiera nowy, formalny front konfliktu: dotąd proirańskie milicje atakowały głównie bazy USA w Iraku i Syrii. Jordania, dzieląca granicę z Irakiem i Syrią, jest uważana za partnera \"niebędącego sojusznikiem NATO, ale traktowanego jak sojusznik\" przez prawodawstwo USA — co zobowiązuje Waszyngton do odpowiedzi. Kongres zwołał nadzwyczajne posiedzenie komisji obrony.",
+        "Iran oficjalnie zaprzeczył bezpośredniemu zaangażowaniu, wskazując na autonomiczne działania \"sił oporu\". USA odrzuciły tę narrację, powołując się na konkretne dowody wywiadowcze powiązania ataków z Islamską Gwardią Rewolucyjną ({{IRGC|Islamska Gwardia Rewolucyjna — elitarne siły zbrojne Iranu nadzorujące sieci proxy w całym regionie}}). Trump ostrzegł w tweecie: \"Następny atak na żołnierzy USA spotka się z odpowiedzią 10x silniejszą\".",
+        "Rozszerzenie konfliktu na Jordanię komplikuje regionalną równowagę: kraj ten jest kluczowy dla dostarczania pomocy humanitarnej do Gazy i działa jako mediator dyplomatyczny. Jeśli Jordania zostanie wciągnięta w konflikt militarnie, może to zamknąć jeden z nielicznych działających korytarzy humanitarnych i jednocześnie destabilizować stosunkowo spokojny kraj o strategicznym położeniu geograficznym między Izraelem, Irakiem, Syrią i Arabią Saudyjską."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Europa może budować fabryki chipów, ale nie ucieknie od zależności od chmury USA — Forrester dla The Register",
+      "zrodlo": {
+        "nazwa": "The Register",
+        "url": "https://www.theregister.com/paas-and-iaas/2026/07/17/europes-chip-ambitions-wont-break-dependence-on-us-cloud-and-software-says-forrester/",
+        "godzina": "12:00"
+      },
+      "obraz": {
+        "query": "European semiconductor chip factory TSMC",
+        "alt": "Linia produkcyjna w europejskiej fabryce półprzewodników"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "120,6 mld USD (~458 mld zł)",
+          "opis": "globalna sprzedaż chipów w maju 2026 (+104% r/r)"
+        },
+        {
+          "wartosc": ">90%",
+          "opis": "europejskich firm uzależnionych od chmury publicznej USA (AWS, Azure, GCP)"
+        },
+        {
+          "wartosc": "9,2%",
+          "opis": "miesięczny wzrost sprzedaży chipów (kwiecień–maj 2026)"
+        }
+      ],
+      "akapity": [
+        "Nowy raport Forrester Research opublikowany przez The Register ostrzega: nawet jeśli Europa wybuduje kolejne {{fab|fabryka chipów (fabrication plant) — obiekt produkujący półprzewodniki na skalę przemysłową}} i subsydiuje krajową produkcję półprzewodników, nie zerwie zależności od amerykańskich dostawców chmury obliczeniowej i oprogramowania. AWS, Azure i Google Cloud kontrolują ponad 90% europejskiego rynku enterprise cloud.",
+        "Forrester wskazuje, że suwerenność technologiczna wymaga nie tylko hardware (chipy, fab), ale też warstwy software: systemy operacyjne, bazy danych, frameworki AI i platformy orkiestracji kontenerów są zdominowane przez firmy z USA. Europejskie inicjatywy jak GAIA-X nie zdołały zbudować realnej alternatywy — a większość europejskich firm nie zamierza rezygnować z dominujących narzędzi na rzecz mniej dojrzałych rozwiązań.",
+        "Globalna sprzedaż chipów osiągnęła w maju 2026 r. 120,6 mld USD (~458 mld zł) — wzrost o 9,2% w stosunku do kwietnia i o 104,1% rok do roku, co odzwierciedla boom AI oraz normalizację po wcześniejszych niedoborach. Boom ten faworyzuje głównie TSMC (Taiwan), Samsung (Korea) i Nvidia/AMD (projektanci USA) — a nie europejskich graczy.",
+        "Wnioski raportu są szczególnie istotne dla Polski, która zadeklarowała inwestycje w suwerenne obliczenia (\"gigafabryka AI\" zatwierdzona przez Radę Ministrów). Eksperci Forrestera sugerują, że bez równoległych inwestycji w stos oprogramowania i politykę danych suwerenny chip może okazać się droższą wersją tego samego uzależnienia — tym razem sprzętowego zamiast softwarowego."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Apple i DOJ w wczesnych rozmowach ugodowych w sprawie antymonopolowej o iPhone",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/apple-in-early-settlement-talks-with-doj-over-antitrust-case",
+        "godzina": "15:00"
+      },
+      "obraz": {
+        "query": "Apple iPhone antitrust DOJ Department of Justice",
+        "alt": "Budynek Departamentu Sprawiedliwości USA w Waszyngtonie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2024",
+          "opis": "rok wniesienia pozwu DOJ przeciw Apple za monopol na rynku smartfonów"
+        },
+        {
+          "wartosc": "ponad 50%",
+          "opis": "udział iPhone w rynku smartfonów w USA"
+        },
+        {
+          "wartosc": "brak gwarancji",
+          "opis": "ugody — rozmowy wciąż wstępne (Bloomberg)"
+        }
+      ],
+      "akapity": [
+        "Apple i Departament Sprawiedliwości USA (DOJ) prowadzą wstępne rozmowy zmierzające do ugody w antymonopolowym procesie z 2024 r. — wynika z informacji Bloomberga. Pozew dotyczył dominującej pozycji iPhone na rynku smartfonów w USA (ponad 50% udziału), ograniczeń dla aplikacji i usług konkurencji w ekosystemie Apple oraz wyłącznych umów z operatorami telekomunikacyjnymi.",
+        "Rozmowy są na wczesnym etapie i nie gwarantują porozumienia — Bloomberg zaznacza, że DOJ może w każdej chwili wycofać się z negocjacji lub zdecydować na kontynuację procesu sądowego. Podobne ugodowe rozmowy prowadził wcześniej Google z DOJ w kwestii monopolu wyszukiwarkowego; tamten proces zakończył się prawomocnym wyrokiem nakazującym sprzedaż Chrome'a.",
+        "Potencjalna ugoda mogłaby zobowiązać Apple do otwarcia {{App Store|sklep z aplikacjami Apple — jedyna legalna metoda instalacji aplikacji na iOS}} na konkurencję, umożliwienia domyślnych aplikacji firm trzecich lub rezygnacji z opłat licencyjnych pobieranych od deweloperów. Apple konsekwentnie odrzuca zarzuty monopolistyczne, argumentując, że rygorystyczna kontrola ekosystemu służy bezpieczeństwu użytkowników.",
+        "Kontekst europejski jest istotny: Unia Europejska na mocy {{DMA|Digital Markets Act — unijne rozporządzenie o rynkach cyfrowych, weszło w życie 2023 r.}} zmusiła Apple już w 2024 r. do otwarcia iOS na alternatywne sklepy z aplikacjami w Europie. Ewentualna ugoda w USA mogłaby przybliżyć ekosystem Apple do modelu europejskiego — z korzyścią dla użytkowników i twórców aplikacji na całym świecie."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Xi Jinping na World AI Conference w Szanghaju: \"AI dla wszystkich\" — Chiny odrzucają zarzuty kradzieży technologii",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-17/xi-vows-to-make-ai-for-all-in-debut-at-china-s-top-tech-summit",
+        "godzina": "11:00"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Bloomberg",
+          "url": "https://www.bloomberg.com/news/articles/2026-07-18/china-dismisses-claim-that-it-illicitly-extracts-foreign-ai-tech"
+        }
+      ],
+      "obraz": {
+        "query": "Xi Jinping Shanghai AI conference 2026",
+        "alt": "Prezydent Xi Jinping podczas World AI Conference w Szanghaju"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "WAIC 2026",
+          "opis": "World AI Conference w Szanghaju — debiut Xi Jinpinga na konferencji"
+        },
+        {
+          "wartosc": "2,8 bln parametrów",
+          "opis": "nowy model Kimi K3 pokazany przez Moonshot AI na konferencji"
+        },
+        {
+          "wartosc": "ZTE NaviX Ultra",
+          "opis": "\"pierwszy na świecie agentowy smartfon AI\" zaprezentowany w Szanghaju"
+        }
+      ],
+      "akapity": [
+        "Prezydent Xi Jinping wystąpił po raz pierwszy na World AI Conference (WAIC) w Szanghaju, wzywając do globalnej współpracy w dziedzinie sztucznej inteligencji: \"Rozwój AI nie powinien być solowym występem jednego kraju, lecz międzynarodową symfonią\". Ogłosił chiński cel \"AI dla wszystkich\" — dążenie do powszechnej dostępności narzędzi AI zarówno wewnątrz Chin, jak i dla krajów rozwijających się.",
+        "Dzień wcześniej wiceminister spraw zagranicznych Liu Bin odrzucił oskarżenia (m.in. ze strony Anthropic), że chińskie firmy AI nielegalnie {{model distillation|technika trenowania mniejszego modelu AI na wynikach większego — pozwala na tańsze odwzorowanie możliwości}} z zachodnich modeli, by podnosić własne możliwości. \"Niektóre kraje zawyżają narrację wokół kradzieży\" — stwierdził Liu.",
+        "Na WAIC zaprezentowano nowe chińskie osiągnięcia: ZTE pokazało NaviX Ultra — smartfon z wbudowanym \"agentowym AI\" zdolnym do samodzielnego wykonywania złożonych zadań (rezerwacje, zakupy, planowanie); Moonshot AI zaprezentowało model Kimi K3 z 2,8 bln parametrami, który w benchmarkach zbliżył się do Claude Fable 5 i GPT 5.6 Sol. Pełne wagi modelu mają zostać upublicznione do 27 lipca.",
+        "Konferencja WAIC odbyła się w momencie, gdy USA nałożyły nowe ograniczenia eksportowe na chipy AI do Chin, a obie strony prowadzą równoległy wyścig regulacyjny: USA próbują odciąć Chiny od frontier chipów, Chiny — zbudować autonomiczny stos AI od modeli po hardware. Debiut Xi na konferencji jest sygnałem, że Pekin traktuje AI jako strategiczny priorytet państwowy na równi z polityką zagraniczną."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Bloomberg: AI może uszczuplić wpływy z podatku dochodowego o biliony dolarów — zagrożenie dla budżetów państw",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/features/2026-07-16/how-ai-could-shrink-income-tax-revenue-and-threaten-economies",
+        "godzina": "08:00"
+      },
+      "obraz": {
+        "query": "artificial intelligence automation office workers tax",
+        "alt": "Pracownicy biurowi przy komputerach — AI zastępuje rutynowe zadania"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7 lat → 18 miesięcy",
+          "opis": "skrócenie \"przewagi handlowej\" algorytmów AI przez konkurencję AI (Bloomberg)"
+        },
+        {
+          "wartosc": "biliony USD",
+          "opis": "szacowany ubytek wpływów podatkowych w horyzoncie 10–15 lat"
+        },
+        {
+          "wartosc": "78%",
+          "opis": "organizacji zgłasza incydenty bezpieczeństwa związane z AI (2026)"
+        }
+      ],
+      "akapity": [
+        "Analiza Bloomberg z 16 lipca wskazuje na zjawisko dotąd słabo dyskutowane w debacie o AI: masowa automatyzacja pracy biurowej i kognitywnej grozi poważnym uszczupleniem wpływów z podatku dochodowego od osób fizycznych ({{PIT|podatek dochodowy od osób fizycznych — kluczowe źródło wpływów budżetowych}}). Jeśli AI przejmie zadania dotychczas wykonywane przez pracowników, dochody do opodatkowania mogą spaść — bez proporcjonalnego wzrostu innych podstaw podatkowych.",
+        "Eksperci cytowani przez Bloomberg szacują, że w horyzoncie 10–15 lat ryzyko ubytku wpływów podatkowych jest realne i może sięgać bilionów dolarów rocznie globalnie — choć zakres zależy od tempa adopcji, polityki regulacyjnej i zdolności gospodarek do tworzenia nowych rodzajów pracy. Dotknięte zostaną szczególnie kraje o wysokich stawkach PIT i dużym udziale sektora usług.",
+        "Dodatkową komplikacją jest {{tax base erosion|erozja bazy podatkowej — sytuacja, gdy dochód podlegający opodatkowaniu maleje szybciej niż gospodarka}} wynikająca z globalnych platform AI: korporacje płacą podatki tam, gdzie rejestrują zyski (często kraje z niskim opodatkowaniem), podczas gdy praca AI dzieje się wszędzie. To poszerza lukę między tworzeniem wartości ekonomicznej a miejscem poboru podatku.",
+        "Polska jest szczególnie narażona: wysoki udział sektora usług BPO (centra obsługi dla firm europejskich), które jako pierwsze adopcją AI mogą zredukować zatrudnienie. Rząd RP w budżecie 2026 zaplanował rekordowe wydatki na infrastrukturę AI i zbrojenia, zakładając wzrost PIT. Jeśli prognozowany Bloomberg scenariusz zmaterializuje się szybciej — Polsce grozi nożyce budżetowe: wyższe wydatki przy malejącej podstawie podatkowej."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Ozempic spowalnia biologiczne starzenie się o 9% — pierwsze dowody kliniczne z badania na osobach z HIV",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/07/260713084907.htm",
+        "godzina": "14:00"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "UCSD",
+          "url": "https://today.ucsd.edu/story/study-popular-glp-1-drug-may-slow-down-biological-aging"
+        }
+      ],
+      "obraz": {
+        "query": "semaglutide Ozempic injection pen GLP-1",
+        "alt": "Wstrzykiwacz z semaglutydem (Ozempic/Wegovy)"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "9%",
+          "opis": "redukcja tempa biologicznego starzenia się (zegar DunedinPACE)"
+        },
+        {
+          "wartosc": "1. na świecie",
+          "opis": "pierwsze randomizowane kontrolowane badanie kliniczne semaglutyd + starzenie"
+        },
+        {
+          "wartosc": "6 narządów",
+          "opis": "krew, mózg, serce, wątroba, nerki, metabolizm — poprawa markerów starzenia"
+        }
+      ],
+      "akapity": [
+        "Pierwsze na świecie randomizowane, kontrolowane badanie kliniczne dostarczyło dowodów, że semaglutyd — substancja czynna Ozempic i Wegovy — zwalnia biologiczne starzenie się człowieka. Uczestnicy z HIV przyjmujący lek wykazali 9% niższe tempo starzenia mierzone zegarem {{DunedinPACE|epigenetyczny zegar biologicznego starzenia mierzący tempo akumulacji uszkodzeń DNA — 1.0 = wzorzec starzenia zdrowego człowieka}} w porównaniu z grupą placebo.",
+        "Badanie przeprowadzone przez Uniwersytet Kalifornijski (UCSD) objęło osoby żyjące z HIV dotknięte {{lipoatrofią|nieprawidłowe rozmieszczenie tkanki tłuszczowej — efekt uboczny leków antyretrowirusowych}}. To właśnie ta populacja starzeje się szybciej niż ogólna populacja, co czyniło ją idealnym modelem do badania efektu przeciwstarzeniowego. Poprawa markerów biologicznych dotyczyła krwi, mózgu, serca, wątroby, nerek i metabolizmu.",
+        "Autorzy badania podkreślają, że wyniki są obiecujące, ale wymagają potwierdzenia w większych próbach na ogólnej populacji. Semaglutyd nie jest lekiem antyagingowym zatwierdzonym przez żaden urząd regulacyjny — FDA zatwierdziła go wyłącznie do leczenia cukrzycy typu 2 (Ozempic) i otyłości (Wegovy). Naukowcy spekulują, że efekt antyagingowy może być wtórny wobec redukcji stanu zapalnego i stresu metabolicznego.",
+        "Odkrycie wpisuje się w dynamicznie rosnące zainteresowanie biomedycyną starzenia: leki GLP-1 (klasa obejmująca semaglutyd i tirzepatyd) badane są równolegle pod kątem wpływu na chorobę Alzheimera, choroby sercowo-naczyniowe i uzależnienia. Jeśli efekt antyagingowy zostanie potwierdzony — rynek leków GLP-1 (już teraz warty dziesiątki miliardów dolarów) może urosnąć wielokrotnie, stając się jednym z największych rynków farmaceutycznych w historii."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Astronomowie po raz pierwszy wykryli hel uciekający z egzoplanety w strefie zamieszkiwalnej — LHS 1140b może mieć atmosferę",
+      "zrodlo": {
+        "nazwa": "Phys.org",
+        "url": "https://phys.org/news/2026-07-nearby-rocky-planet-replenishing-helium.html",
+        "godzina": "11:00"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Science journal",
+          "url": "https://www.science.org/doi/10.1126/science.aea9708"
+        }
+      ],
+      "obraz": {
+        "query": "exoplanet LHS 1140b habitable zone atmosphere",
+        "alt": "Wizualizacja artystyczna egzoplanety w strefie zamieszkiwalnej jej gwiazdy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "39 lat świetlnych",
+          "opis": "odległość LHS 1140b od Ziemi (konstelacja Wieloryba)"
+        },
+        {
+          "wartosc": "5,6 masy Ziemi",
+          "opis": "masa LHS 1140b — \"super-Ziemia\""
+        },
+        {
+          "wartosc": "42%",
+          "opis": "promieniowania słonecznego otrzymywanego przez LHS 1140b względem Ziemi"
+        }
+      ],
+      "akapity": [
+        "Zespół astronomów z Uniwersytetu Florydy wykrył hel uciekający z atmosfery skalistej egzoplanety LHS 1140b — pierwsza taka obserwacja dla planety skalistej krążącej w {{habitable zone|strefa zamieszkiwalna — obszar wokół gwiazdy, gdzie możliwe jest istnienie ciekłej wody na powierzchni planety}} swojej gwiazdy. Wyniki opublikowano w prestiżowym czasopiśmie Science. LHS 1140b leży 39 lat świetlnych od Ziemi w konstelacji Wieloryba.",
+        "LHS 1140b to \"super-Ziemia\": ma 5,6 masy Ziemi i 1,73 promienia Ziemi, obiega swoją gwiazdę (czerwonego karła LHS 1140) w ciągu 24,7 dnia i otrzymuje ok. 42% promieniowania, które dostaje Ziemia od Słońca — dając jej temperaturę równowagi ok. −47°C. Gwiazda LHS 1140 ma 3 miliardy lat i jest wyjątkowo stabilna magnetycznie, co zmniejsza ryzyko zniszczenia atmosfery przez rozbłyski.",
+        "Hel absorpcja wykryta została spektroskopem teleskopu Magellan Clay (Las Campanas Observatory) w 2024 r., ale nie w 2025 — co sugeruje zmienną w czasie ucieczkę atmosferyczną, prawdopodobnie spowodowaną zewnętrznym ciśnieniem wiatru gwiazdowego. Górna atmosfera zdominowana jest przez hel z niedoborem wodoru, co wskazuje na frakcjonowanie: wodór uciekł wcześniej, cięższy hel pozostał.",
+        "\"Ekscytująca część wyników to fakt, że po raz pierwszy widzimy skalistą, Ziemiopodobną planetę, która może wciąż mieć atmosferę\" — powiedział astronom Jason Dittmann (Univ. Florida), dodając, że teleskop Jamesa Webba będzie przez następne 4–5 lat szukał wody w tej atmosferze. Obecność wody oznaczałaby stabilną, podtrzymującą się atmosferę — i uczyniłaby LHS 1140b najpoważniejszym kandydatem do zamieszkiwalności spoza Układu Słonecznego."
+      ],
+      "kontynuacja": false
+    }
+  ],
+  "logi": [
+    {
+      "poziom": "info",
+      "wiadomosc": "Research wtórny (stały wyjątek): kurs USD/PLN 3,80 z NBP 17.07.2026; EUR/PLN 4,34."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Ciekawostka na dziś: źródła (ScienceDaily, phys.org) poza listą zrodla_pierwotne — brak tematyki naukowej w zatwierdzonych źródłach (analogicznie do poprzednich wydań)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Inwestowanie #3 (Amazon obligacje): artykuł z 7 lipca 2026 — poza oknem 12h, użyty z braku świeższych danych inwestycyjnych na dzień wolny od handlu (sobota)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Polityka: artykuły PAP przypisane do pap.pl, konkretne URL-e artykułów niedostępne w wynikach wyszukiwania — użyto strony głównej kategorii PAP."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Okładka. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Okładka' (artykuł 'Siódma noc nalotów USA na Iran: 2 żołnierzy zginęło w Jordanii, Teheran grozi rozlaniem wojny'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Inwestowanie. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Inwestowanie' (artykuł 'Apple wyprzedziło Nvidia z wyceną 4,88 bln USD (~18,5 bln zł) — AI rotation od chipów do urządzeń'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Inwestowanie. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Inwestowanie' (artykuł 'GPW kończy tydzień wzrostami: WIG20 +0,17% do 3 675 pkt, mWIG40 +0,99%; DAX bije rekord wszech czasów'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Inwestowanie. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Inwestowanie' (artykuł 'Amazon wyemitował obligacje za 25 mld USD (~95 mld zł) — największa korporacyjna emisja 2026 na AI'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Polityka. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Polityka' (artykuł 'UE nałożyła cło 3 EUR (~13 zł) na paczki z Chin — 5,9 mld importów rocznie objętych opłatą od 1 lipca'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Polityka. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Polityka' (artykuł 'PE głosuje nad pomocą dla rolników: ceny nawozów w górę po zamknięciu Cieśniny Ormuz przez wojnę USA–Iran'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Polityka. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Polityka' (artykuł 'Irlandzka Prezydencja UE 2026: rozszerzenie na Ukrainę, wdrożenie AI Act i reforma rolna jako priorytety'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Война. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Война' (artykuł 'Ukraińskie drony uderzyły w 13 statków rosyjskiej \"shadow fleet\" na Morzu Czarnym i Azowskim'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Война. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Война' (artykuł 'USA tracą żołnierzy w Jordanii — proirańskie milicje otwierają nowy front w wojnie USA–Iran'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Technologia. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Technologia' (artykuł 'Europa może budować fabryki chipów, ale nie ucieknie od zależności od chmury USA — Forrester dla The Register'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Technologia. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Technologia' (artykuł 'Apple i DOJ w wczesnych rozmowach ugodowych w sprawie antymonopolowej o iPhone'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria AI. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'AI' (artykuł 'Xi Jinping na World AI Conference w Szanghaju: \"AI dla wszystkich\" — Chiny odrzucają zarzuty kradzieży technologii'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria AI. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'AI' (artykuł 'Bloomberg: AI może uszczuplić wpływy z podatku dochodowego o biliony dolarów — zagrożenie dla budżetów państw'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Ciekawostka na dziś. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Ciekawostka na dziś' (artykuł 'Ozempic spowalnia biologiczne starzenie się o 9% — pierwsze dowody kliniczne z badania na osobach z HIV'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria Ciekawostka na dziś. Uzyj DOKLADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']"
+    },
+    {
+      "poziom": "error",
+      "wiadomosc": "Nieznana kategoria 'Ciekawostka na dziś' (artykuł 'Astronomowie po raz pierwszy wykryli hel uciekający z egzoplanety w strefie zamieszkiwalnej — LHS 1140b może mieć atmosferę'). Użyj DOKŁADNEJ nazwy z config: ['AI', 'Ciekawostka na dziś', 'Inwestowanie', 'Okładka', 'Polityka', 'Technologia', 'Wojna']."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Siódma noc nalotów USA na Iran: 2 żołnierzy zginęło w Jordanii, Teheran grozi rozlaniem wojny: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Siódma noc nalotów USA na Iran: 2 żołnierzy zginęło w Jordanii, Teheran grozi rozlaniem wojny': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Apple wyprzedziło Nvidia z wyceną 4,88 bln USD (~18,5 bln zł) — AI rotation od chipów do urządzeń: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Apple wyprzedziło Nvidia z wyceną 4,88 bln USD (~18,5 bln zł) — AI rotation od chipów do urządzeń': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul GPW kończy tydzień wzrostami: WIG20 +0,17% do 3 675 pkt, mWIG40 +0,99%; DAX bije rekord wszech czasów: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'GPW kończy tydzień wzrostami: WIG20 +0,17% do 3 675 pkt, mWIG40 +0,99%; DAX bije rekord wszech czasów': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Amazon wyemitował obligacje za 25 mld USD (~95 mld zł) — największa korporacyjna emisja 2026 na AI: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Amazon wyemitował obligacje za 25 mld USD (~95 mld zł) — największa korporacyjna emisja 2026 na AI': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul UE nałożyła cło 3 EUR (~13 zł) na paczki z Chin — 5,9 mld importów rocznie objętych opłatą od 1 lipca: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'UE nałożyła cło 3 EUR (~13 zł) na paczki z Chin — 5,9 mld importów rocznie objętych opłatą od 1 lipca': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul PE głosuje nad pomocą dla rolników: ceny nawozów w górę po zamknięciu Cieśniny Ormuz przez wojnę USA–Iran: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'PE głosuje nad pomocą dla rolników: ceny nawozów w górę po zamknięciu Cieśniny Ormuz przez wojnę USA–Iran': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Irlandzka Prezydencja UE 2026: rozszerzenie na Ukrainę, wdrożenie AI Act i reforma rolna jako priorytety: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Irlandzka Prezydencja UE 2026: rozszerzenie na Ukrainę, wdrożenie AI Act i reforma rolna jako priorytety': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Ukraińskie drony uderzyły w 13 statków rosyjskiej \"shadow fleet\" na Morzu Czarnym i Azowskim: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Ukraińskie drony uderzyły w 13 statków rosyjskiej \"shadow fleet\" na Morzu Czarnym i Azowskim': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul USA tracą żołnierzy w Jordanii — proirańskie milicje otwierają nowy front w wojnie USA–Iran: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'USA tracą żołnierzy w Jordanii — proirańskie milicje otwierają nowy front w wojnie USA–Iran': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Europa może budować fabryki chipów, ale nie ucieknie od zależności od chmury USA — Forrester dla The Register: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Europa może budować fabryki chipów, ale nie ucieknie od zależności od chmury USA — Forrester dla The Register': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Apple i DOJ w wczesnych rozmowach ugodowych w sprawie antymonopolowej o iPhone: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Apple i DOJ w wczesnych rozmowach ugodowych w sprawie antymonopolowej o iPhone': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Xi Jinping na World AI Conference w Szanghaju: \"AI dla wszystkich\" — Chiny odrzucają zarzuty kradzieży technologii: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Xi Jinping na World AI Conference w Szanghaju: \"AI dla wszystkich\" — Chiny odrzucają zarzuty kradzieży technologii': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Bloomberg: AI może uszczuplić wpływy z podatku dochodowego o biliony dolarów — zagrożenie dla budżetów państw: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Bloomberg: AI może uszczuplić wpływy z podatku dochodowego o biliony dolarów — zagrożenie dla budżetów państw': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Ozempic spowalnia biologiczne starzenie się o 9% — pierwsze dowody kliniczne z badania na osobach z HIV: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Ozempic spowalnia biologiczne starzenie się o 9% — pierwsze dowody kliniczne z badania na osobach z HIV': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykul Astronomowie po raz pierwszy wykryli hel uciekający z egzoplanety w strefie zamieszkiwalnej — LHS 1140b może mieć atmosferę: 4 akapitow, config wymaga 4"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł 'Astronomowie po raz pierwszy wykryli hel uciekający z egzoplanety w strefie zamieszkiwalnej — LHS 1140b może mieć atmosferę': 4 akapitów, config wymaga 4."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Okładka: zlozono 1 art., config oczekuje 1"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Inwestowanie: zlozono 3 art., config oczekuje 3"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Polityka: zlozono 3 art., config oczekuje 3"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Wojna: zlozono 0 art., config oczekuje 2"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Technologia: zlozono 2 art., config oczekuje 2"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria AI: zlozono 2 art., config oczekuje 2"
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Kategoria Ciekawostka na dziś: zlozono 2 art., config oczekuje 2"
+    }
+  ],
+  "pogoda": {
+    "miasto": "Nowy Dwór Mazowiecki",
+    "lat": 52.4306,
+    "lon": 20.7158,
+    "prognoza_url": "https://www.meteo.pl/um/php/mgram_search.php?NALL=52.4306&EALL=20.7158&lang=pl"
+  }
+}
+  </script>
+
+  <script>
+  (function () {
+    /* dane produkcyjne */
+    const _raw = document.getElementById('dane-gazety').textContent.trim();
+    const D = (_raw === '__' + 'DANE' + '__' && typeof DEMO !== 'undefined' && DEMO)
+      ? DEMO : JSON.parse(_raw);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    // Zdjęcie bazowe per kategoria — hostowane w repo (ten sam origin => ZAWSZE się ładuje,
+    // bez limitów i tokenów). Ścieżki root-relative, więc działają i z /wydania/.
+    const KAT_OBRAZ = {
+      'Okładka': '/assets/kategorie/okladka.jpg',
+      'Inwestowanie': '/assets/kategorie/inwestowanie.jpg',
+      'Polityka': '/assets/kategorie/polityka.jpg',
+      'Wojna': '/assets/kategorie/wojna.jpg',
+      'Technologia': '/assets/kategorie/technologia.jpg',
+      'AI': '/assets/kategorie/ai.jpg',
+      'Ciekawostka na dziś': '/assets/kategorie/ciekawostka.jpg'
+    };
+    const katObraz = k => KAT_OBRAZ[k] || '/assets/kategorie/okladka.jpg';
+
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.dataset.kategoria = a.kategoria;
+      const query = a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${katObraz(a.kategoria)}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + ` loading="lazy" onerror="this.onerror=null;this.src='${FALLBACK_IMG}'"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${terminy(esc(p))}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : ''}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''}</span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- Obrazy ----
+       Baza = zdjęcie kategorii z repo (już ustawione jako src). Ten sam origin, więc
+       ZAWSZE się ładuje — bez limitów Wikimedii i bez tokenów rutyny. Best-effort:
+       spróbuj podmienić na konkretniejsze zdjęcie tematu z Wikimedia Commons (query,
+       IP czytelnika). Podmieniamy DOPIERO po udanym preloadzie (new Image()), więc
+       czytelnik nigdy nie widzi zepsutego ani ładującego się obrazka — najwyżej
+       zostaje przy zdjęciu kategorii. Nieudany upgrade (np. 429) jest niewidoczny. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      try {
+        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + p.toString());
+        if (!r.ok) return '';
+        const d = await r.json();
+        const pages = Object.values((d.query && d.query.pages) || {})
+          .sort((x, y) => (x.index || 99) - (y.index || 99));
+        for (const pg of pages) {
+          const ii = (pg.imageinfo || [{}])[0];
+          if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+            return ii.thumburl || ii.url || '';
+        }
+      } catch (e) { /* brak sieci / 429 → zostaje zdjęcie kategorii */ }
+      return '';
+    }
+    const preload = src => new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(true); im.onerror = () => res(false); im.src = src;
+    });
+
+    [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
+      sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
+        .then(() => wikiResolve(img.dataset.query))
+        .then(async url => { if (url && await preload(url)) img.src = url; });
+    });
+
+    /* ---- panel logów rutyny ---- */
+    const logi = Array.isArray(D.logi) ? D.logi : [];
+    function logHtml(entry) {
+      const poziom = (entry && typeof entry === 'object' ? (entry.poziom || 'info') : 'info').toLowerCase();
+      const lvl = ['error', 'warning', 'info'].includes(poziom) ? poziom : 'info';
+      const raw = typeof entry === 'string' ? entry : (entry.wiadomosc || '');
+      const msg = esc(raw).replace(/(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      const label = { error: 'Błąd', warning: 'Ostrzeż.', info: 'Info' }[lvl];
+      return `<div class="log-entry log-entry--${lvl}"><span class="lvl">${label}</span><span class="msg">${msg}</span></div>`;
+    }
+    const logiPanel = document.createElement('section');
+    logiPanel.id = 'logi-panel';
+    logiPanel.className = 'hidden';
+    logiPanel.innerHTML =
+      '<div class="logi-head">Logi z generowania wydania</div>' +
+      '<div class="logi-sub">Ostrzeżenia, błędy i uwagi z uruchomienia rutyny — pomagają ulepszać gazetę ' +
+      '(np. źródła niedostępne dla bota, braki w kategoriach, nieudane obrazy).</div>' +
+      (logi.length
+        ? `<div class="log-list">${logi.map(logHtml).join('')}</div>`
+        : '<div class="logi-empty">Brak zdarzeń — wydanie złożone bez błędów i ostrzeżeń.</div>');
+    main.after(logiPanel);
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('') +
+      `<button class="filtr filtr--logs" data-cat="__logi__">Logs${logi.length ? ' (' + logi.length + ')' : ''}</button>`;
+    main.before(filtryEl);
+    function ustawFiltr(cat) {
+      const widokLogow = cat === '__logi__';
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      logiPanel.classList.toggle('hidden', !widokLogow);
+      main.classList.toggle('hidden', widokLogow);   // ukryj siatkę gazety w trybie logów
+      if (widokLogow) return;
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
+    });
+    ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
+    /* Lokalizacja i link prognozy z config.yaml (rutyna wstrzykuje D.pogoda);
+       fallback = Nowy Dwór Mazowiecki + meteogram ICM. */
+    const PG = D.pogoda || {};
+    const POGODA_MIASTO = {
+      nazwa: PG.miasto || 'Nowy Dwór Mazowiecki',
+      lat: PG.lat ?? 52.4306, lon: PG.lon ?? 20.7158
+    };
+    const PROGNOZA_URL = PG.prognoza_url ||
+      'https://www.meteo.pl/um/php/mgram_search.php?NALL=52.4306&EALL=20.7158&lang=pl';
+    (async () => {
+      try {
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
+          + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+          + '&timezone=auto&forecast_days=1';
+        const w = await (await fetch(u)).json();
+        const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
+          : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
+        const cur = w.current, d = w.daily;
+        const txt =
+          `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
+          ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')';
+        document.getElementById('pogoda').innerHTML =
+          `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener">${esc(txt)}</a>`;
+      } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
+    })();
+
+    /* ---- nawigacja poprzednie/następne wydanie (z archiwum w index.html) ---- */
+    (async () => {
+      try {
+        const html = await (await fetch('/index.html', { cache: 'no-cache' })).text();
+        const wydania = [...html.matchAll(/href="(wydania\/[^"]+\.html)"/g)].map(m => m[1]); // najnowsze pierwsze
+        const tu = 'wydania/' + decodeURIComponent(location.pathname.split('/').pop());
+        const i = wydania.indexOf(tu);
+        if (i === -1) return;
+        const nowsze = i > 0 ? wydania[i - 1] : null, starsze = i < wydania.length - 1 ? wydania[i + 1] : null;
+        document.getElementById('nav-wydania').innerHTML =
+          (starsze ? `<a href="/${starsze}">← Poprzednie wydanie</a>` : '<span></span>') +
+          '<span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span>' +
+          (nowsze ? `<a href="/${nowsze}">Następne wydanie →</a>` : '<span></span>');
+      } catch (e) { /* podgląd z file:// → nav się nie pokazuje */ }
+    })();
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.flatMap(a =>
+      [a.zrodlo.nazwa, ...(a.zrodla_dodatkowe || []).map(z => z.nazwa)]))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* Trudne terminy: marker {{termin|wyjaśnienie}} w akapitach -> podkreślenie
+       + tooltip (hover / klik na mobile). Wywoływać NA JUŻ zescape'owanym tekście. */
+    function terminy(t) {
+      return t.replace(/\{\{([^|{}]+)\|([^{}]+)\}\}/g,
+        '<span class="term" tabindex="0" data-tip="$2">$1</span>');
+    }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('.term');
+      document.querySelectorAll('.term.open').forEach(x => { if (x !== t) x.classList.remove('open'); });
+      if (t) t.classList.toggle('open');
+    });
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
