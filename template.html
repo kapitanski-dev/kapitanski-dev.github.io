@@ -439,7 +439,67 @@ __DANE__
 
   <script>
   (function () {
-    const D = JSON.parse(document.getElementById('dane-gazety').textContent);
+    /* DEMO-START — podgląd szablonu (Lorem Ipsum). Skrypt rutyny (KROK 3) wycina
+       ten blok z publikowanych wydań; renderuje się TYLKO, gdy placeholder
+       __DANE__ nie został podmieniony (czyli przy otwarciu samego template.html). */
+    const DEMO = {
+      tytul: "Grzyb Times",
+      kicker: "Podgląd szablonu · Lorem Ipsum",
+      data_wydania: "poniedziałek, 1 stycznia 2026, 07:00",
+      numer: "Wydanie demo",
+      artykuly: [
+        { kategoria: "Okładka",
+          tytul: "Lorem ipsum dolor sit amet: consectetur adipiscing elit o 12,4% (~47 mld zł)",
+          zrodlo: { nazwa: "Ipsum Press", url: "#", godzina: "06:30" },
+          zrodla_dodatkowe: [{ nazwa: "Dolor Daily", url: "#" }],
+          obraz: { query: "", alt: "Podgląd — zdjęcie okładki" },
+          kluczowe_liczby: [
+            { wartosc: "12,4%", opis: "lorem ipsum dolor" },
+            { wartosc: "47 mld zł", opis: "sed do eiusmod" }],
+          wykres: { typ: "linia", tytul: "Lorem Index — 10 sesji", jednostka: " pkt",
+            etykiety: ["1.01","2.01","3.01","4.01","5.01","8.01","9.01","10.01","11.01","12.01"],
+            wartosci: [6320,6345,6338,6360,6402,6390,6455,6480,6472,6512] },
+          akapity: [
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Trudne pojęcia dostają {{tooltip|krótkie wyjaśnienie widoczne po najechaniu lub kliknięciu}} z podkreśleniem. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
+            "Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium.",
+            "Nemo enim ipsam voluptatem quia voluptas sit aspernatur aut odit aut fugit, sed quia consequuntur magni dolores eos qui ratione voluptatem sequi nesciunt — jak {{backwardacja|cena natychmiastowa wyższa niż terminowa}} na rynku lorem.",
+            "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti quos dolores et quas molestias excepturi sint occaecati cupiditate non provident." ],
+          kontynuacja: false },
+        { kategoria: "Inwestowanie",
+          tytul: "Sed ut perspiciatis unde omnis iste natus: 4,9 bln USD (~19,6 bln zł)",
+          zrodlo: { nazwa: "Lorem Journal", url: "#", godzina: "07:15" },
+          obraz: { query: "", alt: "Podgląd — Inwestowanie" },
+          kluczowe_liczby: [{ wartosc: "+3,6%", opis: "lorem ipsum" }],
+          wykres: { typ: "slupki", tytul: "Ipsum kwartalnie", jednostka: " mld",
+            etykiety: ["Q1","Q2","Q3","Q4"], wartosci: [18,22,19,27] },
+          akapity: [
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus lacinia odio vitae vestibulum vestibulum. Cras venenatis euismod malesuada. Nullam ac erat ante.",
+            "Integer in mauris eu nibh euismod gravida. Duis ac tellus et risus vulputate vehicula. Donec lobortis risus a elit. Etiam tempor, ut ullamcorper.",
+            "Morbi in ipsum sit amet pede facilisis laoreet. Donec lacus nunc, viverra nec, blandit vel, egestas et, augue. Vestibulum tincidunt malesuada tellus.",
+            "Ut ultrices ultrices enim. Curabitur sit amet mauris. Morbi in dui quis est pulvinar ullamcorper. Nulla facilisi." ],
+          kontynuacja: true },
+        { kategoria: "Technologia",
+          tytul: "Neque porro quisquam est qui dolorem ipsum quia dolor sit amet",
+          zrodlo: { nazwa: "Ipsum Tech", url: "#", godzina: "05:50" },
+          obraz: { query: "", alt: "Podgląd — Technologia" },
+          kluczowe_liczby: [{ wartosc: "2,8 bln", opis: "parametrów lorem" }],
+          akapity: [
+            "Consectetur, adipisci velit, sed quia non numquam eius modi tempora incidunt ut labore et dolore magnam aliquam quaerat voluptatem, w tym {{Bandar-e Abbas|przykładowa mało znana miejscowość z wyjaśnieniem}}.",
+            "Ut enim ad minima veniam, quis nostrum exercitationem ullam corporis suscipit laboriosam, nisi ut aliquid ex ea commodi consequatur.",
+            "Quis autem vel eum iure reprehenderit qui in ea voluptate velit esse quam nihil molestiae consequatur, vel illum qui dolorem eum fugiat quo voluptas nulla pariatur.",
+            "At vero eos et accusamus et iusto odio dignissimos ducimus qui blanditiis praesentium voluptatum deleniti atque corrupti." ],
+          kontynuacja: false }
+      ],
+      logi: [
+        { poziom: "error", wiadomosc: "Przykładowy błąd: API Error 400 — domain not accessible ['lorem.example']." },
+        { poziom: "warning", wiadomosc: "Przykładowe ostrzeżenie: kategoria „Ipsum”: 2 z 3 artykułów." },
+        { poziom: "info", wiadomosc: "Przykładowa informacja: kurs USD/PLN 4,00 (lorem)." }
+      ]
+    };
+    /* DEMO-END */
+    const _raw = document.getElementById('dane-gazety').textContent.trim();
+    const D = (_raw === '__' + 'DANE' + '__' && typeof DEMO !== 'undefined' && DEMO)
+      ? DEMO : JSON.parse(_raw);
 
     /* ---- motyw ---- */
     const root = document.documentElement;

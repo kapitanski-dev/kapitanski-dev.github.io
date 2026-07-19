@@ -212,7 +212,7 @@ zbuduj listę `artykuly` (w kolejności kategorii z configu), **dopisz `log(...)
 dla problemów z KROK 1–2** (patrz KROK 2.5) i uruchom:
 
 ```python
-import json, pathlib, subprocess, datetime
+import json, pathlib, subprocess, datetime, re
 try:
     import yaml
 except ImportError:
@@ -287,7 +287,10 @@ print(f"Artykułów łącznie: {len(dane['artykuly'])} (config: {sum(oczek.value
 print(f"Logów: {len(dane['logi'])}")
 
 out = tpl.replace('__DANE__', json.dumps(dane, ensure_ascii=False, indent=2))
+# Wytnij blok demo (Lorem Ipsum do podglądu szablonu) — w wydaniach ma go nie być:
+out = re.sub(r'/\* DEMO-START.*?DEMO-END \*/', '/* dane produkcyjne */', out, flags=re.S)
 assert '__DANE__' not in out
+assert 'DEMO-START' not in out
 filename = f"{today}-{WYDANIE}-{now.strftime('%H%M')}.html"
 pathlib.Path('/tmp/grzyb_times.html').write_text(out, encoding='utf-8')
 print(f'OK — {len(out):,} bajtów | plik: {filename}')
