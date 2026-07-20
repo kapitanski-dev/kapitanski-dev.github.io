@@ -148,7 +148,14 @@ Warstwy, wszystkie automatyczne:
 3. Przeglądarka czytelnika może jeszcze podmienić zdjęcie kategorii wg
    `obraz.query` (Wikimedia, best-effort).
 
-**Opcjonalnie** podaj `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–5 słów)
+**Okładka — OBOWIĄZKOWE pole `obraz.kategoria`.** Kategoria „Okładka” nie ma
+własnego tematu, a jej bazowe zdjęcie (glob) nie pasuje do niczego konkretnego
+(wpadka 20.07.2026: wojna USA–Iran zilustrowana kulą ziemską). W artykule
+okładkowym wpisz w `obraz.kategoria` DOKŁADNĄ nazwę tej kategorii z config.yaml,
+do której news tematycznie należy (np. `"Wojna"`, `"Inwestowanie"`) — gazeta
+użyje wtedy jej zdjęcia jako bazy. W pozostałych artykułach pola NIE dodawaj.
+
+**Opcjonalnie** podaj `obraz.query`: **precyzyjną, ANGIELSKĄ frazę** (2–4 słowa)
 wskazującą konkretny, fotografowalny obiekt tematu — przeglądarka czytelnika spróbuje
 wtedy w tle podmienić zdjęcie kategorii na trafniejsze z Wikimedia Commons. To czysty
 bonus: jak się uda, obraz jest konkretniejszy; jak nie — zostaje zdjęcie kategorii.
@@ -157,8 +164,10 @@ z głowy (lub `""`, jeśli brak oczywistego obiektu).
 
 Dobre `obraz.query` = **JEDEN konkretny obiekt** (2–4 słowa), nie kombinacja pojęć.
 Wyszukiwarka Wikimedia traktuje słowa jako AND — fraza wielotematyczna zwraca
-0 wyników i artykuł zostaje przy zdjęciu kategorii. Test: „czy istnieje zdjęcie,
-które ktoś podpisałby dokładnie tak?”
+0 wyników i artykuł zostaje przy zdjęciu kategorii. Przy braku trafień
+przeglądarka skraca frazę od KOŃCA, więc **najważniejsze słowa dawaj na
+początku** (`goblin shark filmed alive` zadziała, `deep sea goblin shark` — nie).
+Test: „czy istnieje zdjęcie, które ktoś podpisałby dokładnie tak?”
 - osoba: `Jerome Powell`, `Donald Tusk`, `Sam Altman`
 - miejsce/budynek: `Warsaw Stock Exchange`, `Federal Reserve building`, `Strait of Hormuz`
 - rzecz/logo: `Leopard 2 tank`, `NVIDIA logo`, `James Webb Space Telescope`
@@ -384,6 +393,7 @@ except Exception as _ex:
 for a in dane["artykuly"]:
     obraz = a.get("obraz") or {}
     a["obraz"] = {"query": obraz.get("query") or "", "alt": obraz.get("alt") or a["tytul"]}
+    if obraz.get("kategoria"): a["obraz"]["kategoria"] = obraz["kategoria"]  # okładka: zdjęcie kategorii tematycznej
 
 if _net_ok:
     try:
@@ -428,6 +438,12 @@ valid_cats = {k['nazwa'] for k in cfg['kategorie']}
 for a in dane["artykuly"]:
     if a["kategoria"] not in valid_cats:
         log("error", f"Nieznana kategoria „{a['kategoria']}” (artykuł „{a['tytul']}”). Użyj DOKŁADNEJ nazwy z config: {sorted(valid_cats)}.")
+    if a["obraz"].get("kategoria") and a["obraz"]["kategoria"] not in valid_cats:
+        log("error", f"Nieznana obraz.kategoria „{a['obraz']['kategoria']}” (artykuł „{a['tytul']}”) — użyj DOKŁADNEJ nazwy z config.")
+
+# --- Kontrola: okładka bez obraz.kategoria = neutralny glob zamiast zdjęcia tematu ---
+if dane["artykuly"] and not dane["artykuly"][0]["obraz"].get("kategoria"):
+    log("warning", "Artykuł okładkowy bez obraz.kategoria — dostanie neutralny glob zamiast zdjęcia kategorii tematycznej.")
 
 # --- Kontrola: liczba akapitów wg config (wydanie.akapity, domyślnie 3) ---
 n_akapity = cfg['wydanie'].get('akapity', 3)
@@ -463,7 +479,8 @@ print(f'OK — {len(out):,} bajtów | plik: {filename}')
 ```
 
 Schemat artykułu (`obraz.query` opcjonalna — angielska fraza dla ew. lepszego zdjęcia;
-gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`):
+gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`;
+`obraz.kategoria` — TYLKO w artykule okładkowym, patrz KROK 1):
 
 ```json
 {

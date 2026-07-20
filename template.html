@@ -509,7 +509,7 @@ __DANE__
           skrot: "Lorem ipsum wzrósł o 12,4% (~47 mld zł) — najwyżej od czterech kwartałów.",
           zrodlo: { nazwa: "Ipsum Press", url: "#", opublikowano: "1.01.2026 06:30" },
           zrodla_dodatkowe: [{ nazwa: "Dolor Daily", url: "#" }],
-          obraz: { query: "", alt: "Podgląd — zdjęcie okładki" },
+          obraz: { query: "", alt: "Podgląd — zdjęcie okładki", kategoria: "Inwestowanie" },
           kluczowe_liczby: [
             { wartosc: "12,4%", opis: "lorem ipsum dolor" },
             { wartosc: "47 mld zł", opis: "sed do eiusmod" }],
@@ -618,7 +618,9 @@ __DANE__
          Fallback w onerror: plik -> kategoria -> SVG. Podmiana Wikimedia (data-query)
          tylko, gdy nie ma plika — plik jest trafniejszy niż cokolwiek z Commons. */
       const plik = a.obraz && a.obraz.plik ? a.obraz.plik : '';
-      const kat = katObraz(a.kategoria);
+      /* obraz.kategoria: tematyczna kategoria zdjęcia bazowego — używa jej okładka,
+         żeby news np. wojenny dostał zdjęcie Wojny, a nie neutralny glob „Okładki” */
+      const kat = katObraz((a.obraz && a.obraz.kategoria) || a.kategoria);
       const query = !plik && a.obraz && a.obraz.query ? a.obraz.query : '';
       const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(plik || kat)}"`
         + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
@@ -698,11 +700,15 @@ __DANE__
     [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
       sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
         .then(async () => {
-          const q = img.dataset.query;
-          let url = await wikiResolve(q);
-          // Fallback: fraza wielosłowna bez trafień -> spróbuj 2 pierwszych słów
-          const slowa = q.split(/\s+/);
-          if (!url && slowa.length > 2) url = await wikiResolve(slowa.slice(0, 2).join(' '));
+          /* Commons szuka słów w trybie AND — im dłuższa fraza, tym częściej 0 wyników.
+             Przy braku trafień zdejmuj ostatnie słowo (max 3 zapytania, min 2 słowa,
+             pauza między próbami — rate-limit Commons potrafi uciąć całą serię). */
+          const slowa = img.dataset.query.split(/\s+/);
+          let url = '';
+          for (let n = slowa.length, prob = 0; !url && prob < 3 && n >= Math.min(2, slowa.length); n--, prob++) {
+            if (prob) await sleep(500);
+            url = await wikiResolve(slowa.slice(0, n).join(' '));
+          }
           if (url && await preload(url)) img.src = url;
         });
     });
