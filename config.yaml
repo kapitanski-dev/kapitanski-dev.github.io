@@ -7,7 +7,8 @@
 wydanie:
   tytul: "Grzyb Times"
   jezyk: pl
-  akapity: 4          # liczba akapitów w każdym artykule (domyślnie 3)
+  akapity: 5          # CEL i górna granica akapitów na artykuł; gdy materiału
+                      # źródłowego jest za mało — daj mniej, nie dopychaj wodą
 
 # ------------------------------------------------------------
 # POGODA — pasek w nagłówku. Rutyna przy generowaniu parsuje

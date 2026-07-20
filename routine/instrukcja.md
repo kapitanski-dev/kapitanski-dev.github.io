@@ -206,12 +206,12 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   (≤ 20 słów) — samodzielne, rzeczowe streszczenie z najważniejszą liczbą, jeśli
   jest. Gazeta pokazuje je jako listę na górze wydania z linkami do artykułów.
   Bez markerów `{{...}}` i bez powtarzania tytułu słowo w słowo.
-- **Liczba akapitów = `wydanie.akapity` z `config.yaml`** (gdy brak pola — 3).
-  Dokładnie tyle w każdym artykule. Struktura: pierwszy = najważniejsze fakty
-  i liczby; środkowe = kontekst, szczegóły, reakcje; ostatni = dlaczego to
-  ważne / konsekwencje. Dodatkowe akapity wypełniaj kontekstem i analizą
-  z JUŻ zebranego materiału — nie rób dodatkowego researchu tylko po to,
-  by wydłużyć artykuł.
+- **Liczba akapitów: CEL i górna granica = `wydanie.akapity` z `config.yaml`**
+  (gdy brak pola — 3). Pisz tyle, jeśli zebrany materiał na to pozwala; gdy
+  treści jest za mało — daj MNIEJ, bez dopychania wodą i bez dodatkowego
+  researchu tylko po to, by wydłużyć artykuł. Nigdy więcej niż limit.
+  Struktura: pierwszy = najważniejsze fakty i liczby; środkowe = kontekst,
+  szczegóły, reakcje; ostatni = dlaczego to ważne / konsekwencje.
 - **Ton:** obiektywny, agencyjny, zero marketingu.
 - **Trudne terminy — marker `{{termin|wyjaśnienie}}` w akapitach.** Czytelnik to
   programista: żargon branżowy spoza IT (finanse, wojskowość, prawo, nauka), mało
@@ -450,11 +450,12 @@ for a in dane["artykuly"]:
 if dane["artykuly"] and not dane["artykuly"][0]["obraz"].get("kategoria"):
     log("warning", "Artykuł okładkowy bez obraz.kategoria — dostanie neutralny glob zamiast zdjęcia kategorii tematycznej.")
 
-# --- Kontrola: liczba akapitów wg config (wydanie.akapity, domyślnie 3) ---
+# --- Kontrola: akapity — config to CEL/górna granica; mniej wolno przy chudym materiale ---
 n_akapity = cfg['wydanie'].get('akapity', 3)
 for a in dane["artykuly"]:
-    if len(a.get("akapity") or []) != n_akapity:
-        log("warning", f"Artykuł „{a['tytul']}”: {len(a.get('akapity') or [])} akapitów, config wymaga {n_akapity}.")
+    n = len(a.get("akapity") or [])
+    if n > n_akapity:
+        log("warning", f"Artykuł „{a['tytul']}”: {n} akapitów, config dopuszcza najwyżej {n_akapity}.")
 
 # --- Kontrola: liczba artykułów na kategorię wg config.yaml (rozbieżności -> log) ---
 from collections import Counter
@@ -504,7 +505,8 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`;
 }
 ```
 
-Liczba elementów `akapity` = `wydanie.akapity` z configu (domyślnie 3).
+Liczba elementów `akapity` ≤ `wydanie.akapity` z configu (domyślnie 3) —
+celuj w limit, ale przy chudym materiale daj mniej (patrz KROK 2).
 
 `zrodla_dodatkowe` — tylko gdy treść faktycznie korzysta z więcej niż jednego
 źródła (patrz KROK 2); przy jednym źródle pomiń pole.
