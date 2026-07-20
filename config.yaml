@@ -107,7 +107,8 @@ zrodla_pierwotne:
   - sciencenews.org    # dziennikarstwo naukowe (Society for Science), bez paywalla
   - livescience.com    # codzienny popularnonaukowy; lżejsze tematy też pod Ciekawostkę
   # Uzupełnienie braków (audyt logów 19.07.2026):
-  - marketwatch.com    # globalne rynki, działa też w weekendy (Inwestowanie)
+  - finance.yahoo.com  # globalne rynki, działa też w weekendy (Inwestowanie);
+                       # zastąpił marketwatch.com, który blokuje bota (błąd 400, audyt 20.07.2026)
   - interia.pl         # polskie newsy z konkretnymi URL-ami (Polityka)
   - newatlas.com       # nowinki techniczne i przełomy inżynieryjne (Technologia)
   - space.com          # przemysł kosmiczny — luka wykryta przy pominiętym Starship Flight 13

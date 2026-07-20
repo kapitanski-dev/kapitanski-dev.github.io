@@ -328,13 +328,37 @@ dane = {
   "pogoda": cfg.get('pogoda') or {}  # lokalizacja + link prognozy z configu (pasek w nagłówku)
 }
 
+def log(poziom, wiadomosc):
+    """Dodaj wpis do sekcji „Logs”. poziom: 'error' | 'warning' | 'info'."""
+    dane["logi"].append({"poziom": poziom, "wiadomosc": wiadomosc})
+    print(f"  LOG[{poziom}] {wiadomosc}")
+
+# >>> OBOWIĄZKOWO: zaloguj model, który generuje to wydanie (podaj SWOJĄ dokładną
+#     nazwę/ID modelu — wiesz, kim jesteś):
+log("info", "Model rutyny: <tu wpisz dokładną nazwę modelu, np. claude-opus-4-8>")
+
+# >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
+#     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
+
+# --- Sonda łączności: środowisko rutyny bywa za proxy, które odrzuca wychodzący
+#     HTTP do dowolnych domen (objaw: „Tunnel connection failed: 403 Forbidden”;
+#     audyt 20.07.2026 — padły przez to WSZYSTKIE og:image i pogoda z Interii).
+#     Jedna próba zamiast kilkunastu cichych porażek: ---
+import io, urllib.request
+_UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+_net_ok = True
+try:
+    urllib.request.urlopen(urllib.request.Request('https://www.wikimedia.org', headers=_UA), timeout=10).read(200)
+except Exception as _ex:
+    _net_ok = False
+    log("warning", f"Środowisko blokuje wychodzący HTTP ({_ex}) — pomijam pogodę z Interii i og:image; obrazy = zdjęcia kategorii, pogoda = Open-Meteo w przeglądarce.")
+
 # --- Pogoda z Interii: parsowanie HTML w skrypcie (zero tokenów LLM).
 #     Gdy się nie uda — pole zostaje puste, przeglądarka użyje Open-Meteo. ---
-import urllib.request
 try:
     _pu = dane["pogoda"].get("prognoza_url", "")
-    if "pogoda.interia.pl" in _pu:
-        _rq = urllib.request.Request(_pu, headers={"User-Agent": "Mozilla/5.0"})
+    if _net_ok and "pogoda.interia.pl" in _pu:
+        _rq = urllib.request.Request(_pu, headers=_UA)
         _h = urllib.request.urlopen(_rq, timeout=15).read().decode("utf-8", "ignore")
         _t = re.search(r'weather-currently-temp-strict">\s*(-?\d+)°C', _h)
         _o = re.search(r'weather-currently-icon[^"]*"\s*\n?\s*title="([^"]+)"', _h)
@@ -351,18 +375,6 @@ try:
 except Exception as _ex:
     log("info", f"Pogoda z Interii nieudana ({_ex}) — przeglądarka użyje Open-Meteo.")
 
-def log(poziom, wiadomosc):
-    """Dodaj wpis do sekcji „Logs”. poziom: 'error' | 'warning' | 'info'."""
-    dane["logi"].append({"poziom": poziom, "wiadomosc": wiadomosc})
-    print(f"  LOG[{poziom}] {wiadomosc}")
-
-# >>> OBOWIĄZKOWO: zaloguj model, który generuje to wydanie (podaj SWOJĄ dokładną
-#     nazwę/ID modelu — wiesz, kim jesteś):
-log("info", "Model rutyny: <tu wpisz dokładną nazwę modelu, np. claude-opus-4-8>")
-
-# >>> Wklej tu wpisy log(...) dla problemów napotkanych w KROK 1–2 (patrz KROK 2.5),
-#     np. log("error", "API Error: 400 ... domains not accessible ... ['reuters.com'] ...")
-
 # --- Obrazy, warstwa 1: og:image artykułu źródłowego, pobierane TYM skryptem
 #     (mechanicznie, zero tokenów LLM) i zapisywane do repo => ten sam origin,
 #     ładuje się zawsze. Porażka któregokolwiek kroku = artykuł zostaje przy
@@ -373,15 +385,15 @@ for a in dane["artykuly"]:
     obraz = a.get("obraz") or {}
     a["obraz"] = {"query": obraz.get("query") or "", "alt": obraz.get("alt") or a["tytul"]}
 
-try:
-    from PIL import Image
-except ImportError:
-    subprocess.run("pip install pillow -q", shell=True)
-    from PIL import Image
-import io, urllib.request
+if _net_ok:
+    try:
+        from PIL import Image
+    except ImportError:
+        subprocess.run("pip install pillow -q", shell=True)
+        from PIL import Image
 _imgdir = repo / 'wydania' / 'img' / f"{today}-{WYDANIE}"
-_UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-for _i, _a in enumerate(dane["artykuly"]):
+_og_err = {}
+for _i, _a in enumerate(dane["artykuly"] if _net_ok else []):
     try:
         _h = urllib.request.urlopen(urllib.request.Request(_a["zrodlo"]["url"], headers=_UA), timeout=12).read(400000).decode('utf-8', 'ignore')
         _m = (re.search(r'property=["\']og:image["\'][^>]*content=["\']([^"\']+)', _h) or
@@ -396,12 +408,20 @@ for _i, _a in enumerate(dane["artykuly"]):
         _imgdir.mkdir(parents=True, exist_ok=True)
         _im.save(_imgdir / f"art-{_i}.jpg", 'JPEG', quality=78, optimize=True)
         _a["obraz"]["plik"] = f"/wydania/img/{today}-{WYDANIE}/art-{_i}.jpg"
-    except Exception:
-        pass   # fallback: zdjęcie kategorii (+ ew. Wikimedia w przeglądarce)
+    except Exception as _ex:
+        # fallback: zdjęcie kategorii (+ ew. Wikimedia w przeglądarce);
+        # przyczynę zapamiętaj — bez tego 0/N w logach jest niediagnozowalne
+        _k = str(_ex)[:120] or type(_ex).__name__
+        _og_err[_k] = _og_err.get(_k, 0) + 1
 _n_og = sum(1 for _a in dane["artykuly"] if _a["obraz"].get("plik"))
 print(f"Obrazy ze źródeł (og:image): {_n_og}/{len(dane['artykuly'])}")
-if _n_og < len(dane["artykuly"]):
-    log("info", f"Obrazy: {_n_og}/{len(dane['artykuly'])} pobrane ze źródeł (og:image); pozostałe = zdjęcia kategorii.")
+if _net_ok and _n_og < len(dane["artykuly"]):
+    _dg = ""
+    if _og_err:
+        _top = max(_og_err, key=_og_err.get)
+        _dg = f" Najczęstszy błąd ({_og_err[_top]}×): {_top}"
+    _lvl = "warning" if (_n_og == 0 and _og_err) else "info"
+    log(_lvl, f"Obrazy: {_n_og}/{len(dane['artykuly'])} pobrane ze źródeł (og:image); pozostałe = zdjęcia kategorii.{_dg}")
 
 # --- Kontrola: kategorie muszą DOKŁADNIE pasować do config.yaml (łapie np. „Война”->„Wojna”) ---
 valid_cats = {k['nazwa'] for k in cfg['kategorie']}
@@ -584,6 +604,7 @@ mkdir -p wydania
 cp /tmp/grzyb_times.html wydania/${DATE}-${WYDANIE}-${TIME}.html
 git add wydania index.html   # wydania/ obejmuje też pobrane obrazy (wydania/img/…)
 git commit -m "Grzyb Times — ${WYDANIE} ${DATE} ${TIME}"
+git pull --rebase origin main   # ktoś mógł pushnąć w trakcie generowania
 git push origin main
 echo "Opublikowano: https://kapitanski-dev.github.io/wydania/${DATE}-${WYDANIE}-${TIME}.html"
 ```
