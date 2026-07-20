@@ -222,6 +222,11 @@ trafiła do akapitów, wypisz je w `zrodla_dodatkowe` (KROK 2).
   - termin wpisuj w odmianie, w jakiej stoi w zdaniu (np.
     `{{kontraktach terminowych|umowy kupna/sprzedaży z ustaloną ceną i przyszłą datą}}`);
   - oznaczaj tylko PIERWSZE wystąpienie, maksymalnie ~3 na artykuł;
+  - **nazwane reguły, ustawy, dyrektywy i doktryny MAJĄ PIERWSZEŃSTWO w tym
+    limicie** — czytelnik nie wywnioskuje ich z kontekstu (np. `{{reguły
+    Volckera|amerykański zakaz spekulacyjnego handlu banków na własny rachunek}}`,
+    Basel III, CRD VI, MiCA). Wpadka 20.07.2026: „osłabienie reguły Volckera”
+    bez wyjaśnienia, choć limit markerów nie był wyczerpany;
   - nie oznaczaj rzeczy oczywistych (USA, NATO, inflacja, GPU) ani niczego
     w tytułach i `kluczowe_liczby` — marker działa tylko w `akapity`.
 - **Sprzeczne narracje między źródłami:** gdy źródła opisują ten sam news inaczej,
