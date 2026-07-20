@@ -153,16 +153,19 @@
   .w-skrocie a:hover { color: var(--accent); }
   .w-skrocie.hidden { display: none !important; }
 
-  /* ===== Widok okładki: hero i „W skrócie” obok siebie 1:1 =====
-     (JS dodaje .widok-okladka na #gazeta, gdy aktywny filtr = kategoria okładki;
-     ukryte artykuły/divider mają display:none, więc grid ich nie układa) */
-  #gazeta.widok-okladka { display: grid; grid-template-columns: 1fr 1fr; column-gap: 44px; align-items: start; }
-  #gazeta.widok-okladka .hero { grid-column: 1; grid-row: 1; }
-  #gazeta.widok-okladka .w-skrocie { grid-column: 2; grid-row: 1; margin: 40px 0 10px; }
+  /* ===== Widok okładki: „W skrócie” pływa po prawej (1:1) =====
+     (JS dodaje .widok-okladka na #gazeta, gdy aktywny filtr = kategoria okładki.
+     Skrót to float — treść hero zaczyna się obok, w lewej połowie, a tam, gdzie
+     skrót się kończy, akapity wpadają na pełną szerokość: siatka jak w gazecie.
+     figure/wykres dostają flow-root (BFC), żeby stały OBOK floatu, nie pod nim.) */
+  #gazeta.widok-okladka .w-skrocie { float: right; width: calc(50% - 22px); margin: 40px 0 22px 44px; }
   #gazeta.widok-okladka .w-skrocie ul { column-count: 1; }
-  #gazeta.widok-okladka .hero .cols { column-count: 1; }
+  #gazeta.widok-okladka .hero figure,
+  #gazeta.widok-okladka .hero .chart-box { display: flow-root; }
+  #gazeta.widok-okladka .hero .cols { column-count: auto; }
   #gazeta.widok-okladka .hero img { height: clamp(260px, 34vh, 400px); }
   #gazeta.widok-okladka .divider { display: none; }
+  #gazeta.widok-okladka::after { content: ""; display: block; clear: both; }
 
   /* ===== Artykuł hero ===== */
   .hero { margin: 40px 0 10px; }
@@ -425,9 +428,9 @@
     .w-skrocie { padding: 12px 14px 8px; margin: 18px 0 4px; }
 
     /* Widok okładki — układ 1:1 zwija się do kolumny: hero nad skrótem */
-    #gazeta.widok-okladka { grid-template-columns: 1fr; column-gap: 0; }
-    #gazeta.widok-okladka .hero { grid-column: 1; grid-row: 1; }
-    #gazeta.widok-okladka .w-skrocie { grid-column: 1; grid-row: 2; margin: 18px 0 4px; }
+    #gazeta.widok-okladka { display: flex; flex-direction: column; }
+    #gazeta.widok-okladka .hero { order: 1; }
+    #gazeta.widok-okladka .w-skrocie { float: none; width: auto; margin: 18px 0 4px; order: 2; }
 
     /* Hero */
     .hero { margin: 28px 0 8px; }
