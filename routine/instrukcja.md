@@ -274,8 +274,11 @@ W skrypcie z KROK 3 służy do tego funkcja `log(poziom, wiadomosc)`.
 - **Błędy narzędzi** — dosłowną treść, np. z WebSearch/WebFetch:
   `log("error", "API Error: 400 The following domains are not accessible to our user agent: ['reuters.com']. Read more: https://support.anthropic.com/...")`.
 - **Źródło niedostępne / zablokowane** dla bota, przekierowania, paywall, timeouty.
-- **Braki w kategoriach** — za mało sensownych materiałów, by wypełnić `liczba`
-  (np. `log("warning", "Kategoria „Wojna”: znaleziono 2 z 3 wymaganych artykułów.")`).
+- **Braki w kategoriach** — `liczba` to CEL/górna granica: gdy sensownych
+  materiałów jest mniej, daj mniej (nie dopychaj słabym artykułem). Niedoboru
+  NIE loguj ręcznie — skrypt z KROK 3 sam dopisze wpis `info` o różnicy. Jeśli
+  brak wynika z czegoś nietypowego (np. temat wypadł przez deduplikację), dodaj
+  własny wpis `info` z przyczyną.
 - **Problemy z danymi** — rozbieżne wartości między źródłami, brak aktualnego
   kursu walutowego do przeliczenia na PLN. (Brak danych do wykresu NIE jest
   zdarzeniem — po prostu pomiń wykres, patrz KROK 2.)
@@ -457,14 +460,21 @@ for a in dane["artykuly"]:
     if n > n_akapity:
         log("warning", f"Artykuł „{a['tytul']}”: {n} akapitów, config dopuszcza najwyżej {n_akapity}.")
 
-# --- Kontrola: liczba artykułów na kategorię wg config.yaml (rozbieżności -> log) ---
+# --- Kontrola: liczba artykułów na kategorię wg config.yaml. `liczba` to CEL i
+#     górna granica (jak akapity): NADMIAR = realny problem (nad budżet / zła
+#     kategoryzacja) -> warning; NIEDOBÓR przy chudym materiale jest OK (nie
+#     dopychamy słabym artykułem) -> info, żeby ślad był, ale bez fałszywego alarmu. ---
 from collections import Counter
 oczek = {k['nazwa']: k.get('liczba', 1) for k in cfg['kategorie']}
 masz = Counter(a['kategoria'] for a in dane['artykuly'])
 for kat, n in oczek.items():
-    if masz.get(kat, 0) != n:
-        print(f"  ⚠ {kat}: jest {masz.get(kat,0)}, config oczekuje {n}")
-        log("warning", f"Kategoria „{kat}”: złożono {masz.get(kat,0)} art., config oczekuje {n}.")
+    ile = masz.get(kat, 0)
+    if ile > n:
+        print(f"  ⚠ {kat}: jest {ile}, config dopuszcza najwyżej {n}")
+        log("warning", f"Kategoria „{kat}”: złożono {ile} art., config dopuszcza najwyżej {n}.")
+    elif ile < n:
+        print(f"  · {kat}: jest {ile} z {n} (chudy materiał — nie dopychamy)")
+        log("info", f"Kategoria „{kat}”: złożono {ile} art. z {n} w configu — mniej przy chudym materiale, bez dopychania wodą.")
 # --- Higiena logów: dedup + wpisy kontrolne tylko dla realnych rozbieżności ---
 _seen = set()
 dane["logi"] = [l for l in dane["logi"]
