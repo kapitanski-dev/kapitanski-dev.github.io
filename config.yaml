@@ -129,3 +129,15 @@ zrodla_pierwotne:
 # ------------------------------------------------------------
 research_wtorny:
   tryb: wyjatkowo   # nigdy | wyjatkowo | swobodnie
+
+# ------------------------------------------------------------
+# LITERATURA — stała rubryka wydania (cytat / przysłowie / wiersz
+# dnia z omówieniem powiązanym z wydarzeniami + angielskie słówko
+# i zwrot). Szczegóły składu: routine/instrukcja.md (KROK 2.7).
+# `zrodlo_wierszy` — biblioteka poezji w domenie publicznej (bot ma
+# dostęp; sprawdzone 22.07.2026). Cytat/przysłowie/angielski model
+# składa z własnej wiedzy (atrybucję cytatu może zweryfikować w sieci).
+# ------------------------------------------------------------
+literatura:
+  wlaczona: true
+  zrodlo_wierszy: wolnelektury.pl   # API: /api/genres/wiersz/books/?format=json
