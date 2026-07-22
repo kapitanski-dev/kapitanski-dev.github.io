@@ -59,6 +59,25 @@ duplikuj tematów i nie wychodź poza listę źródeł).
 - **Weekend/święta (Inwestowanie):** gdy giełdy są zamknięte, okno dla
   Inwestowania rozszerza się do 48 h (podsumowania tygodnia, zapowiedzi).
   Nie sięgaj po newsy starsze niż 48 h — lepiej mniej artykułów.
+- **Świeżość to TWARDY warunek, nie sugestia.** Wiek liczy się datą WYDARZENIA /
+  publikacji źródła (`zrodlo.opublikowano`), nie datą, w której news wypłynął
+  w wyszukiwarce. Decyzja/uchwała sprzed dwóch tygodni to NIE jest news dnia,
+  nawet jeśli akurat pojawił się o niej wpis (wpadka 22.07: rezolucja PE ws. UPA
+  z **08.07** — 14 dni — trafiła do wydania). Gdy w kategorii nie ma nic w oknie,
+  daj mniej artykułów — nie łataj luki starym tematem.
+- **Okno 12 h obowiązuje KAŻDĄ kategorię — bez wyjątków, także Ciekawostkę
+  i Naukę.** Nie ma tematów „ponadczasowych": odkrycie, rekord czy ciekawostka
+  też mają datę publikacji i muszą mieścić się w 12 h (wpadka 22.07: rekin goblin
+  z **08.07** — 14 dni — i „pszczoły potu” z **kwietnia** trafiły do Ciekawostek).
+  Jedyny wyjątek to opisane wyżej weekendowe 48 h dla **Inwestowania** (giełdy
+  zamknięte) — nie rozciągaj go na inne kategorie. Skrypt KROK 3 oznacza
+  ostrzeżeniem każdy artykuł ze źródłem starszym niż okno.
+- **`zrodlo.opublikowano` — PEŁNA data i czas TAK DOKŁADNIE, jak podaje źródło.**
+  Format `DD.MM.YYYY GG:MM:SS`, gdy źródło daje sekundy; `DD.MM.YYYY GG:MM`, gdy
+  tylko godzinę i minutę; `DD.MM.YYYY`, gdy zna tylko dzień. Nigdy sam miesiąc/rok
+  („2026-07”) — bez pełnej daty nie sposób ocenić okna 12 h, a skrypt KROK 3 taki
+  timestamp oznaczy ostrzeżeniem. Jeśli źródło nie podaje daty w ogóle — pomiń
+  pole, nie zgaduj.
 - **`zrodlo.url` = KONKRETNY artykuł, nie strona główna.** Jeśli wyniki
   wyszukiwania nie dają bezpośredniego URL-a, wybierz inny temat/źródło,
   które go ma. Link do strony głównej lub kategorii serwisu — tylko w
@@ -76,6 +95,17 @@ według trzech kryteriów, w tej kolejności wag:
 Wybierz top `liczba` wg łącznej oceny i uporządkuj malejąco. Rozstrzyganie
 remisów: wyżej to, co bardziej konkretne (zweryfikowane liczby, podjęte
 decyzje) — niżej „może / planuje / rozważa”.
+
+**Różnorodność w kategorii — nie pozwól, by jeden wątek zdusił resztę.**
+Gdy kategoria obejmuje kilka RÓWNOLEGLE aktywnych teatrów/wątków (typowo
+**Wojna**: Bliski Wschód, Ukraina–Rosja, ew. inne), rozłóż sloty `liczba` między
+odrębne fronty — czytelnik ma dostać przekrój, a nie 3 odcinki tej samej wojny.
+Wpadka 22.07 wieczór: kategoria Wojna to USA–Iran + dwa recapy jednego wątku,
+a świeży ukraiński atak na rosyjskie **magazyny towarowe** (Wildberries, w nocy,
+15 rannych) wypadł. Praktycznie: jeśli pierwszy WebSearch skupił się na jednym
+froncie, zrób **jedno dodatkowe, celowane wyszukanie** drugiego aktywnego frontu
+(to mieści się w limicie „1 dodatkowe” z reguły oszczędzania tokenów) — dopiero
+potem wybieraj. Ta sama zasada dotyczy każdej kategorii z kilkoma żywymi wątkami.
 
 **Paywall — link artykułu ma być czytelny.** Czytelnik klika `zrodlo.url`, żeby
 doczytać — link za twardym paywallem (np. **bloomberg.com**) jest dla niego
@@ -303,6 +333,45 @@ artykułów i akapitów).
   nazwy kategorii) — te kontrole skrypt loguje sam i tylko przy rozbieżności.
 - Używaj skryptu z instrukcji **bez przerabiania logiki kontroli**.
 
+## KROK 2.7 — Sekcja „Literatura”
+
+Osobna, stała rubryka wydania (własny przycisk „Literatura” w pasku filtrów) —
+lekki, kulturalny kontrapunkt dla newsów. Buduj tę sekcję tylko, gdy
+`config.yaml → literatura.wlaczona` jest `true` (jeśli `false` lub brak — zostaw
+`dane["literatura"] = {}`, przycisk się nie pojawi). Złóż obiekt `literatura`
+z **czterema** elementami. Każdy z pierwszych trzech ma **omówienie na JEDEN
+akapit** (kilka zdań, zwięźle). Powiązanie z wydarzeniami wydania jest
+**opcjonalne** — jeśli myśl naturalnie pasuje do dnia, możesz to zaznaczyć, ale
+NIE dopasowuj na siłę. Wybieraj przede wszystkim rzeczy dobre i ciekawe same
+w sobie; omówienie ma objaśnić sens/kontekst utworu, nie udawać związku z newsami.
+
+1. **Cytat dnia** — myśl znanego autora (pisarz, filozof, naukowiec, mąż stanu).
+   Podaj `autor` i — jeśli znasz — `zrodlo` (dzieło) lub `"przypisywane"`, gdy
+   atrybucja niepewna. Cytuj wiernie; nie zmyślaj autorstwa.
+2. **Przysłowie dnia** — polskie lub obce/łacińskie (`pochodzenie`, przy obcym
+   podaj oryginał w treści lub omówieniu). Omówienie tłumaczy sens.
+3. **Wiersz dnia** — **cały wiersz, w całości** (nie fragment). Dlatego wybieraj
+   utwory KRÓTKIE (kilka–kilkanaście wersów: fraszka, sonet, krótki liryk),
+   które zmieszczą się bez ucinania; zachowaj łamanie wersów jako `\n`. Pola:
+   `tytul`, `autor`, `zrodlo_url` i `tresc` (pełny tekst). Źródło poezji:
+   **wolnelektury.pl** (domena wolna od praw autorskich, bot ma dostęp; API:
+   `https://wolnelektury.pl/api/genres/wiersz/books/?format=json`, pełny tekst
+   utworu z pola `txt`). Trzymaj się domeny publicznej — klasyka polska i światowa
+   (Tuwim, Miłosz\*, Konopnicka, Horacy, Szymborska\*…); \*sprawdź, czy utwór jest
+   na wolnelektury (tam są tylko wolne od praw). Nie wklejaj poezji spod praw
+   autorskich spoza tego źródła.
+4. **Angielski na dziś** — jedno przydatne `slowo` (z `wymowa` w IPA, `znaczenie`
+   po polsku, `przyklad` w formacie `"zdanie EN — tłumaczenie PL"`) oraz jeden
+   idiomatyczny `zwrot`/kolokacja (`zwrot_znaczenie`, `zwrot_przyklad` w tym
+   samym formacie). Poziom średnio-zaawansowany, słownictwo przydatne przy
+   czytaniu prasy. To Twoja wiedza — nie wymaga researchu w sieci.
+
+Research: wiersz bierz z wolnelektury.pl (WebFetch API powyżej — działa mimo
+blokady egresu skryptu, bo to fetcher Anthropic). Cytat, przysłowie i angielski
+możesz złożyć z własnej wiedzy; jeśli weryfikujesz atrybucję cytatu w sieci —
+dozwolone (to research wtórny, patrz config). Braki loguj tylko przy realnym
+problemie (np. nie udało się pobrać wiersza — daj `info` i pomiń pole `wiersz`).
+
 ## KROK 3 — Wygeneruj plik wydania
 
 W poniższym skrypcie **ustaw `WYDANIE`** na wartość z promptu (`rano` albo `wieczor`),
@@ -340,6 +409,7 @@ dane = {
   "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}, {now.strftime('%H:%M')}",
   "numer": etykieta,
   "artykuly": [],  # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
+  "literatura": {},# <-- sekcja „Literatura”: cytat/przysłowie/wiersz + angielski (patrz KROK 2.7 i schemat niżej)
   "logi": [],      # <-- zdarzenia z uruchomienia rutyny -> sekcja „Logs” w gazecie (patrz KROK 2.5)
   "watki": [],     # <-- zapowiedzi do sprawdzenia w NASTĘPNYM wydaniu (patrz KROK 1 — wątki)
   "pogoda": cfg.get('pogoda') or {}  # lokalizacja + link prognozy z configu (pasek w nagłówku)
@@ -460,6 +530,42 @@ for a in dane["artykuly"]:
     if n > n_akapity:
         log("warning", f"Artykuł „{a['tytul']}”: {n} akapitów, config dopuszcza najwyżej {n_akapity}.")
 
+# --- Kontrola: ŚWIEŻOŚĆ źródła (zrodlo.opublikowano). TWARDE okno 12 h dla KAŻDEJ
+#     kategorii (jedyny wyjątek: weekend + Inwestowanie = 48 h, giełdy zamknięte).
+#     Łapie trzy wpadki naraz: (1) stary news podany jako świeży (audyt 22.07: rezolucja
+#     PE ws. UPA z 08.07 — 14 dni; rekin goblin z 08.07 w Ciekawostkach), (2) niejasny
+#     timestamp bez pełnej daty (np. „2026-07”), który MASKUJE wiek, (3) data bez godziny,
+#     przez którą nie da się potwierdzić okna 12 h. Warning, nie blokada — ale wiek ma być
+#     widoczny. Timestamp podawaj tak dokładnie, jak źródło (do sekund, jeśli są). ---
+def _parse_pub(s):
+    s = (s or "").strip()
+    for fmt, _ma_czas in (("%d.%m.%Y %H:%M:%S", True), ("%d.%m.%Y %H:%M", True),
+                          ("%Y-%m-%dT%H:%M:%S", True), ("%Y-%m-%d %H:%M", True),
+                          ("%d.%m.%Y", False), ("%Y-%m-%d", False)):
+        try: return datetime.datetime.strptime(s, fmt), _ma_czas
+        except ValueError: pass
+    return None, False
+_weekend = today.weekday() >= 5
+for a in dane["artykuly"]:
+    _pub = (a.get("zrodlo") or {}).get("opublikowano", "")
+    if not _pub:
+        continue                     # brak pola jest dozwolony — nie hałasujemy
+    _dt, _ma_czas = _parse_pub(_pub)
+    _okno_h = 48 if (_weekend and a["kategoria"] == "Inwestowanie") else 12
+    if _dt is None:
+        log("warning", f"Artykuł „{a['tytul']}”: niejasny timestamp źródła („{_pub}”) — podaj pełną datę DD.MM.YYYY[ GG:MM:SS] (bez niej nie sposób sprawdzić okna {_okno_h} h).")
+    elif _ma_czas:
+        _wiek_h = (now - _dt).total_seconds() / 3600
+        if _wiek_h > _okno_h:
+            log("warning", f"Artykuł „{a['tytul']}”: źródło sprzed {_wiek_h:.0f} h ({_dt.strftime('%d.%m.%Y %H:%M')}) — poza oknem {_okno_h} h.")
+    else:
+        # sama data, bez godziny — 12 h nie do zweryfikowania; dozwolone tylko dziś
+        _dni = (today - _dt.date()).days
+        if _dni >= 1:
+            log("warning", f"Artykuł „{a['tytul']}”: źródło z {_dt.strftime('%d.%m.%Y')} ({_dni} dni temu) — poza oknem {_okno_h} h.")
+        else:
+            log("info", f"Artykuł „{a['tytul']}”: źródło ({_dt.strftime('%d.%m.%Y')}) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno {_okno_h} h.")
+
 # --- Kontrola: liczba artykułów na kategorię wg config.yaml. `liczba` to CEL i
 #     górna granica (jak akapity): NADMIAR = realny problem (nad budżet / zła
 #     kategoryzacja) -> warning; NIEDOBÓR przy chudym materiale jest OK (nie
@@ -503,7 +609,7 @@ gwarantowane zdjęcie kategorii dostaje artykuł i tak, po `kategoria`;
   "kategoria": "Inwestowanie",
   "tytul": "Rzeczowy tytuł z liczbą",
   "skrot": "Jedno zdanie (≤20 słów) do sekcji „W skrócie” — z kluczową liczbą.",
-  "zrodlo": {"nazwa": "Bankier", "url": "https://...", "opublikowano": "19.07.2026 06:45"},
+  "zrodlo": {"nazwa": "Bankier", "url": "https://...", "opublikowano": "19.07.2026 06:45:12"},
   "zrodla_dodatkowe": [{"nazwa": "Al Jazeera", "url": "https://..."}],
   "obraz": {"query": "Warsaw Stock Exchange", "alt": "opis zdjęcia po polsku"},
   "kluczowe_liczby": [{"wartosc": "2,3%", "opis": "spadek indeksu"}],
@@ -524,6 +630,19 @@ celuj w limit, ale przy chudym materiale daj mniej (patrz KROK 2).
 `kontynuacja: true` **tylko** gdy artykuł rozwija temat z poprzedniego wydania
 (patrz KROK 1 — deduplikacja); wtedy gazeta pokazuje badge „Aktualizacja”.
 Przy zwykłych, nowych tematach pole pomiń albo ustaw `false`.
+
+Schemat sekcji „Literatura” (`dane["literatura"]` — patrz KROK 2.7; pola
+opcjonalne pomiń, ale każdy z 4 elementów staraj się wypełnić; omówienie na
+JEDEN akapit; `\n` w `tresc` wiersza łamie wersy — podaj CAŁY utwór):
+
+```json
+{
+  "cytat": {"tresc": "Kto nie idzie naprzód, ten się cofa.", "autor": "J.W. Goethe", "zrodlo": "przypisywane", "omowienie": "Jeden akapit — sens myśli (powiązanie z dniem opcjonalne)."},
+  "przyslowie": {"tresc": "Gdzie dwóch się bije, tam trzeci korzysta.", "pochodzenie": "przysłowie polskie", "omowienie": "Jeden akapit — sens (powiązanie opcjonalne)."},
+  "wiersz": {"tytul": "Tytuł", "autor": "Autor", "zrodlo_url": "https://wolnelektury.pl/katalog/lektura/...", "tresc": "Cały wiersz, wers po wersie,\nz łamaniem przez \\n,\nbez ucinania.", "omowienie": "Jeden akapit — interpretacja utworu."},
+  "angielski": {"slowo": "resilience", "wymowa": "/rɪˈzɪl.jəns/", "znaczenie": "odporność", "przyklad": "The market showed resilience. — Rynek wykazał się odpornością.", "zwrot": "to weather the storm", "zwrot_znaczenie": "przetrwać trudny okres", "zwrot_przyklad": "They weathered the storm. — Przetrwali trudny okres."}
+}
+```
 
 Schemat wpisu logu (`dane["logi"]` — dodawany funkcją `log(poziom, wiadomosc)`):
 
