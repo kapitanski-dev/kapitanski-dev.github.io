@@ -19,6 +19,7 @@ Mapowanie `WYDANIE`:
 Repozytorium jest już sklonowane w środowisku. Zlokalizuj je i wczytaj config:
 
 ```bash
+date +%s > /tmp/grzyb_start_epoch   # znacznik startu rutyny — „czas wykonania” w logach (KROK 3)
 REPO=$(find /home /root /workspace /tmp -maxdepth 6 -name ".git" 2>/dev/null | grep -v '/.git/' | head -1 | xargs dirname 2>/dev/null)
 echo "Repo: $REPO" && ls "$REPO"
 ```
@@ -322,7 +323,8 @@ Zasady: notuj **konkretnie** (kategoria, artykuł, dosłowny komunikat błędu, 
 pomocy jeśli był). Nie loguj rzeczy oczywistych ani szumu. Jeśli wszystko poszło
 gładko — zostaw `logi` puste (gazeta pokaże „Brak zdarzeń”). Część logów skrypt
 z KROK 3 dopisze automatycznie (złe nazwy kategorii, rozbieżność liczby
-artykułów i akapitów).
+artykułów i akapitów, świeżość źródeł, **czas wykonania i zużycie tokenów**) —
+tych NIE pisz ręcznie.
 
 **Higiena logów — publikowane są tylko logi z OSTATNIEGO, poprawnego przebiegu:**
 - Jeśli uruchamiasz skrypt KROK 3 kilka razy (poprawki, debug), lista `logi`
@@ -348,29 +350,41 @@ w sobie; omówienie ma objaśnić sens/kontekst utworu, nie udawać związku z n
 1. **Cytat dnia** — myśl znanego autora (pisarz, filozof, naukowiec, mąż stanu).
    Podaj `autor` i — jeśli znasz — `zrodlo` (dzieło) lub `"przypisywane"`, gdy
    atrybucja niepewna. Cytuj wiernie; nie zmyślaj autorstwa.
-2. **Przysłowie dnia** — polskie lub obce/łacińskie (`pochodzenie`, przy obcym
-   podaj oryginał w treści lub omówieniu). Omówienie tłumaczy sens.
-3. **Wiersz dnia** — **cały wiersz, w całości** (nie fragment). Dlatego wybieraj
-   utwory KRÓTKIE (kilka–kilkanaście wersów: fraszka, sonet, krótki liryk),
-   które zmieszczą się bez ucinania; zachowaj łamanie wersów jako `\n`. Pola:
-   `tytul`, `autor`, `zrodlo_url` i `tresc` (pełny tekst). Źródło poezji:
-   **wolnelektury.pl** (domena wolna od praw autorskich, bot ma dostęp; API:
-   `https://wolnelektury.pl/api/genres/wiersz/books/?format=json`, pełny tekst
-   utworu z pola `txt`). Trzymaj się domeny publicznej — klasyka polska i światowa
-   (Tuwim, Miłosz\*, Konopnicka, Horacy, Szymborska\*…); \*sprawdź, czy utwór jest
-   na wolnelektury (tam są tylko wolne od praw). Nie wklejaj poezji spod praw
-   autorskich spoza tego źródła.
+2. **Przysłowie dnia** — **czysty random, BEZ związku z newsami** (nie dopasowuj
+   do wydarzeń dnia — ma być po prostu ciekawe). Baza: przysłowie polskie
+   (`tresc`, `pochodzenie: "przysłowie polskie"`). Dodaj pole `odpowiedniki` —
+   listę obcych odpowiedników w stałej kolejności języków: **angielski (`ang.`),
+   łaciński (`łac.`), japoński (`jp`)**. Każdy wpis: `jezyk`, `tresc` w oryginale
+   (przy japońskim ZAPIS oryginalny + transkrypcja łacińska w nawiasie) oraz
+   `tlum` = dosłowne tłumaczenie na polski. **Tylko RZECZYWISTE odpowiedniki** —
+   jeśli dla danego przysłowia nie ma trafnego odpowiednika w którymś języku,
+   pomiń ten język (nie zmyślaj na siłę). Omówienie (1 akapit) tłumaczy sens.
+3. **Wiersz dnia** — **cały wiersz, w całości** (nie fragment); wybieraj utwory
+   KRÓTKIE (kilka–kilkanaście wersów: fraszka, sonet, krótki liryk), zachowaj
+   łamanie wersów jako `\n`. Pola: `tytul`, `autor`, `tresc` (pełny tekst),
+   opcjonalnie `zrodlo_url`. **Wiersz podajesz Z WŁASNEJ WIEDZY** — tak jak cytat.
+   Masz do dyspozycji setki krótkich klasyków domeny publicznej, więc **wiersz
+   ma być ZAWSZE** — pominięcie to absolutna ostateczność (tylko gdy naprawdę
+   nie masz pewnego utworu). wolnelektury.pl to co najwyżej OPCJONALNA weryfikacja
+   tekstu, gdy odpowie; **jej 403/niedostępność NIE jest powodem, by pominąć
+   wiersz** (audyt 23.07: wolnelektury dało 403 → wiersz zniknął — tak MA NIE być).
+   ŻELAZNA zasada: **tylko domena publiczna** — autor zmarły ponad 70 lat temu.
+   Bezpieczni: Kochanowski, Mickiewicz, Słowacki, Norwid, Konopnicka, Asnyk,
+   Leśmian, Tuwim, Horacy. POD PRAWAMI, ZAKAZ: Miłosz (†2004), Szymborska (†2012),
+   Herbert (†1998), Staff (†1957). Cytuj wiernie z pamięci — nie parafrazuj.
 4. **Angielski na dziś** — jedno przydatne `slowo` (z `wymowa` w IPA, `znaczenie`
    po polsku, `przyklad` w formacie `"zdanie EN — tłumaczenie PL"`) oraz jeden
    idiomatyczny `zwrot`/kolokacja (`zwrot_znaczenie`, `zwrot_przyklad` w tym
    samym formacie). Poziom średnio-zaawansowany, słownictwo przydatne przy
    czytaniu prasy. To Twoja wiedza — nie wymaga researchu w sieci.
 
-Research: wiersz bierz z wolnelektury.pl (WebFetch API powyżej — działa mimo
-blokady egresu skryptu, bo to fetcher Anthropic). Cytat, przysłowie i angielski
-możesz złożyć z własnej wiedzy; jeśli weryfikujesz atrybucję cytatu w sieci —
-dozwolone (to research wtórny, patrz config). Braki loguj tylko przy realnym
-problemie (np. nie udało się pobrać wiersza — daj `info` i pomiń pole `wiersz`).
+Research: **całą sekcję Literatura składasz z WŁASNEJ WIEDZY** — cytat, przysłowie
+(z odpowiednikami), wiersz i angielski. Żaden element nie zależy od sieci, więc
+sekcja ma być KOMPLETNA (4/4) w każdym wydaniu. wolnelektury.pl to tylko
+opcjonalna weryfikacja tekstu wiersza, gdy odpowie — jej 403 pomiń w ciszy i
+podaj wiersz z pamięci (NIE loguj tego jako braku). Weryfikację atrybucji cytatu
+w sieci wolno zrobić (research wtórny, patrz config). Braki loguj tylko, gdy
+naprawdę czegoś zabrakło — a przy tej sekcji nie powinno.
 
 ## KROK 3 — Wygeneruj plik wydania
 
@@ -581,6 +595,38 @@ for kat, n in oczek.items():
     elif ile < n:
         print(f"  · {kat}: jest {ile} z {n} (chudy materiał — nie dopychamy)")
         log("info", f"Kategoria „{kat}”: złożono {ile} art. z {n} w configu — mniej przy chudym materiale, bez dopychania wodą.")
+
+# --- Metryki przebiegu: CZAS WYKONANIA + ZUŻYTE TOKENY (do sekcji Logs) ---
+import os, glob
+_fmt = lambda n: f"{n:,}".replace(",", " ")
+# 1) Czas wykonania — od znacznika startu zapisanego w KROK 0 (/tmp/grzyb_start_epoch)
+try:
+    _start = int(pathlib.Path('/tmp/grzyb_start_epoch').read_text().strip())
+    _sek = max(0, int(datetime.datetime.now().timestamp()) - _start)
+    _mm, _ss = divmod(_sek, 60)
+    log("info", f"Czas wykonania rutyny: {_mm} min {_ss} s (od startu KROK 0 do wygenerowania wydania).")
+except Exception:
+    pass   # brak znacznika (np. ręczne odpalenie samego KROK 3) — pomiń
+# 2) Zużyte tokeny — suma z transkryptu sesji Claude Code. Best-effort: tura KROK 3
+#    nie jest jeszcze zapisana w transkrypcie, więc wartości są lekko zaniżone („≈”).
+try:
+    _sid = os.environ.get('CLAUDE_CODE_SESSION_ID', '') or os.environ.get('CLAUDE_SESSION_ID', '')
+    _cand = glob.glob(os.path.expanduser('~/.claude/projects/**/*.jsonl'), recursive=True)
+    _tf = next((p for p in _cand if _sid and _sid in p), None) or (max(_cand, key=os.path.getmtime) if _cand else None)
+    _tin = _tout = _tcache = 0
+    if _tf:
+        for _ln in pathlib.Path(_tf).read_text(errors='ignore').splitlines():
+            try: _u = (json.loads(_ln).get('message') or {}).get('usage') or {}
+            except Exception: continue
+            _tin += _u.get('input_tokens', 0); _tout += _u.get('output_tokens', 0)
+            _tcache += _u.get('cache_read_input_tokens', 0) + _u.get('cache_creation_input_tokens', 0)
+    if _tout or _tin:
+        log("info", f"Zużyte tokeny (≈): wyjście {_fmt(_tout)}, wejście {_fmt(_tin)}, kontekst z cache {_fmt(_tcache)}.")
+    else:
+        log("info", "Zużycie tokenów: niedostępne w tym środowisku (brak transkryptu sesji).")
+except Exception as _ex:
+    log("info", f"Zużycie tokenów: niedostępne ({type(_ex).__name__}).")
+
 # --- Higiena logów: dedup + wpisy kontrolne tylko dla realnych rozbieżności ---
 _seen = set()
 dane["logi"] = [l for l in dane["logi"]
@@ -638,7 +684,7 @@ JEDEN akapit; `\n` w `tresc` wiersza łamie wersy — podaj CAŁY utwór):
 ```json
 {
   "cytat": {"tresc": "Kto nie idzie naprzód, ten się cofa.", "autor": "J.W. Goethe", "zrodlo": "przypisywane", "omowienie": "Jeden akapit — sens myśli (powiązanie z dniem opcjonalne)."},
-  "przyslowie": {"tresc": "Gdzie dwóch się bije, tam trzeci korzysta.", "pochodzenie": "przysłowie polskie", "omowienie": "Jeden akapit — sens (powiązanie opcjonalne)."},
+  "przyslowie": {"tresc": "Nie ma tego złego, co by na dobre nie wyszło.", "pochodzenie": "przysłowie polskie", "odpowiedniki": [{"jezyk": "ang.", "tresc": "Every cloud has a silver lining", "tlum": "każda chmura ma srebrną podszewkę"}, {"jezyk": "łac.", "tresc": "Per aspera ad astra", "tlum": "przez trudy do gwiazd"}, {"jezyk": "jp", "tresc": "七転び八起き (nana korobi ya oki)", "tlum": "upadaj siedem razy, wstań osiem"}], "omowienie": "Jeden akapit — sens (czysty random, bez związku z newsami; pomiń język bez trafnego odpowiednika)."},
   "wiersz": {"tytul": "Tytuł", "autor": "Autor", "zrodlo_url": "https://wolnelektury.pl/katalog/lektura/...", "tresc": "Cały wiersz, wers po wersie,\nz łamaniem przez \\n,\nbez ucinania.", "omowienie": "Jeden akapit — interpretacja utworu."},
   "angielski": {"slowo": "resilience", "wymowa": "/rɪˈzɪl.jəns/", "znaczenie": "odporność", "przyklad": "The market showed resilience. — Rynek wykazał się odpornością.", "zwrot": "to weather the storm", "zwrot_znaczenie": "przetrwać trudny okres", "zwrot_przyklad": "They weathered the storm. — Przetrwali trudny okres."}
 }
