@@ -643,6 +643,7 @@ assert '__DANE__' not in out
 assert 'DEMO-START' not in out
 filename = f"{today}-{WYDANIE}-{now.strftime('%H%M')}.html"
 pathlib.Path('/tmp/grzyb_times.html').write_text(out, encoding='utf-8')
+pathlib.Path('/tmp/grzyb_filename').write_text(filename, encoding='utf-8')  # KROK 5 użyje TEJ nazwy (spójny czas, bez ponownego liczenia)
 print(f'OK — {len(out):,} bajtów | plik: {filename}')
 ```
 
@@ -702,7 +703,13 @@ Weryfikacja poprawności JSON w pliku:
 python3 -c "import json,pathlib; h=pathlib.Path('/tmp/grzyb_times.html').read_text(); s=h[h.index('application/json')+18:]; s=s[:s.index('</script>')].strip(); json.loads(s); print('JSON OK')"
 ```
 
-## KROK 4 — Zaktualizuj index.html (archiwum)
+## KROK 4 — Archiwum (index.html) — kod źródłowy budowania
+
+Poniższy kod to **jedyne źródło prawdy** dla strony archiwum. **Nie uruchamiasz go
+ręcznie** — robi to za Ciebie `routine/buduj_index.py` wywoływany w KROK 5 (czyta
+ten blok i odpala dla repo). Dzięki temu archiwum przebudowuje się ZAWSZE, po
+skopiowaniu nowego wydania do `wydania/`, i nie da się opublikować wydania bez
+wpisu w `index.html` (wpadka 24.07: poranne wydanie poszło bez linku w archiwum).
 
 ```python
 import pathlib, datetime, subprocess, re
@@ -794,18 +801,27 @@ print(f'index.html OK — {len(editions)} wydań')
 ## KROK 5 — Commit & push
 
 ```bash
-DATE=$(python3 -c "import datetime; print(datetime.date.today())")
-TIME=$(python3 -c "import datetime; print(datetime.datetime.now().strftime('%H%M'))")
 cd "$REPO"
 git config user.email "grzyb-times@auto.bot"
 git config user.name "Grzyb Times Bot"
 mkdir -p wydania
-cp /tmp/grzyb_times.html wydania/${DATE}-${WYDANIE}-${TIME}.html
-git add wydania index.html   # wydania/ obejmuje też pobrane obrazy (wydania/img/…)
-git commit -m "Grzyb Times — ${WYDANIE} ${DATE} ${TIME}"
+
+# 1) Skopiuj wygenerowane wydanie do wydania/ (nazwa z KROK 3 — spójny czas).
+FN=$(cat /tmp/grzyb_filename)
+cp /tmp/grzyb_times.html "wydania/$FN"
+
+# 2) Przebuduj archiwum TERAZ, gdy plik już jest w wydania/ (kod KROK 4).
+python3 routine/buduj_index.py
+
+# 3) BEZPIECZNIK: nie publikuj, jeśli archiwum nie linkuje nowego wydania.
+grep -q "$FN" index.html || { echo "STOP: index.html nie linkuje $FN — archiwum nieodświeżone, przerywam publikację."; exit 1; }
+
+# 4) Commit + push (wydania/ obejmuje też pobrane obrazy wydania/img/…).
+git add wydania index.html
+git commit -m "Grzyb Times — ${FN%.html}"
 git pull --rebase origin main   # ktoś mógł pushnąć w trakcie generowania
 git push origin main
-echo "Opublikowano: https://kapitanski-dev.github.io/wydania/${DATE}-${WYDANIE}-${TIME}.html"
+echo "Opublikowano: https://kapitanski-dev.github.io/wydania/$FN"
 ```
 
 Na koniec podaj użytkownikowi link do opublikowanego wydania i jedno zdanie o
