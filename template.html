@@ -286,6 +286,20 @@
   }
   .lit-src a { color: var(--ink-soft); }
   .lit-omowienie { font-size: .93em; line-height: 1.62; margin: 0; text-align: justify; hyphens: auto; }
+  .lit-odp { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--rule); }
+  .lit-odp-h {
+    font-family: 'Inter', sans-serif; font-size: .64em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    display: block; margin-bottom: 8px;
+  }
+  .lit-odp ul { margin: 0; padding: 0; list-style: none; }
+  .lit-odp li { font-size: .9em; line-height: 1.5; margin-bottom: 5px; }
+  .lit-odp-j {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+    margin-right: 6px;
+  }
+  .lit-odp-t { color: var(--ink-soft); }
   .lit-en { margin: 0 0 16px; line-height: 1.5; }
   .lit-en:last-child { margin-bottom: 0; }
   .lit-en b { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
@@ -611,9 +625,14 @@ __DANE__
           omowienie: "Podgląd omówienia — tu rutyna wiąże myśl przewodnią cytatu z najważniejszym wątkiem wydania (np. wyścig technologiczny, ruch na rynkach)."
         },
         przyslowie: {
-          tresc: "Gdzie dwóch się bije, tam trzeci korzysta.",
+          tresc: "Nie ma tego złego, co by na dobre nie wyszło.",
           pochodzenie: "przysłowie polskie",
-          omowienie: "Podgląd — krótkie wyjaśnienie sensu i podpięcie pod sytuację z wydania (np. kto zyskuje na sporze dwóch stron)."
+          omowienie: "Podgląd — jeden akapit o sensie przysłowia. Przysłowie to czysty random, bez związku z newsami.",
+          odpowiedniki: [
+            { jezyk: "ang.", tresc: "Every cloud has a silver lining", tlum: "każda chmura ma srebrną podszewkę" },
+            { jezyk: "łac.", tresc: "Per aspera ad astra", tlum: "przez trudy do gwiazd" },
+            { jezyk: "jp", tresc: "七転び八起き (nana korobi ya oki)", tlum: "upadaj siedem razy, wstań osiem" }
+          ]
         },
         wiersz: {
           tytul: "Podgląd wiersza",
@@ -805,6 +824,13 @@ __DANE__
         return i === -1 ? `<div class="lit-ex"><i>${esc(ex)}</i></div>`
           : `<div class="lit-ex"><i>${esc(ex.slice(0, i).trim())}</i> — ${esc(ex.slice(i + 1).trim())}</div>`;
       };
+      const odpowiedniki = arr => (Array.isArray(arr) && arr.length)
+        ? '<div class="lit-odp"><span class="lit-odp-h">Odpowiedniki</span><ul>' +
+          arr.filter(o => o && o.tresc).map(o =>
+            `<li><span class="lit-odp-j">${esc(o.jezyk || '')}</span> ${esc(o.tresc)}` +
+            (o.tlum ? ` <span class="lit-odp-t">— ${esc(o.tlum)}</span>` : '') + '</li>').join('') +
+          '</ul></div>'
+        : '';
       const cards = [];
       if (cyt.tresc) cards.push(
         '<div class="lit-card"><span class="lit-label">Cytat dnia</span>' +
@@ -815,7 +841,7 @@ __DANE__
         '<div class="lit-card"><span class="lit-label">Przysłowie dnia</span>' +
         `<p class="lit-quote">„${esc(prz.tresc)}”</p>` +
         zrodloTekst(prz.pochodzenie) +
-        omow(prz.omowienie) + '</div>');
+        omow(prz.omowienie) + odpowiedniki(prz.odpowiedniki) + '</div>');
       if (wrs.tresc) cards.push(
         '<div class="lit-card lit-card--wide"><span class="lit-label">Wiersz dnia</span>' +
         `<div class="lit-poem">${esc(wrs.tresc)}</div>` +
