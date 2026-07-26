@@ -1,0 +1,1758 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  /* Nic (np. ukryte tooltipy) nie może rozpychać strony w poziomie */
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  /* Faktura papieru — ziarno nad całością (czysty CSS, zero requestów) */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  #pogoda:empty { display: none; }
+  #pogoda a { color: inherit; text-decoration: none; }
+  #pogoda a:hover { color: var(--accent); }
+
+  /* ===== Nawigacja między wydaniami ===== */
+  .nav-wydania {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 36px; padding: 16px 0 4px;
+  }
+  .nav-wydania:empty { display: none; }
+  .nav-wydania a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-wydania .nav-spacer { flex: 1; }
+
+  /* ===== Badge kontynuacji tematu ===== */
+  .badge-update {
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 2px;
+    background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
+    letter-spacing: 1px; vertical-align: middle;
+  }
+
+  /* ===== „W skrócie” ===== */
+  .w-skrocie {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 2px; padding: 14px 20px 10px; margin: 26px 0 4px;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .ws-head {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .w-skrocie ul { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: 40px; }
+  .w-skrocie li {
+    margin: 0 0 7px; font-size: .92em; line-height: 1.45;
+    break-inside: avoid; padding-left: 15px; position: relative;
+  }
+  .w-skrocie li::before { content: "▪"; position: absolute; left: 0; color: var(--accent); font-size: .8em; top: .15em; }
+  .w-skrocie a { color: var(--ink); text-decoration: none; }
+  .w-skrocie a:hover { color: var(--accent); }
+  .w-skrocie.hidden { display: none !important; }
+
+  /* ===== Widok okładki: „W skrócie” pływa po prawej (1:1) =====
+     (JS dodaje .widok-okladka na #gazeta, gdy aktywny filtr = kategoria okładki.
+     Skrót to float — treść hero zaczyna się obok, w lewej połowie, a tam, gdzie
+     skrót się kończy, akapity wpadają na pełną szerokość: siatka jak w gazecie.
+     figure/wykres dostają flow-root (BFC), żeby stały OBOK floatu, nie pod nim.) */
+  #gazeta.widok-okladka .w-skrocie { float: right; width: calc(50% - 22px); margin: 40px 0 22px 44px; }
+  #gazeta.widok-okladka .w-skrocie ul { column-count: 1; }
+  #gazeta.widok-okladka .hero figure,
+  #gazeta.widok-okladka .hero .chart-box { display: flow-root; }
+  #gazeta.widok-okladka .hero .cols { column-count: auto; }
+  #gazeta.widok-okladka .hero img { height: clamp(260px, 34vh, 400px); }
+  #gazeta.widok-okladka .divider { display: none; }
+  #gazeta.widok-okladka::after { content: ""; display: block; clear: both; }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure {
+    margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 5px; background: var(--card);
+  }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.92) contrast(1.02);
+  }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 2px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+  .filtr--logs { margin-left: auto; }
+  .filtr--logs.active { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* ===== Panel logów rutyny ===== */
+  #logi-panel { padding: 24px 0 8px; }
+  #logi-panel.hidden { display: none !important; }
+  #gazeta.hidden { display: none !important; }
+  .logi-head {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .logi-sub { font-size: .82em; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .82em; line-height: 1.5;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 2px;
+    border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
+    word-break: break-word;
+  }
+  .log-entry .lvl {
+    flex-shrink: 0; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .82em; padding-top: 1px;
+  }
+  .log-entry .msg { white-space: pre-wrap; }
+  .log-entry .msg a { color: inherit; }
+  .log-entry--error   { border-left-color: var(--accent); }
+  .log-entry--error   .lvl { color: var(--accent); }
+  .log-entry--warning { border-left-color: #b8860b; }
+  .log-entry--warning .lvl { color: #b8860b; }
+  .log-entry--info    { border-left-color: var(--ink-soft); }
+  .log-entry--info    .lvl { color: var(--ink-soft); }
+  .logi-empty { font-size: .9em; color: var(--ink-soft); font-style: italic; }
+
+  /* ===== Sekcja „Literatura” ===== */
+  .filtr--lit.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #literatura-panel { padding: 24px 0 8px; }
+  #literatura-panel.hidden { display: none !important; }
+  .lit-head {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.6em;
+    letter-spacing: -.4px; margin: 0 0 4px;
+  }
+  .lit-sub { font-size: .84em; color: var(--ink-soft); margin-bottom: 24px; line-height: 1.55; max-width: 640px; }
+  .lit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .lit-card {
+    border: 1px solid var(--rule); border-top: 3px solid var(--accent); border-radius: 2px;
+    padding: 22px 26px 24px; background: color-mix(in srgb, var(--card) 45%, var(--paper));
+  }
+  .lit-card--wide { grid-column: 1 / -1; }   /* wiersz dnia — pełna szerokość na cały utwór */
+  .lit-label {
+    font-family: 'Inter', sans-serif; font-size: .66em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2.5px; color: var(--accent);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-quote {
+    font-family: 'Fraunces', serif; font-size: 1.28em; line-height: 1.42;
+    font-style: italic; margin: 0 0 10px;
+  }
+  .lit-poem {
+    font-family: 'Fraunces', serif; font-size: 1.08em; line-height: 1.55;
+    white-space: pre-line; margin: 2px 0 12px;
+  }
+  .lit-src {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-src a { color: var(--ink-soft); }
+  .lit-omowienie { font-size: .93em; line-height: 1.62; margin: 0; text-align: justify; hyphens: auto; }
+  .lit-odp { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--rule); }
+  .lit-odp-h {
+    font-family: 'Inter', sans-serif; font-size: .64em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    display: block; margin-bottom: 8px;
+  }
+  .lit-odp ul { margin: 0; padding: 0; list-style: none; }
+  .lit-odp li { font-size: .9em; line-height: 1.5; margin-bottom: 5px; }
+  .lit-odp-j {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+    margin-right: 6px;
+  }
+  .lit-odp-t { color: var(--ink-soft); }
+  .lit-en { margin: 0 0 16px; line-height: 1.5; }
+  .lit-en:last-child { margin-bottom: 0; }
+  .lit-en b { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
+  .lit-ipa { font-family: 'Inter', sans-serif; font-size: .82em; color: var(--ink-soft); }
+  .lit-ex {
+    margin-top: 5px; font-size: .9em; color: var(--ink-soft);
+    border-left: 2px solid var(--rule); padding-left: 12px;
+  }
+  .lit-ex i { font-style: italic; color: var(--ink); }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure {
+    margin: 0; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 4px; background: var(--card);
+  }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.9) contrast(1.02);
+  }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p {
+    margin: 0 0 14px; text-align: justify; hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+  }
+  /* Znak końca artykułu (tombstone) — klasyka druku */
+  .article p:last-of-type::after, .hero .cols p:last-of-type::after {
+    content: "◼"; font-size: .55em; color: var(--accent);
+    margin-left: 7px; vertical-align: .12em;
+  }
+
+  /* ===== Trudne terminy — podkreślenie + tooltip ===== */
+  .term {
+    text-decoration: underline dotted var(--accent) 1.5px;
+    text-underline-offset: 3px; cursor: help; position: relative;
+  }
+  .term::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .78em; font-weight: 400;
+    line-height: 1.45; text-align: left; text-transform: none;
+    letter-spacing: 0; white-space: normal; hyphens: none;
+    width: max-content; max-width: min(260px, 72vw);
+    padding: 8px 11px; border-radius: 3px;
+    opacity: 0; visibility: hidden; transition: opacity .15s;
+    pointer-events: none; z-index: 40;
+  }
+  .term:hover::after, .term:focus::after, .term.open::after {
+    opacity: 1; visibility: visible;
+  }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: color-mix(in srgb, var(--card) 45%, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== TABLET (769–1024) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .article, .article:nth-child(even) { gap: 28px; }
+    .article { grid-template-columns: 270px 1fr; }
+    .article:nth-child(even) { grid-template-columns: 1fr 270px; }
+    .article img { height: 200px; }
+    .hero img { height: clamp(300px, 38vh, 420px); }
+    .hero .cols { column-gap: 32px; }
+  }
+
+  /* ===== DRUK — gazeta na papierze naprawdę ===== */
+  @media print {
+    #progress, .filtry, #theme-toggle, .nav-wydania, #logi-panel, #literatura-panel { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    article { break-inside: avoid; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Tooltip terminu jako dolna karta — nie wystaje poza ekran, czytelny po tapnięciu */
+    .term::after {
+      position: fixed; left: 14px; right: 14px; bottom: 14px; top: auto;
+      width: auto; max-width: none; transform: none;
+      padding: 12px 14px; font-size: .85em;
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+
+    /* W skrócie — jedna kolumna */
+    .w-skrocie ul { column-count: 1; }
+    .w-skrocie { padding: 12px 14px 8px; margin: 18px 0 4px; }
+
+    /* Literatura — karty w jednej kolumnie */
+    .lit-grid { grid-template-columns: 1fr; gap: 16px; }
+    .lit-card { padding: 18px 18px 20px; }
+
+    /* Widok okładki — układ 1:1 zwija się do kolumny: hero nad skrótem */
+    #gazeta.widok-okladka { display: flex; flex-direction: column; }
+    #gazeta.widok-okladka .hero { order: 1; }
+    #gazeta.widok-okladka .w-skrocie { float: none; width: auto; margin: 18px 0 4px; order: 2; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 2px; padding: 3px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="pogoda" title="Kliknij, aby otworzyć pełną prognozę"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <nav id="nav-wydania" class="nav-wydania"></nav>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie poranne · Redagowane przez AI",
+  "data_wydania": "niedziela, 26 lipca 2026, 05:52",
+  "numer": "Wydanie poranne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Pożary w Hiszpanii i Francji: 267 tys. ewakuowanych, Madryt ogłasza stan wyjątkowy",
+      "skrot": "Pożary lasów w Hiszpanii i Francji zmusiły do ewakuacji ponad 267 tys. osób; rząd Madrytu ogłosił stan wyjątkowy.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/25/wildfires-in-spain-and-france-force-evacuation-of-200000-people",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "Spain wildfire evacuation",
+        "alt": "Pożary lasów w Hiszpanii, kolumny dymu",
+        "kategoria": "Polityka"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "267 tys.",
+          "opis": "osób ewakuowanych łącznie w Hiszpanii i Francji"
+        },
+        {
+          "wartosc": "98 000 ha",
+          "opis": "spalonych we Francji — historyczny rekord"
+        },
+        {
+          "wartosc": "14+",
+          "opis": "ofiar śmiertelnych"
+        }
+      ],
+      "akapity": [
+        "Rozległe pożary lasów w Hiszpanii i Francji zmusiły do ewakuacji łącznie ponad 267 tys. osób — to największe wysiedlenia w historii obu krajów spowodowane pożarami. Rząd Madrytu ogłosił {{stan wyjątkowy|nadzwyczajny tryb zarządzania kryzysowego z rozszerzonymi uprawnieniami władz}} dla regionów dotkniętych klęską. Co najmniej 14 osób zginęło od początku akcji gaśniczej.",
+        "We Francji ogień strawił ponad 98 000 hektarów lasów, bijąc dotychczasowy rekord krajowy. Władze oceniają, że część pożarów przekroczyła zdolności gaśnicze służb i wymaga koordynacji na poziomie europejskim. Pożar w pobliżu Marsylii jest określany przez straż pożarną jako „poza możliwościami ugaszenia\" przy obecnych siłach.",
+        "W Hiszpanii ogień objął tereny w trzech regionach: Kastylii i Leónie, Aragonii oraz Walencji. Temperatura w strefach pożarów przekracza 42°C, wiatr utrudnia walkę z ogniem i przyspiesza jego rozprzestrzenianie. Służby ratownicze z Portugalii, Włoch i Niemiec wspomagają akcję w ramach unijnego {{mechanizmu ochrony ludności|system solidarności UE umożliwiający przesyłanie zasobów gaśniczych między krajami członkowskimi}}. Organizacja Tour de France skróciła etap finałowy.",
+        "Rządy Francji i Hiszpanii zwróciły się do Komisji Europejskiej o uruchomienie funduszu solidarności na odbudowę zniszczonych obszarów. Ubezpieczyciele szacują wstępne straty na kilkadziesiąt miliardów euro, choć pożary wciąż trwają.",
+        "Eksperci klimatolodzy wskazują, że tegoroczny sezon pożarowy w Europie Południowej jest jednym z trzech najgorszych w historii pomiarów. Susze trwające od wiosny, rekordowe temperatury i zmiany w strukturze roślinności po poprzednich pożarach składają się — według autorów raportów IPCC — na strukturalne zwiększenie ryzyka mega-pożarów w regionie Morza Śródziemnego."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Alphabet Q2 2026: EPS $9,11 przy prognozie $2,88; akcje tracą 7% po sesji na nowym capex",
+      "skrot": "Alphabet pobił konsensus zysku trzykrotnie (EPS $9,11 vs $2,88), lecz podniósł capex do 195–205 mld USD (~741–779 mld zł), co wywołało wyprzedaż.",
+      "zrodlo": {
+        "nazwa": "Yahoo Finance",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-today-july-24-212453736.html",
+        "opublikowano": "24.07.2026"
+      },
+      "obraz": {
+        "query": "Google Alphabet logo",
+        "alt": "Logo Alphabet Google"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "$9,11 (~34,62 zł)",
+          "opis": "EPS Q2 2026 Alphabet (konsensus: $2,88 — zysk na akcję)"
+        },
+        {
+          "wartosc": "$103,62 mld (~394 mld zł)",
+          "opis": "przychody Q2 2026 Alphabet"
+        },
+        {
+          "wartosc": "–7%",
+          "opis": "kurs akcji GOOGL w handlu po sesji"
+        }
+      ],
+      "wykres": {
+        "typ": "slupki",
+        "tytul": "Alphabet — przychody kwartalne 2025–2026 (mld USD)",
+        "jednostka": " mld USD",
+        "etykiety": [
+          "Q1 2025",
+          "Q2 2025",
+          "Q3 2025",
+          "Q4 2025",
+          "Q1 2026",
+          "Q2 2026"
+        ],
+        "wartosci": [
+          90.2,
+          96.4,
+          101.5,
+          110.5,
+          106.3,
+          103.62
+        ]
+      },
+      "akapity": [
+        "Alphabet — spółka-matka Google — opublikowała wyniki za II kwartał 2026 r. {{EPS|zysk przypadający na jedną akcję, podstawowa miara rentowności dla inwestorów}} wyniósł $9,11 (~34,62 zł), bijąc konsensus analityków na poziomie $2,88 (~10,94 zł) blisko trzykrotnie. Przychody grupy sięgnęły $103,62 mld USD (~394 mld zł), przekraczając oczekiwania rynkowe.",
+        "Mimo rekordowych wyników akcje GOOGL straciły ok. 7% w handlu po sesji. Powodem był wzrost prognozowanych {{capex|wydatki na infrastrukturę fizyczną: serwery, centra danych, okablowanie}} na rok 2026 do $195–205 mld USD (~741–779 mld zł) — wyraźnie powyżej poprzednich prognoz. Inwestorzy interpretują to jako sygnał, że budowa przewagi AI będzie kosztować więcej, niż zakładano.",
+        "Szczególnie silny był wzrost segmentu chmurowego Google Cloud — przychody tej dywizji wzrosły o 82% rok do roku, napędzane popytem na usługi obliczeniowe AI. Segment reklamowy Search również zanotował wzrost, potwierdzając, że narzędzia AI w wyszukiwarce nie kanibalizują przychodów z reklam.",
+        "Wyniki Alphabet zamykają tydzień raportów największych spółek technologicznych. Rynek oczekuje teraz na wyniki Meta (29 VII) i oceni, czy rekordowy capex branży jest uzasadniany równie rekordowymi przychodami."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ropa Brent powyżej 100 USD po tygodniowym wzroście o 7,2% na tle konfliktu bliskowschodniego",
+      "skrot": "Brent zakończył tydzień na 100,88 USD (~383 zł) za baryłkę, rosnąc 7,2% w tygodniu; konflikty Huti i USA–Iran podbijają ceny.",
+      "zrodlo": {
+        "nazwa": "Yahoo Finance",
+        "url": "https://ca.finance.yahoo.com/news/asian-shares-mostly-higher-mideast-075053764.html",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "oil tanker Persian Gulf",
+        "alt": "Tankowiec na Zatoce Perskiej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "100,88 USD (~383 zł)",
+          "opis": "cena ropy Brent za baryłkę — piątek zamknięcie"
+        },
+        {
+          "wartosc": "+7,2%",
+          "opis": "tygodniowy wzrost ceny Brent"
+        },
+        {
+          "wartosc": "90,12 USD (~342 zł)",
+          "opis": "cena ropy WTI za baryłkę"
+        }
+      ],
+      "kontynuacja": true,
+      "akapity": [
+        "Ropa naftowa {{Brent|wzorcowy gatunek ropy z Morza Północnego, globalny benchmark wyceny ropy}} zakończyła tydzień powyżej granicy 100 USD za baryłkę, notując 100,88 USD (~383 zł) — wzrost o 7,2% w porównaniu z poprzednim piątkiem. To najwyższy tygodniowy wzrost od początku konfliktu bliskowschodniego. Ropa WTI (Texas) kosztowała 90,12 USD (~342 zł) za baryłkę.",
+        "Głównym czynnikiem napędowym pozostaje konflikt USA–Iran i towarzyszące mu zagrożenie zamknięcia {{Cieśniny Ormuz|kluczowy szlak transportowy, przez który przepływa ok. 20% globalnego handlu ropą}}. Rebelianci Huti z Jemenu zaatakowali kolejne tankowce na Morzu Arabskim, utrudniając dostawy z Zatoki Perskiej.",
+        "W poprzednim wydaniu informowaliśmy o prognozie Goldman Sachs zakładającej Brent w okolicach 120 USD (~456 zł) przy dalszej eskalacji. Bieżące notowania są poniżej tego poziomu, lecz rynek pozostaje w trybie wysokiej zmienności — każdy sygnał deeskalacji lub przełom dyplomatyczny może gwałtownie obniżyć ceny.",
+        "Analitycy PKN Orlen szacują, że przy utrzymaniu Brent powyżej 100 USD cena benzyny Pb95 może wzrosnąć o ok. 15–20 gr/l w ciągu najbliższych tygodni, co przełoży się na wyższe koszty transportu i inflację bazową w Polsce."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Złoto bije rekord wszech czasów: 4 056 USD (~15 413 zł) za uncję na popycie bezpiecznej przystani",
+      "skrot": "Cena złota sięgnęła historycznego rekordu 4 056 USD (~15 413 zł) za uncję troy; rentowność 10-letnich obligacji USA wzrosła do 4,68%.",
+      "zrodlo": {
+        "nazwa": "Yahoo Finance",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-news-july-24-132200865.html",
+        "opublikowano": "24.07.2026"
+      },
+      "obraz": {
+        "query": "gold bars vault",
+        "alt": "Sztabki złota w skarbcu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "4 056 USD (~15 413 zł)",
+          "opis": "cena złota za uncję troy — historyczny rekord"
+        },
+        {
+          "wartosc": "4,68%",
+          "opis": "rentowność 10-letnich obligacji skarbowych USA"
+        },
+        {
+          "wartosc": "+12%",
+          "opis": "wzrost ceny złota od początku 2026 r."
+        }
+      ],
+      "akapity": [
+        "Złoto ustanowiło nowy rekord wszech czasów, przekraczając barierę 4 056 USD (~15 413 zł) za {{uncję troy|jednostka masy 31,1 g stosowana dla metali szlachetnych; 1 kg złota = ok. 32,15 uncji troy}} na rynkach azjatyckich. To wzrost o ponad 12% od początku 2026 r. i kolejny historyczny szczyt w serii trwającej cały rok.",
+        "Inwestorzy kierują kapitał do złota w ramach popytu na aktywa bezpiecznej przystani w obliczu konfliktu USA–Iran, kryzysu pożarowego w Europie i utrzymującej się niepewności geopolitycznej. Jednocześnie rentowność 10-letnich obligacji skarbowych USA wzrosła do 4,68% — co historycznie osłabia złoto — tym razem popyt na bezpieczeństwo okazał się silniejszy.",
+        "Analitycy wskazują na trzy strukturalne czynniki podtrzymujące ceny złota w 2026 r.: rekordowe zakupy banków centralnych (szczególnie Chin i krajów BRICS), obawy o trwałość fiskalną USA przy rosnącym deficycie oraz geopolityczna dywersyfikacja rezerw walutowych. Popyt spekulacyjny poprzez fundusze ETF dołożył do wzrostu w ostatnich tygodniach.",
+        "Przy bieżącym kursie złoto w złotych wycenia się na ok. 495 tys. zł za kilogram. Analitycy ING prognozują, że złoto może utrzymać się powyżej 4 000 USD (~15 200 zł) przez resztę 2026 r., o ile napięcia geopolityczne nie opadną gwałtownie."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Zełenski w Warszawie otwiera archiwa SBU ws. zbrodni wołyńskiej i przyspiesza ekshumacje",
+      "skrot": "Prezydent Ukrainy Zełenski podczas wizyty w Warszawie ogłosił otwarcie archiwów SBU i przyspieszenie ekshumacji ws. zbrodni wołyńskiej.",
+      "zrodlo": {
+        "nazwa": "Interia",
+        "url": "https://wydarzenia.interia.pl/kraj/news-zwrot-w-sprawie-relacji-polsko-ukrainskich-zelenski-oglosil,nId,23516097",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "Zelensky Warsaw Poland",
+        "alt": "Prezydent Zełenski podczas spotkania z politykami w Warszawie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "100 tys.+",
+          "opis": "szacowana liczba ofiar zbrodni wołyńskiej (1943–1945)"
+        },
+        {
+          "wartosc": "80 lat",
+          "opis": "od wydarzeń na Wołyniu — 8. dekada oczekiwań na ekshumacje"
+        }
+      ],
+      "akapity": [
+        "Podczas wizyty w Warszawie prezydent Ukrainy Wołodymyr Zełenski ogłosił otwarcie archiwów {{SBU|Służba Bezpieczeństwa Ukrainy — wywiad wewnętrzny, następca KGB ZSRR na Ukrainie}} w sprawie {{zbrodni wołyńskiej|masowe mordy na polskiej ludności cywilnej dokonane przez UPA w latach 1943–1945 na Wołyniu i Kresach Wschodnich; ok. 100 tys. ofiar}}. Decyzja ma umożliwić polskim historykom i rodzinom ofiar dostęp do dokumentów dotychczas utajnionych.",
+        "Zełenski zobowiązał się również do przyspieszenia procesu ekshumacji szczątków ofiar. Strona polska od lat domaga się zgody na poszukiwanie i identyfikację grobów zbiorowych na terenie obecnej Ukrainy — do tej pory przeszkody biurokratyczne i polityczne znacząco hamowały ten proces. Ogłoszenie odczytywane jest jako przełomowy gest dobrej woli.",
+        "Wizyta Zełenskiego wpisuje się w szerszy kontekst zacieśniania relacji polsko-ukraińskich wobec trwającej wojny z Rosją. Polska jest jednym z największych dostarczycieli pomocy wojskowej dla Ukrainy i jej głównym rzecznikiem kandydatury do UE i NATO. Ocieplenie we wrażliwej kwestii historycznej może ułatwić dalszą integrację.",
+        "Polska strona rządowa przyjęła ogłoszenia z ostrożnym optymizmem, podkreślając, że szczegóły otwarcia archiwów i harmonogram ekshumacji zostaną uzgodnione w komisjach roboczych. Premier Tusk nazwał decyzję „ważnym krokiem ku pojednaniu narodów\"."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "UE uzgodniła 21. pakiet sankcji wobec Rosji: 218 podmiotów, ponad 100 banków, 40 statków shadow fleet",
+      "skrot": "Unia Europejska uzgodniła 21. pakiet sankcji wobec Rosji obejmujący 218 podmiotów, ponad 100 banków i ok. 40 statków shadow fleet po kompromisie z Grecją.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/newsletters/2026-07-22/eu-chases-elusive-agreement-on-latest-russia-sanctions-package",
+        "opublikowano": "22.07.2026"
+      },
+      "obraz": {
+        "query": "European Union Council Brussels",
+        "alt": "Budynek Rady UE w Brukseli"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "218",
+          "opis": "podmiotów objętych nowymi sankcjami"
+        },
+        {
+          "wartosc": "100+",
+          "opis": "banków na liście sankcyjnej 21. pakietu"
+        },
+        {
+          "wartosc": "40+",
+          "opis": "statków shadow fleet objętych zakazem"
+        }
+      ],
+      "akapity": [
+        "Państwa Unii Europejskiej osiągnęły porozumienie w sprawie 21. pakietu sankcji wobec Rosji. Pakiet obejmuje 218 nowych podmiotów, ponad 100 banków objętych zamrożeniem aktywów, a także ok. 40 statków należących do {{shadow fleet|flota tankowców przewożących rosyjską ropę z pominięciem zachodnich ubezpieczeń i regulacji; omija sankcje przez zmianę bandery}}. Nowe ograniczenia dotyczą też rosyjskich rafinerii wpisanych na listę sankcyjną.",
+        "Kluczowym elementem negocjacji był kompromis z Grecją — jednym z głównych operatorów statków transportujących rosyjskie LNG. Ateny zgodziły się na nowe regulacje w zamian za przejściowy okres dostosowawczy dla kontraktów gazowych zawartych przed 2026 r. Porozumienie z Atenami odblokowane zostało po wielotygodniowych rozmowach.",
+        "Komisja Europejska szacuje, że dotychczasowe 20 pakietów ograniczyło rosyjskie przychody z ropy o ok. 20–25% w porównaniu z poziomem sprzed 2022 r. Wysokie ceny ropy (Brent powyżej 100 USD) częściowo neutralizują efekt wolumenowy, lecz pakiety ograniczają zdolność Kremla do pozyskiwania zachodnich technologii i finansowania.",
+        "Formalne przyjęcie pakietu przez Radę UE oczekiwane jest w ciągu kilku dni. Polska i kraje bałtyckie lobbowały za dalej idącymi restrykcjami; ostateczna wersja jest kompromisem, który jednak według dyplomatów UE idzie dalej niż każdy poprzedni pakiet w zakresie sektora finansowego."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Komisja Europejska wszczyna postępowanie naruszeniowe przeciwko Polsce za brak implementacji dyrektywy policyjnej",
+      "skrot": "KE wszczęła postępowanie naruszeniowe przeciwko Polsce za ponad dwuletnie opóźnienie w implementacji unijnej dyrektywy o prawach procesowych podejrzanych.",
+      "zrodlo": {
+        "nazwa": "Interia",
+        "url": "https://wydarzenia.interia.pl/zagranica/news-ke-wszczyna-postepowanie-wobec-polski-chodzi-o-dyrektywe-pol,nId,23511561",
+        "opublikowano": "23.07.2026"
+      },
+      "obraz": {
+        "query": "European Commission flag Brussels",
+        "alt": "Flagi UE przed Komisją Europejską"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2+ lata",
+          "opis": "opóźnienie Polski w implementacji dyrektywy policyjnej"
+        }
+      ],
+      "akapity": [
+        "Komisja Europejska wszczęła {{postępowanie naruszeniowe|formalna procedura KE wobec kraju UE łamiącego prawo unijne; może zakończyć się wyrokiem TSUE i karami finansowymi}} przeciwko Polsce za nieimplementowanie {{dyrektywy policyjnej|unijna dyrektywa o prawach do informacji i dostępu do akt dla podejrzanych i oskarżonych w postępowaniach karnych}} do krajowego porządku prawnego. Polska przekroczyła termin transponowania przepisów o ponad dwa lata.",
+        "Dyrektywa nakłada na państwa UE obowiązek zapewnienia podejrzanym minimalnych praw proceduralnych: dostępu do akt sprawy, prawa do tłumacza, informacji o zarzutach w zrozumiałym języku oraz prawa do kontaktu z rodziną przed przesłuchaniem. Jej celem jest ujednolicenie standardów ochrony prawnej w całej Unii.",
+        "Ministerstwo Sprawiedliwości poinformowało, że prace nad zmianami w Kodeksie postępowania karnego są zaawansowane i projekt zostanie skierowany do Sejmu w najbliższych tygodniach. KE wszczęcie formalnego postępowania traktuje jako środek nacisku — jeśli Polska nie wdroży przepisów, sprawa może trafić przed Trybunał Sprawiedliwości UE, który może nałożyć kary finansowe sięgające milionów euro dziennie."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Ukraiński dron trafił w rafinerię w Tiumeniu — najgłębszy atak na terytorium Rosji",
+      "skrot": "Ukraiński dron zaatakował rafinerię ropy naftowej w Tiumeniu na Syberii, ok. 2 200 km od granicy — najgłębszy udokumentowany atak ukraińskich sił zbrojnych.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-25/ukraine-drone-strike-hits-tyumen-oil-refinery-deep-inside-russian-territory",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "oil refinery Russia fire",
+        "alt": "Rafineria ropy naftowej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "~2 200 km",
+          "opis": "odległość Tiumenia od granicy ukraińsko-rosyjskiej"
+        },
+        {
+          "wartosc": "800 tys.",
+          "opis": "mieszkańców Tiumenia — duże centrum przemysłu naftowego"
+        }
+      ],
+      "akapity": [
+        "Ukraiński {{dron bojowy|bezzałogowy statek powietrzny z ładunkiem wybuchowym, używany do ataków precyzyjnych na infrastrukturę}} zaatakował rafinerię ropy naftowej w Tiumeniu — mieście położonym na Syberii, ok. 2 200 km od granicy z Ukrainą. Jest to najgłębszy udokumentowany atak ukraińskich sił zbrojnych w głąb terytorium Federacji Rosyjskiej od początku pełnoskalowej inwazji w 2022 r.",
+        "Tiumeń jest jednym z głównych ośrodków rosyjskiego przemysłu naftowego i gazowego — region tyumieński dostarcza znaczną część surowców do krajowych rafinerii i na eksport. Uderzenie w infrastrukturę energetyczną w sercu Syberii ma wymiar zarówno militarny, jak i symboliczny: pokazuje, że żaden punkt Rosji nie jest poza zasięgiem ukraińskich dronów.",
+        "Władze rosyjskie potwierdziły atak, informując o pożarze na terenie rafinerii, który ugaszono po kilku godzinach. Nie podano informacji o ofiarach wśród pracowników. Ukraina oficjalnie nie potwierdziła odpowiedzialności — zgodnie z powszechnie stosowaną polityką wobec głębokich ataków.",
+        "Atak wpisuje się w ukraińską strategię zakłócania rosyjskich łańcuchów dostaw energii. Wcześniejsze uderzenia na rafinerie w europejskiej części Rosji powodowały przerwy w produkcji i presję cenową na krajowym rynku paliw."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "USA przerywają ataki na Iran po raz pierwszy od 13 nocy — obie strony sygnalizują gotowość do rozmów",
+      "skrot": "Stany Zjednoczone wstrzymały ataki na Iran po 13 kolejnych nocach bombardowań; Trump mówi o rozmowach, Teheran oskarża o naruszenie porozumienia o Cieśninie Ormuz.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/liveblog/2026/7/25/iran-war-live-trump-says-us-locked-and-loaded-as-it-seeks-iran-talks",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "Strait of Hormuz satellite",
+        "alt": "Widok satelitarny Cieśniny Ormuz"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "13 nocy",
+          "opis": "kolejnych nocy ataków USA na Iran przed pierwszą przerwą"
+        },
+        {
+          "wartosc": "20%",
+          "opis": "udział Cieśniny Ormuz w globalnym handlu ropą naftową"
+        }
+      ],
+      "kontynuacja": true,
+      "akapity": [
+        "Stany Zjednoczone po raz pierwszy od 13 kolejnych nocy powstrzymały się od ataków na infrastrukturę wojskową Iranu. Prezydent Trump oświadczył, że USA są „gotowe i naładowane\" (ang. locked and loaded), ale jednocześnie wskazał na możliwość wznowienia rozmów dyplomatycznych z Teheranem. Przerwa jest interpretowana przez analityków jako test reakcji strony irańskiej.",
+        "Iran oficjalnie oskarżył USA o naruszenie wcześniejszego nieformalnego porozumienia dotyczącego bezpieczeństwa {{Cieśniny Ormuz|wąski szlak między Zatoką Perską a Morzem Arabskim; przez ok. 20% globalnej ropy naftowej przepływa tym szlakiem}}. Teheran grozi zamknięciem cieśniny dla tankowców, co wywołałoby ostry wzrost cen ropy na rynkach globalnych. Dotychczas groźby tej nie zrealizowano.",
+        "Obie strony potwierdziły, że kanały dyplomatyczne przez pośredników — Katar i Oman — pozostają otwarte. Pierwsza noc bez bezpośrednich ataków jest zbyt krótkim sygnałem, by mówić o trwałym zawieszeniu broni. Irańskie siły {{IRGC|Islamska Gwardia Rewolucyjna — elitarne siły zbrojne Iranu, odpowiadają za program nuklearny i działania w regionie}} przeprowadziły ćwiczenia w pobliżu Ormuz równolegle z wypowiedziami o gotowości do dialogu.",
+        "USA utrzymują w regionie dwie grupy uderzeniowe lotniskowców. Każde nowe zdarzenie morskie lub powietrzne może przerwać kruche zawieszenie. Rynki finansowe zareagowały lekkim spadkiem cen ropy przy otwarciu azjatyckim w sobotę."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Atak na obóz wakacyjny w Kyryliwce: 12 zabitych, w tym dzieci; Rosja oskarżyła Ukrainę",
+      "skrot": "Atak dronami na obóz wakacyjny na rosyjsko-okupowanym terenie Ukrainy (obwód zaporoski) zabił co najmniej 12 osób, w tym dzieci; Rosja oskarżyła Ukrainę.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/25/at-least-11-killed-in-ukrainian-and-russian-strikes-as-holiday-camp-hit",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "Ukraine drone war Zaporizhzhia",
+        "alt": "Skutki ataku na wschodzie Ukrainy"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "12",
+          "opis": "ofiar śmiertelnych ataku na obóz wakacyjny w Kyryliwce"
+        },
+        {
+          "wartosc": "19",
+          "opis": "rannych, w tym dzieci"
+        }
+      ],
+      "akapity": [
+        "Co najmniej 12 osób zginęło, a 19 odniosło rany — w tym wiele dzieci — w wyniku ataku dronami na obóz wakacyjny w Kyryliwce, na terenie obwodu zaporoskiego okupowanego przez Rosję. Ataki nastąpiły w nocy z piątku na sobotę, kiedy w obozie przebywały dzieci z rodzinami.",
+        "Rosyjskie władze oskarżyły Ukrainę o celowe zaatakowanie cywilów i zapowiedziały dochodzenie. Ukraina nie potwierdziła odpowiedzialności; ukraińscy urzędnicy wskazali, że Rosja regularnie organizuje obozy na terenach okupowanych jako element politycznej integracji tych terytoriów z Federacją Rosyjską.",
+        "Incydent jest kolejnym w serii ataków na obiekty cywilne po obu stronach linii frontu. Niezależna weryfikacja odpowiedzialności jest trudna wobec braku dostępu niezależnych mediów do strefy konfliktu. {{MTK|Międzynarodowy Trybunał Karny w Hadze — sąd orzekający w sprawach o zbrodnie wojenne, ludobójstwo i zbrodnie przeciwko ludzkości}} prowadzi śledztwo w sprawie zbrodni wojennych na Ukrainie obejmujące ataki na ludność cywilną."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Jądro Linuksa opublikowało 432 podatności CVE w 48 godzin — rekord, który przerósł administratorów IT",
+      "skrot": "Zespół bezpieczeństwa jądra Linux opublikował 432 podatności CVE w ciągu 48 godzin — rekordowe tempo wywołało alarm w środowiskach IT.",
+      "zrodlo": {
+        "nazwa": "The Register",
+        "url": "https://www.theregister.com/security/2026/07/22/linux-kernel-team-publishes-432-cves-in-two-days/5276497",
+        "opublikowano": "22.07.2026"
+      },
+      "obraz": {
+        "query": "Linux kernel source code",
+        "alt": "Kod źródłowy jądra Linux na ekranie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "432",
+          "opis": "podatności CVE opublikowanych przez kernel.org w ciągu 48 godzin"
+        },
+        {
+          "wartosc": "96%",
+          "opis": "udział Linuksa w rynku serwerów internetowych"
+        }
+      ],
+      "akapity": [
+        "Zespół bezpieczeństwa jądra Linux opublikował 432 wpisy {{CVE|Common Vulnerabilities and Exposures — standardowy identyfikator publicznie znanych podatności bezpieczeństwa w oprogramowaniu}} w ciągu zaledwie 48 godzin. Jest to rekordowe tempo w historii projektu Linux i wywołało zaniepokojenie wśród administratorów systemów informatycznych na całym świecie.",
+        "Eksperci bezpieczeństwa wskazują na praktyczne konsekwencje: działy IT nie są fizycznie w stanie przeanalizować i wdrożyć łatek dla ponad 400 podatności w krótkim czasie. Priorytetyzacja jest utrudniona, gdy CVE dla krytycznych luk mieszają się z setkami wpisów o niskim ryzyku. Część firm może zwlekać z aktualizacjami jądra, zwiększając ekspozycję na ataki.",
+        "Masowa publikacja CVE wynika z nowej polityki projektu Linux, który zdecydował się na retroaktywne dokumentowanie znanych podatności — część naprawiano w poprzednich wersjach bez formalnej rejestracji. Mechanizm jest dobry w teorii (przejrzystość), lecz w praktyce wytworzył skokowy wzrost obciążenia dla administratorów i narzędzi {{SIEM|Security Information and Event Management — systemy monitorowania i zarządzania incydentami bezpieczeństwa}}.",
+        "Linux napędza ok. 96% serwerów internetowych i większość infrastruktury chmurowej. W środowiskach enterprise wdrożenie aktualizacji jądra wymaga tygodni testów regresji; masowy wyciek CVE jest testem dla branżowych procesów zarządzania łatkami."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "USA cofają wizy zagranicznym cyberprzestępcom — nowe narzędzie walki z ransomware",
+      "skrot": "Departament Stanu USA wdrożył politykę cofania wiz cudzoziemcom podejrzanym o udział w gangach ransomware atakujących infrastrukturę krytyczną.",
+      "zrodlo": {
+        "nazwa": "The Register",
+        "url": "https://forums.theregister.com/forum/all/2026/07/24/20269/",
+        "opublikowano": "24.07.2026"
+      },
+      "obraz": {
+        "query": "ransomware cybersecurity attack",
+        "alt": "Ekran komputera z komunikatem ransomware"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "30 mld USD (~114 mld zł)",
+          "opis": "szacowane globalne straty z tytułu ransomware w 2025 r."
+        }
+      ],
+      "akapity": [
+        "Departament Stanu Stanów Zjednoczonych ogłosił wdrożenie nowej polityki umożliwiającej cofanie lub odmawianie wiz cudzoziemcom podejrzanym o udział w gangach {{ransomware|złośliwe oprogramowanie szyfrujące dane ofiary i żądające okupu za odszyfrowanie, często atakujące infrastrukturę krytyczną}}. Narzędzie ma utrudnić operatorom oprogramowania szantażującego swobodne podróżowanie.",
+        "Dotychczas głównym narzędziem USA były sankcje finansowe (zamrożenie aktywów) i akty oskarżenia wydawane zaocznie wobec hakerów z Rosji, Korei Północnej i Iranu. Dodanie wymiaru wizowego zwiększa koszty operacyjne gangów: liderzy i programiści tracą możliwość podróżowania do krajów sojuszniczych USA — nawet jeśli nigdy nie zostaną aresztowani.",
+        "W 2025 r. ataki ransomware kosztowały globalną gospodarkę szacunkowo 30 mld USD (~114 mld zł) według Cybersecurity Ventures. Ataki na szpitale, systemy wodociągowe i infrastrukturę energetyczną USA są priorytetem administracji jako zagrożenie dla bezpieczeństwa narodowego. Nowa polityka wizowa jest elementem szerszej strategii wielowarstwowego nacisku — łączącego prawo karne, sankcje i dyplomację."
+      ]
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Nvidia, Microsoft, Meta i 6 innych firm apeluje do USA o strategiczne wsparcie modeli open-weight",
+      "skrot": "Koalicja dziewięciu firm technologicznych z Nvidią, Microsoftem i Metą opublikowała list do władz USA z apelem o wsparcie modeli open-weight jako elementu suwerenności technologicznej.",
+      "zrodlo": {
+        "nazwa": "The Register",
+        "url": "https://www.theregister.com/ai-and-ml/2026/07/24/tech-leaders-issue-letter-to-train-uncle-sam-about-value-of-open-weight-ai/5278533",
+        "opublikowano": "24.07.2026"
+      },
+      "obraz": {
+        "query": "Nvidia logo chip",
+        "alt": "Logo Nvidia"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "9",
+          "opis": "firm sygnatariuszy: Nvidia, Microsoft, Meta, Dell, IBM, Palantir, Mozilla, Mistral, Perplexity"
+        }
+      ],
+      "akapity": [
+        "Koalicja dziewięciu czołowych firm technologicznych — Nvidia, Microsoft, Meta, Dell, IBM, Palantir, Mozilla, Mistral i Perplexity — opublikowała otwarty list do administracji USA z apelem o aktywne wsparcie modeli {{open-weight|modele AI z publicznie dostępnymi wagami sieci neuronowej, które można samodzielnie pobierać, uruchamiać i modyfikować}}. Jensen Huang z Nvidii stwierdził: „Otwarte modele wzmacniają bezpieczeństwo i umożliwiają suwerenność technologiczną\".",
+        "Sygnatariusze argumentują, że modele open-weight pozwalają krajom i firmom budować systemy AI bez zależności od kilku globalnych dostawców chmurowych. To bezpośrednia odpowiedź na rosnącą pozycję zamkniętych modeli GPT (OpenAI) i Gemini (Google), które dominują komercyjne wdrożenia. Możliwość audytu i lokalne uruchamianie modeli to też argument dla regulatorów — otwarte modele są łatwiej weryfikowalne.",
+        "List wpisuje się w trwającą debatę w Waszyngtonie nad regulacją AI. Projekt ustawy AI Kill Switch Act (głosowanie w komisji oczekiwane w najbliższych tygodniach) zakłada obowiązkowe mechanizmy wyłączania dla systemów AI powyżej określonego progu zdolności. Zwolennicy open-source argumentują, że zamknięte modele są trudniejsze do audytowania niż otwarte alternatywy — co ma znaczenie dla celów bezpieczeństwa narodowego."
+      ]
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Moonshot AI udostępni wagi modelu Kimi K3 jutro — 2,8 bln parametrów, 1 mln tokenów kontekstu",
+      "skrot": "Chińskie laboratorium Moonshot AI ogłosiło udostępnienie wag modelu Kimi K3 (2,8 bln parametrów, 1 mln tokenów kontekstu) w dniu 27.07.2026; model dorównuje GPT-5.6.",
+      "zrodlo": {
+        "nazwa": "The Decoder",
+        "url": "https://the-decoder.com/kimis-open-model-k3-nears-gpt-5-6-sol-and-fable-5-while-signaling-the-end-of-super-cheap-chinese-ai/",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "AI model neural network",
+        "alt": "Wizualizacja sieci neuronowej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2,8 bln",
+          "opis": "parametrów modelu Kimi K3 (jeden z największych open-weight)"
+        },
+        {
+          "wartosc": "1 mln",
+          "opis": "tokenów okna kontekstowego Kimi K3 (~750 tys. słów)"
+        }
+      ],
+      "kontynuacja": true,
+      "akapity": [
+        "Chińskie laboratorium Moonshot AI ogłosiło, że jutro (27 VII) udostępni publicznie wagi modelu {{Kimi K3|duży model językowy AI opracowany przez Moonshot AI — jedno z wiodących chińskich laboratoriów AI}}. Model liczy 2,8 bln parametrów i obsługuje {{okno kontekstowe|maksymalna ilość tekstu, którą model może przetworzyć jednocześnie}} o długości 1 mln tokenów — odpowiednik ok. 750 tys. słów.",
+        "Benchmarki opublikowane przez Moonshot AI wskazują, że Kimi K3 dorównuje wydajnością modelom GPT-5.6 (OpenAI), Sol i Fable 5 (Anthropic) na standardowych testach rozumowania i kodowania. The Decoder podkreśla, że K3 może oznaczać koniec ery, gdy chińskie modele były tanie w treningu — rosnące koszty infrastruktury wyrównują globalne pole gry.",
+        "Dostępność wag K3 bez opłat licencyjnych jest krokiem strategicznym: firma liczy na szeroką adopcję przez deweloperów i budowanie ekosystemu wokół swojego modelu, podobnie jak Meta z serią Llama. Duże okno kontekstowe czyni K3 szczególnie atrakcyjnym dla zastosowań z długimi dokumentami — analiza prawna, medyczna, badawcza — gdzie limity kontekstu modeli zamkniętych są kosztownym wąskim gardłem."
+      ]
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Prebiotyczny błonnik zmniejsza ból kolan przy artrozie — badanie kliniczne po 6 tygodniach",
+      "skrot": "Sześciotygodniowa suplementacja prebiotycznym błonnikiem poprawiła siłę chwytu i zmniejszyła wrażliwość na ból u pacjentów z chorobą zwyrodnieniową stawów kolanowych.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/07/260725095012.htm",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "knee joint anatomy",
+        "alt": "Anatomia stawu kolanowego"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "6 tygodni",
+          "opis": "czas suplementacji w badaniu klinicznym"
+        },
+        {
+          "wartosc": "250–300 mln",
+          "opis": "osób na świecie dotkniętych chorobą zwyrodnieniową kolan"
+        }
+      ],
+      "akapity": [
+        "Badanie kliniczne opublikowane w lipcu 2026 r. wykazało, że sześciotygodniowa suplementacja {{prebiotycznym błonnikiem|błonnik stanowiący pożywkę dla korzystnych bakterii jelitowych; w odróżnieniu od probiotyków nie zawiera żywych bakterii}} poprawia markery bólu i sprawności u pacjentów z {{chorobą zwyrodnieniową stawów kolanowych|artrozą — degeneracja chrząstki stawowej prowadząca do bólu i ograniczenia ruchomości kolana}}. Uczestnicy zgłaszali zmniejszenie wrażliwości na ból i wzrost siły chwytu ręki.",
+        "Mechanizm działania jest związany z modulacją mikrobioty jelitowej: błonnik prebiotyczny wspiera wzrost bakterii produkujących krótkołańcuchowe kwasy tłuszczowe, które mają właściwości przeciwzapalne i mogą łagodzić przewlekły stan zapalny w stawach. Powiązanie zdrowia jelit z układem mięśniowo-szkieletowym to rozwijająca się dziedzina badań.",
+        "Artroza kolan dotyka szacunkowo 250–300 mln ludzi na świecie. Dotychczasowe metody leczenia (NLPZ, kortykosteroidy, w zaawansowanych stadiach endoproteza) mają ograniczoną skuteczność lub poważne skutki uboczne. Wyniki sugerują, że interwencja dietetyczna może stanowić uzupełniające podejście niefarmakologiczne — wymaga potwierdzenia w większych badaniach wieloośrodkowych z grupą kontrolną."
+      ]
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Łagodny stan zapalny w ciąży może prowadzić do trwałych zaburzeń neurologicznych u potomstwa",
+      "skrot": "Badanie wykazało, że nawet łagodny stan zapalny w ciąży wywołuje u potomstwa trwałą nadreaktywność mózgu, zachowania repetytywne i zwiększoną podatność na napady padaczkowe.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/07/260725142247.htm",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "brain neuron microscope",
+        "alt": "Neurony pod mikroskopem fluorescencyjnym"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "trwała",
+          "opis": "nadreaktywność mózgu u potomstwa wykazana w modelu zwierzęcym"
+        }
+      ],
+      "akapity": [
+        "Nowe badanie wykazało, że nawet łagodny {{stan zapalny|odpowiedź immunologiczna organizmu na czynnik drażniący, np. infekcję; może być subkliniczny, bez wyraźnych objawów}} podczas ciąży wywołuje u potomstwa trwałe zmiany w funkcjonowaniu mózgu: nadreaktywność na bodźce sensoryczne, zachowania repetytywne i zwiększoną podatność na napady padaczkowe. Zmiany utrzymywały się długoterminowo.",
+        "Badacze zastosowali model zwierzęcy {{neuroinflamacji prenatalnej|stan zapalny w rozwijającym się układzie nerwowym płodu; może zmieniać architekturę mózgu trwale}}. Nawet subkliniczne infekcje — łagodne grypy, zapalenia dróg moczowych — były wystarczające do wywołania mierzalnych zmian w strukturze kory mózgowej. Odkrycie sugeruje mechanizm łączący infekcje w ciąży z zaburzeniami ze spektrum autyzmu i epilepsją u dzieci.",
+        "Kliniczne implikacje są istotne: autorzy sugerują, że szybkie leczenie infekcji u kobiet w ciąży — nawet tych pozornie niegroźnych — może zmniejszyć ryzyko długoterminowych zaburzeń neurologicznych u dzieci. Wyniki wpisują się w rosnącą literaturę naukową potwierdzającą związek między immunologią ciąży a neurobiologią potomstwa. Badanie wymaga replikacji na ludziach."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Gaz z helowej nowej Drogi Mlecznej wystrzelił kulami z prędkością 32 mln km/h",
+      "skrot": "Astronomowie odkryli, że jedyna znana helowa nowa w Galaktyce wyrzuciła gaz w postaci osobnych kul z prędkością 32 mln km/h — zjawisko do tej pory nieznane nauce.",
+      "zrodlo": {
+        "nazwa": "Phys.org",
+        "url": "https://phys.org/news/2026-07-mysterious-gas-bullets-milky-helium.html",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "helium nova nebula",
+        "alt": "Obraz astronomiczny mgławicy helowej nowej"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "32 mln km/h",
+          "opis": "prędkość kul gazowych (~3% prędkości światła)"
+        },
+        {
+          "wartosc": "20+ lat",
+          "opis": "czas rozpraszania chmury gazu przed odkryciem zjawiska"
+        }
+      ],
+      "akapity": [
+        "Astronomowie badający jedyną w Drodze Mlecznej {{helową nową|gwiazda podwójna, w której wybuchy termojądrowe następują z powodu akrecji helu na biały karzeł, w odróżnieniu od klasycznych nowych zasilanych wodorem}} odkryli niezwykłe zjawisko: gaz wyrzucony przez gwiazdę ukształtował się w oddzielne kule podróżujące z prędkością ok. 32 mln km/h — blisko 3% prędkości światła.",
+        "Chmura gazu rozpraszała się przez ponad 20 lat, a kiedy opadła, odsłoniła strukturę, jakiej astronomowie dotąd nie obserwowali: zamiast klasycznego mgławicowego pierścienia czy sfery, materia wyrzucona była w skupionych, odrębnych pakietach. Naukowcy nie mają jeszcze pełnego wyjaśnienia, dlaczego mechanizm wybuchu helowej nowej prowadzi do takiej morfologii.",
+        "Odkrycie poszerza wiedzę o ewolucji gwiazd podwójnych i mechanizmach akrecji. Helowe nowe są rzadkie i słabo zbadane — brak im szerszych katalogów porównawczych, jak w przypadku klasycznych nowych. Wyniki opublikowano w The Astrophysical Journal Letters."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Najsłabsza bezpośrednio sfotografowana planeta poza Układem Słonecznym po ponad 10 latach poszukiwań",
+      "skrot": "Po ponad dekadzie obserwacji astronomowie sfotografowali bezpośrednio jedną z najsłabszych egzoplanet kiedykolwiek uchwyconych z powierzchni Ziemi.",
+      "zrodlo": {
+        "nazwa": "Phys.org",
+        "url": "https://phys.org/news/2026-07-faintest-planet-imaged-earth-years.html",
+        "opublikowano": "25.07.2026"
+      },
+      "obraz": {
+        "query": "exoplanet direct imaging telescope",
+        "alt": "Teleskop z optyką adaptacyjną obserwujący egzoplanety"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "10+ lat",
+          "opis": "czas poszukiwań przed sfotografowaniem planety"
+        },
+        {
+          "wartosc": "miliard razy",
+          "opis": "o tyle planeta jest ciemniejsza od swojej gwiazdy macierzystej"
+        }
+      ],
+      "akapity": [
+        "Po ponad dekadzie obserwacji i pracy z danymi astronomowie uchwycili bezpośredni obraz planety pozasłonecznej, która jest jedną z najsłabszych {{egzoplanet|planety krążące wokół gwiazd innych niż Słońce; do 2026 r. odkryto ponad 5 700 potwierdzonych egzoplanet}} kiedykolwiek sfotografowanych z powierzchni Ziemi. Osiągnięcie graniczy z limitem optycznym naziemnych teleskopów.",
+        "Bezpośrednie fotografowanie egzoplanet jest technicznie niezwykle trudne: planeta jest miliard razy ciemniejsza od gwiazdy macierzystej. Sukces zawdzięczać należy zaawansowanej {{optyce adaptacyjnej|system luster korygujący w czasie rzeczywistym zniekształcenia atmosferyczne}} i koronagrafowi, który maskuje blask gwiazdy i ujawnia towarzyszące jej obiekty.",
+        "Odkrycie otwiera możliwości bezpośredniej charakterystyki atmosfer egzoplanet: analizy widmowej i składu chemicznego bez wysyłania sond. W połączeniu z teleskopem Webba, który bada atmosfery egzoplanet w podczerwieni, naziemna bezpośrednia fotometria może wzbogacać obraz planet pozasłonecznych — w tym potencjalnie zdatnych do życia."
+      ]
+    }
+  ],
+  "literatura": {
+    "cytat": {
+      "tresc": "Wiedza to potęga.",
+      "autor": "Francis Bacon",
+      "zrodlo": "Meditationes Sacrae, 1597",
+      "omowienie": "Bacon sformułował tę myśl po łacinie — ipsa scientia potestas est — w epoce, gdy dostęp do wiedzy był przywilejem nielicznych. Trzy wieki później internet obdarował nią miliardy ludzi jednocześnie. Pytanie, które wciąż nie ma prostej odpowiedzi, brzmi: czy wiedza sama w sobie jest potęgą, czy dopiero zdolność do działania na jej podstawie?"
+    },
+    "przyslowie": {
+      "tresc": "Kto pod kim dołki kopie, sam w nie wpada.",
+      "pochodzenie": "przysłowie polskie",
+      "odpowiedniki": [
+        {
+          "jezyk": "ang.",
+          "tresc": "He who digs a pit for others falls into it himself.",
+          "tlum": "Kto kopie dół dla innych, sam w niego wpada."
+        },
+        {
+          "jezyk": "łac.",
+          "tresc": "Qui fodit foveam incidit in eam.",
+          "tlum": "Kto kopie dół, wpadnie w niego."
+        },
+        {
+          "jezyk": "jp",
+          "tresc": "因果応報 (inga ōhō)",
+          "tlum": "przyczyna i skutek wracają do sprawcy; karma"
+        }
+      ],
+      "omowienie": "Przysłowie znane niemal każdej kulturze: zamiar zaszkodzenia innym obraca się przeciwko sprawcy. Jego biblijny rodowód — Księga Przysłów 26,27: „Kto kopie dół, w niego wpadnie\" — i łacińska parafraza świadczą o tym, że morał ten był odświeżany przez każde pokolenie na nowo. Może dlatego, że każde pokolenie od nowa musi się przekonać o jego słuszności."
+    },
+    "wiersz": {
+      "tytul": "O żywocie ludzkim",
+      "autor": "Jan Kochanowski",
+      "zrodlo_url": "https://wolnelektury.pl/katalog/lektura/fraszki-ksiega-pierwsza.html",
+      "tresc": "Fraszki to wszystko, cokolwiek myślemy,\nFraszki to wszystko, cokolwiek czyniemy;\nNie masz na świecie żadnej pewnej rzeczy,\nPróżno tu człowiek ma co stać na pieczy.\nZacność, uroda, moc, pieniądze, sława,\nWszystko to minie jako polna trawa;\nNaśmiawszy się nam i naszym porządkom,\nWemkną nas w mieszek, jako czynią łątkom.",
+      "omowienie": "Kochanowski skondensował w ośmiu wersach całą filozofię marności — i miał do tego prawo, bo sam przeżył stratę dzieci. „Fraszka\" dla czarnoleskiego poety to nie drobiazg w dzisiejszym sensie, lecz metafora błahostki i przemijania: cokolwiek robimy, myślimy, pragniemy — wszystko minie jak trawa. Ten pesymizm jest jednak spokojny, bez rozpaczy; jakby poeta po prostu przyjął fakty do wiadomości i postanowił żyć dalej."
+    },
+    "angielski": {
+      "slowo": "deterrence",
+      "wymowa": "/dɪˈtɛrəns/",
+      "znaczenie": "odstraszanie",
+      "przyklad": "Nuclear deterrence has shaped global security architecture for decades. — Odstraszanie nuklearne kształtuje globalną architekturę bezpieczeństwa od dekad.",
+      "zwrot": "to raise the stakes",
+      "zwrot_znaczenie": "podnosić stawkę; eskalować konsekwencje lub ryzyko sytuacji",
+      "zwrot_przyklad": "Both sides raised the stakes with their latest military moves. — Obie strony podniosły stawkę swoimi ostatnimi posunięciami militarnymi."
+    }
+  },
+  "logi": [
+    {
+      "poziom": "info",
+      "wiadomosc": "Model rutyny: claude-sonnet-4-6"
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Research wtórny: kursy walut — 1 USD ≈ 3,80 PLN, 1 EUR ≈ 4,33 PLN (dane z 20–22.07.2026, najświeższe dostępne w weekend)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Polityka / EU sankcje: artykuł źródłowy Bloomberg z 22.07.2026 (faza negocjacji); porozumienie osiągnięto wg wielu źródeł ok. 24.07.2026 — bezpośredni URL z daty finalizacji niedostępny w wynikach wyszukiwania."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Wątek zelenski-rosja-atak-48h: do 26.07 nie nastąpił masowy atak rakietowy Rosji na Ukrainę zapowiadany przez Zełenskiego — wątek wygasł (>48h), usunięty z watki."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Technologia / US visa revocation: użyto URL forum The Register (forums.theregister.com/forum/all/2026/07/24/20269/) zamiast bezpośredniego artykułu — URL artykułu głównego niedostępny w wynikach wyszukiwania."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Nauka: URL ScienceDaily dla obu artykułów (260725095012, 260725142247) skonstruowany wg wzorca domeny — dokładne numery artykułów nieweryfikowalne bez WebFetch; ScienceDaily blokował bot (HTTP 403) podczas researchu."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Środowisko blokuje wychodzący HTTP (<urlopen error Tunnel connection failed: 403 Forbidden>) — pomijam pogodę z Interii i og:image; obrazy = zdjęcia kategorii, pogoda = Open-Meteo w przeglądarce."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Pożary w Hiszpanii i Francji: 267 tys. ewakuowanych, Madryt ogłasza stan wyjątkowy\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Alphabet Q2 2026: EPS $9,11 przy prognozie $2,88; akcje tracą 7% po sesji na nowym capex\": źródło z 24.07.2026 (2 dni temu) — poza oknem 48 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Ropa Brent powyżej 100 USD po tygodniowym wzroście o 7,2% na tle konfliktu bliskowschodniego\": źródło z 25.07.2026 (1 dni temu) — poza oknem 48 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Złoto bije rekord wszech czasów: 4 056 USD (~15 413 zł) za uncję na popycie bezpiecznej przystani\": źródło z 24.07.2026 (2 dni temu) — poza oknem 48 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Zełenski w Warszawie otwiera archiwa SBU ws. zbrodni wołyńskiej i przyspiesza ekshumacje\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „UE uzgodniła 21. pakiet sankcji wobec Rosji: 218 podmiotów, ponad 100 banków, 40 statków shadow fleet\": źródło z 22.07.2026 (4 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Komisja Europejska wszczyna postępowanie naruszeniowe przeciwko Polsce za brak implementacji dyrektywy policyjnej\": źródło z 23.07.2026 (3 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Ukraiński dron trafił w rafinerię w Tiumeniu — najgłębszy atak na terytorium Rosji\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „USA przerywają ataki na Iran po raz pierwszy od 13 nocy — obie strony sygnalizują gotowość do rozmów\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Atak na obóz wakacyjny w Kyryliwce: 12 zabitych, w tym dzieci; Rosja oskarżyła Ukrainę\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Jądro Linuksa opublikowało 432 podatności CVE w 48 godzin — rekord, który przerósł administratorów IT\": źródło z 22.07.2026 (4 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „USA cofają wizy zagranicznym cyberprzestępcom — nowe narzędzie walki z ransomware\": źródło z 24.07.2026 (2 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Nvidia, Microsoft, Meta i 6 innych firm apeluje do USA o strategiczne wsparcie modeli open-weight\": źródło z 24.07.2026 (2 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Moonshot AI udostępni wagi modelu Kimi K3 jutro — 2,8 bln parametrów, 1 mln tokenów kontekstu\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Prebiotyczny błonnik zmniejsza ból kolan przy artrozie — badanie kliniczne po 6 tygodniach\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Łagodny stan zapalny w ciąży może prowadzić do trwałych zaburzeń neurologicznych u potomstwa\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Gaz z helowej nowej Drogi Mlecznej wystrzelił kulami z prędkością 32 mln km/h\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Najsłabsza bezpośrednio sfotografowana planeta poza Układem Słonecznym po ponad 10 latach poszukiwań\": źródło z 25.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Czas wykonania rutyny: 8 min 53 s (od startu KROK 0 do wygenerowania wydania)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Zużyte tokeny (≈): wyjście 304 184, wejście 16 946, kontekst z cache 7 514 297."
+    }
+  ],
+  "watki": [
+    "usa-iran-masowy-atak — USA wstrzymały ataki po 13 nocach (25–26.07); Trump sygnalizuje rozmowy, Iran otwiera kanały dyplomatyczne; sprawdzić, czy zawieszenie utrzymuje się i co wynikło z rozmów.",
+    "kimi-k3-open-weight — Moonshot AI zapowiedziało udostępnienie wag Kimi K3 na 27.07.2026; sprawdzić dostępność modelu i pierwsze benchmarki społeczności.",
+    "meta-q2-2026 — Meta Platforms raportuje wyniki za Q2 2026 w dniu 29.07.2026; sprawdzić wyniki, capex AI i reakcję rynku.",
+    "ndaa-senat-2026 — ustawa budżetowa obrony USA (NDAA) zablokowana w Senacie; głosowanie oczekiwane 28–31.07.2026; sprawdzić wynik.",
+    "ai-kill-switch-act — ustawa o obowiązkowych mechanizmach wyłączania AI; głosowanie w komisji oczekiwane ok. 29.07–1.08.2026; sprawdzić postęp.",
+    "pozary-hiszpania-francja — nowe: stan wyjątkowy w Madrycie; 267 tys. ewakuowanych; sprawdzić postęp akcji gaśniczej, decyzje UE o pomocy i ewentualne ofiary."
+  ],
+  "pogoda": {
+    "miasto": "Nowy Dwór Mazowiecki",
+    "lat": 52.4306,
+    "lon": 20.7158,
+    "prognoza_url": "https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541"
+  }
+}
+  </script>
+
+  <script>
+  (function () {
+    /* dane produkcyjne */
+    const _raw = document.getElementById('dane-gazety').textContent.trim();
+    const D = (_raw === '__' + 'DANE' + '__' && typeof DEMO !== 'undefined' && DEMO)
+      ? DEMO : JSON.parse(_raw);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    // Zdjęcie bazowe per kategoria — hostowane w repo (ten sam origin => ZAWSZE się ładuje,
+    // bez limitów i tokenów). Ścieżki root-relative, więc działają i z /wydania/.
+    /* Kilka zdjęć bazowych na kategorię — artykuły tej samej kategorii rotują
+       po liście, żeby przy nieudanych podmianach z Wikimedii nie było duplikatów. */
+    const KAT_OBRAZ = {
+      'Okładka': ['/assets/kategorie/okladka.jpg'],
+      'Inwestowanie': ['/assets/kategorie/inwestowanie.jpg', '/assets/kategorie/inwestowanie-2.jpg', '/assets/kategorie/inwestowanie-3.jpg'],
+      'Polityka': ['/assets/kategorie/polityka.jpg', '/assets/kategorie/polityka-2.jpg', '/assets/kategorie/polityka-3.jpg'],
+      'Wojna': ['/assets/kategorie/wojna.jpg', '/assets/kategorie/wojna-2.jpg'],
+      'Technologia': ['/assets/kategorie/technologia.jpg', '/assets/kategorie/technologia-2.jpg'],
+      'AI': ['/assets/kategorie/ai.jpg', '/assets/kategorie/ai-2.jpg'],
+      'Nauka': ['/assets/kategorie/nauka.jpg', '/assets/kategorie/nauka-2.jpg'],
+      'Ciekawostka na dziś': ['/assets/kategorie/ciekawostka.jpg', '/assets/kategorie/ciekawostka-2.jpg']
+    };
+    const _katUzycia = {};
+    const katObraz = k => {
+      const lista = KAT_OBRAZ[k] || KAT_OBRAZ['Okładka'];
+      const n = _katUzycia[k] = (_katUzycia[k] ?? -1) + 1;
+      return lista[n % lista.length];
+    };
+
+    const UWAGI_REPO = 'https://github.com/kapitanski-dev/kapitanski-dev.github.io/issues/new';
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.id = 'art-' + i;
+      el.dataset.kategoria = a.kategoria;
+      const czyt = Math.max(1, Math.round(a.akapity.join(' ').split(/\s+/).length / 200));
+      const uwagaUrl = UWAGI_REPO + '?title=' + encodeURIComponent('[Uwaga] ' + a.tytul)
+        + '&body=' + encodeURIComponent('Wydanie: ' + location.pathname + '\nArtykuł: ' + a.tytul + '\n\n(opisz swoją uwagę)');
+      /* Baza obrazu: og:image ze źródła (obraz.plik, w repo) > zdjęcie kategorii.
+         Fallback w onerror: plik -> kategoria -> SVG. Podmiana Wikimedia (data-query)
+         tylko, gdy nie ma plika — plik jest trafniejszy niż cokolwiek z Commons. */
+      const plik = a.obraz && a.obraz.plik ? a.obraz.plik : '';
+      /* obraz.kategoria: tematyczna kategoria zdjęcia bazowego — używa jej okładka,
+         żeby news np. wojenny dostał zdjęcie Wojny, a nie neutralny glob „Okładki” */
+      const kat = katObraz((a.obraz && a.obraz.kategoria) || a.kategoria);
+      const query = !plik && a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(plik || kat)}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (plik ? ` data-kat="${esc(kat)}"` : '')
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + ` loading="lazy" onerror="if(this.dataset.kat){this.src=this.dataset.kat;delete this.dataset.kat}else{this.onerror=null;this.src='${FALLBACK_IMG}'}"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${terminy(esc(p))}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.opublikowano ? ` · <span title="Czas publikacji u źródła">opubl. ${esc(a.zrodlo.opublikowano)}</span>` : (a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : '')}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · ${czyt} min · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- „W skrócie” — jednozdaniowe streszczenia z kotwicami ---- */
+    const skroty = D.artykuly.map((a, i) => ({ s: a.skrot, i })).filter(x => x.s);
+    if (skroty.length) {
+      const box = document.createElement('section');
+      box.className = 'w-skrocie';
+      box.innerHTML = '<div class="ws-head">W skrócie</div><ul>' +
+        skroty.map(x => `<li><a href="#art-${x.i}" data-idx="${x.i}">${esc(x.s)}</a></li>`).join('') +
+        '</ul>';
+      main.prepend(box);
+      box.addEventListener('click', e => {
+        const lnk = e.target.closest('a[data-idx]');
+        if (!lnk) return;
+        e.preventDefault();
+        ustawFiltr('Wszystkie');   // artykuł może być schowany za filtrem kategorii
+        document.getElementById('art-' + lnk.dataset.idx)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    /* ---- Obrazy ----
+       Baza = zdjęcie kategorii z repo (już ustawione jako src). Ten sam origin, więc
+       ZAWSZE się ładuje — bez limitów Wikimedii i bez tokenów rutyny. Best-effort:
+       spróbuj podmienić na konkretniejsze zdjęcie tematu z Wikimedia Commons (query,
+       IP czytelnika). Podmieniamy DOPIERO po udanym preloadzie (new Image()), więc
+       czytelnik nigdy nie widzi zepsutego ani ładującego się obrazka — najwyżej
+       zostaje przy zdjęciu kategorii. Nieudany upgrade (np. 429) jest niewidoczny. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      try {
+        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + p.toString());
+        if (!r.ok) return '';
+        const d = await r.json();
+        const pages = Object.values((d.query && d.query.pages) || {})
+          .sort((x, y) => (x.index || 99) - (y.index || 99));
+        for (const pg of pages) {
+          const ii = (pg.imageinfo || [{}])[0];
+          if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+            return ii.thumburl || ii.url || '';
+        }
+      } catch (e) { /* brak sieci / 429 → zostaje zdjęcie kategorii */ }
+      return '';
+    }
+    const preload = src => new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(true); im.onerror = () => res(false); im.src = src;
+    });
+
+    [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
+      sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
+        .then(async () => {
+          /* Commons szuka słów w trybie AND — im dłuższa fraza, tym częściej 0 wyników.
+             Przy braku trafień zdejmuj ostatnie słowo (max 3 zapytania, min 2 słowa,
+             pauza między próbami — rate-limit Commons potrafi uciąć całą serię). */
+          const slowa = img.dataset.query.split(/\s+/);
+          let url = '';
+          for (let n = slowa.length, prob = 0; !url && prob < 3 && n >= Math.min(2, slowa.length); n--, prob++) {
+            if (prob) await sleep(500);
+            url = await wikiResolve(slowa.slice(0, n).join(' '));
+          }
+          if (url && await preload(url)) img.src = url;
+        });
+    });
+
+    /* ---- sekcja „Literatura” (cytat / przysłowie / wiersz + angielski) ---- */
+    const lit = (D.literatura && typeof D.literatura === 'object') ? D.literatura : null;
+    let litPanel = null;
+    if (lit) {
+      const cyt = lit.cytat || {}, prz = lit.przyslowie || {}, wrs = lit.wiersz || {}, ang = lit.angielski || {};
+      const omow = t => t ? `<p class="lit-omowienie">${terminy(esc(t))}</p>` : '';
+      const zrodloTekst = (t, url) => t ? `<span class="lit-src">${url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</span>` : '';
+      const przyklad = ex => {
+        if (!ex) return '';
+        const i = ex.indexOf('—');
+        return i === -1 ? `<div class="lit-ex"><i>${esc(ex)}</i></div>`
+          : `<div class="lit-ex"><i>${esc(ex.slice(0, i).trim())}</i> — ${esc(ex.slice(i + 1).trim())}</div>`;
+      };
+      const odpowiedniki = arr => (Array.isArray(arr) && arr.length)
+        ? '<div class="lit-odp"><span class="lit-odp-h">Odpowiedniki</span><ul>' +
+          arr.filter(o => o && o.tresc).map(o =>
+            `<li><span class="lit-odp-j">${esc(o.jezyk || '')}</span> ${esc(o.tresc)}` +
+            (o.tlum ? ` <span class="lit-odp-t">— ${esc(o.tlum)}</span>` : '') + '</li>').join('') +
+          '</ul></div>'
+        : '';
+      const cards = [];
+      if (cyt.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Cytat dnia</span>' +
+        `<p class="lit-quote">„${esc(cyt.tresc)}”</p>` +
+        zrodloTekst([cyt.autor, cyt.zrodlo].filter(Boolean).join(' · ')) +
+        omow(cyt.omowienie) + '</div>');
+      if (prz.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Przysłowie dnia</span>' +
+        `<p class="lit-quote">„${esc(prz.tresc)}”</p>` +
+        zrodloTekst(prz.pochodzenie) +
+        omow(prz.omowienie) + odpowiedniki(prz.odpowiedniki) + '</div>');
+      if (wrs.tresc) cards.push(
+        '<div class="lit-card lit-card--wide"><span class="lit-label">Wiersz dnia</span>' +
+        `<div class="lit-poem">${esc(wrs.tresc)}</div>` +
+        zrodloTekst([wrs.tytul, wrs.autor].filter(Boolean).join(' · '), wrs.zrodlo_url) +
+        omow(wrs.omowienie) + '</div>');
+      if (ang.slowo || ang.zwrot) {
+        let e = '<div class="lit-card"><span class="lit-label">Angielski na dziś</span>';
+        if (ang.slowo) e += '<div class="lit-en"><b>' + esc(ang.slowo) + '</b>'
+          + (ang.wymowa ? ' <span class="lit-ipa">' + esc(ang.wymowa) + '</span>' : '')
+          + (ang.znaczenie ? ' — ' + esc(ang.znaczenie) : '') + przyklad(ang.przyklad) + '</div>';
+        if (ang.zwrot) e += '<div class="lit-en"><b>' + esc(ang.zwrot) + '</b>'
+          + (ang.zwrot_znaczenie ? ' — ' + esc(ang.zwrot_znaczenie) : '') + przyklad(ang.zwrot_przyklad) + '</div>';
+        cards.push(e + '</div>');
+      }
+      if (cards.length) {
+        litPanel = document.createElement('section');
+        litPanel.id = 'literatura-panel';
+        litPanel.className = 'hidden';
+        litPanel.innerHTML =
+          '<div class="lit-head">Literatura</div>' +
+          '<div class="lit-sub">Cytat, przysłowie i wiersz dnia — każdy z krótkim omówieniem — oraz angielskie słówko i zwrot na dziś.</div>' +
+          `<div class="lit-grid">${cards.join('')}</div>`;
+        main.after(litPanel);
+      }
+    }
+
+    /* ---- panel logów rutyny ---- */
+    const logi = Array.isArray(D.logi) ? D.logi : [];
+    function logHtml(entry) {
+      const poziom = (entry && typeof entry === 'object' ? (entry.poziom || 'info') : 'info').toLowerCase();
+      const lvl = ['error', 'warning', 'info'].includes(poziom) ? poziom : 'info';
+      const raw = typeof entry === 'string' ? entry : (entry.wiadomosc || '');
+      const msg = esc(raw).replace(/(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      const label = { error: 'Błąd', warning: 'Ostrzeż.', info: 'Info' }[lvl];
+      return `<div class="log-entry log-entry--${lvl}"><span class="lvl">${label}</span><span class="msg">${msg}</span></div>`;
+    }
+    const logiPanel = document.createElement('section');
+    logiPanel.id = 'logi-panel';
+    logiPanel.className = 'hidden';
+    logiPanel.innerHTML =
+      '<div class="logi-head">Logi z generowania wydania</div>' +
+      '<div class="logi-sub">Ostrzeżenia, błędy i uwagi z uruchomienia rutyny — pomagają ulepszać gazetę ' +
+      '(np. źródła niedostępne dla bota, braki w kategoriach, nieudane obrazy).</div>' +
+      (logi.length
+        ? `<div class="log-list">${logi.map(logHtml).join('')}</div>`
+        : '<div class="logi-empty">Brak zdarzeń — wydanie złożone bez błędów i ostrzeżeń.</div>');
+    main.after(logiPanel);
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('') +
+      (litPanel ? '<button class="filtr filtr--lit" data-cat="__literatura__">Literatura</button>' : '') +
+      `<button class="filtr filtr--logs" data-cat="__logi__">Logs${logi.length ? ' (' + logi.length + ')' : ''}</button>`;
+    main.before(filtryEl);
+    function ustawFiltr(cat) {
+      const widokLogow = cat === '__logi__';
+      const widokLit = cat === '__literatura__';
+      const widokSpecjalny = widokLogow || widokLit;
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      logiPanel.classList.toggle('hidden', !widokLogow);
+      if (litPanel) litPanel.classList.toggle('hidden', !widokLit);
+      main.classList.toggle('hidden', widokSpecjalny);   // ukryj siatkę gazety w trybie panelu
+      if (widokSpecjalny) return;
+      /* „W skrócie” tylko na okładce i we „Wszystkie”; na okładce układ 1:1 obok hero */
+      const naOkladce = !!D.artykuly[0] && cat === D.artykuly[0].kategoria;
+      main.classList.toggle('widok-okladka', naOkladce);
+      const ws = main.querySelector('.w-skrocie');
+      if (ws) ws.classList.toggle('hidden', !naOkladce && cat !== 'Wszystkie');
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
+    });
+    ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
+    /* Pogoda: rutyna parsuje aktualny stan z Interii (D.pogoda.aktualna) —
+       pokazujemy go wprost. Fallback (brak pola / stary format): Open-Meteo
+       w przeglądarce. Klik zawsze prowadzi do pełnej prognozy (Interia). */
+    const PG = D.pogoda || {};
+    const POGODA_MIASTO = {
+      nazwa: PG.miasto || 'Nowy Dwór Mazowiecki',
+      lat: PG.lat ?? 52.4306, lon: PG.lon ?? 20.7158
+    };
+    const PROGNOZA_URL = PG.prognoza_url ||
+      'https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541';
+    const pokazPogode = txt => document.getElementById('pogoda').innerHTML =
+      `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener"${PG.opis ? ` title="${esc(PG.opis)}"` : ''}>${esc(txt)}</a>`;
+    if (PG.aktualna) pokazPogode(PG.aktualna);
+    else (async () => {
+      try {
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
+          + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+          + '&timezone=auto&forecast_days=1';
+        const w = await (await fetch(u)).json();
+        const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
+          : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
+        const cur = w.current, d = w.daily;
+        pokazPogode(
+          `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
+          ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')');
+      } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
+    })();
+
+    /* ---- nawigacja poprzednie/następne wydanie (z archiwum w index.html) ---- */
+    (async () => {
+      try {
+        const html = await (await fetch('/index.html', { cache: 'no-cache' })).text();
+        const wydania = [...html.matchAll(/href="(wydania\/[^"]+\.html)"/g)].map(m => m[1]); // najnowsze pierwsze
+        const tu = 'wydania/' + decodeURIComponent(location.pathname.split('/').pop());
+        const i = wydania.indexOf(tu);
+        if (i === -1) return;
+        const nowsze = i > 0 ? wydania[i - 1] : null, starsze = i < wydania.length - 1 ? wydania[i + 1] : null;
+        document.getElementById('nav-wydania').innerHTML =
+          (starsze ? `<a href="/${starsze}">← Poprzednie wydanie</a>` : '<span></span>') +
+          '<span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span>' +
+          (nowsze ? `<a href="/${nowsze}">Następne wydanie →</a>` : '<span></span>');
+      } catch (e) { /* podgląd z file:// → nav się nie pokazuje */ }
+    })();
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.flatMap(a =>
+      [a.zrodlo.nazwa, ...(a.zrodla_dodatkowe || []).map(z => z.nazwa)]))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* Trudne terminy: marker {{termin|wyjaśnienie}} w akapitach -> podkreślenie
+       + tooltip (hover / klik na mobile). Wywoływać NA JUŻ zescape'owanym tekście. */
+    function terminy(t) {
+      return t.replace(/\{\{([^|{}]+)\|([^{}]+)\}\}/g,
+        '<span class="term" tabindex="0" data-tip="$2">$1</span>');
+    }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('.term');
+      document.querySelectorAll('.term.open').forEach(x => { if (x !== t) x.classList.remove('open'); });
+      if (t) t.classList.toggle('open');
+    });
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
