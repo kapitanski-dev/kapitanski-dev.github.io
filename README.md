@@ -17,10 +17,10 @@ składają wydanie i wypychają je z powrotem do repo.
 | `template.html` | Szablon wydania (HTML+CSS+JS). Placeholder `__DANE__` = dane wydania. Otwarty bez danych pokazuje **podgląd Lorem Ipsum** (blok DEMO — rutyna wycina go z wydań). |
 | `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → generacja → publikacja. |
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
-| `index.html` | Auto-generowane archiwum wydań (strona główna, grupowanie po dniach). |
+| `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach. |
 | `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Opublikowanych wydań nie edytujemy.** |
 | `assets/kategorie/` | Zdjęcia bazowe kategorii (2–3 na kategorię, rotacja przeciw duplikatom). |
-| `raport-finansowy/` | Osobna rutyna: cotygodniowe przeglądy rynku (niezależne od gazety). |
+| `raport-finansowy/` | Osobna rutyna: cotygodniowe przeglądy rynku (niezależne od gazety). Pliki `.md` z front matterem Jekylla — Pages serwuje je jako `.html`, a archiwum linkuje automatycznie. |
 
 **Cała logika jest w repo.** Rutyny to cienki bootstrap („znajdź repo → przeczytaj
 `routine/instrukcja.md` → wykonaj"). Zmiana czegokolwiek = commit, bez ruszania rutyn.

@@ -412,7 +412,7 @@ tytul = cfg['wydanie']['tytul']
 tpl = (repo / 'template.html').read_text()
 
 etykieta = 'Wydanie poranne' if WYDANIE == 'rano' else 'Wydanie wieczorne'
-now = datetime.datetime.now()
+now = datetime.datetime.now(datetime.timezone.utc)   # zawsze UTC — przeglądarka przeliczy na czas PL (Europe/Warsaw)
 today = now.date()
 days_pl = ['poniedziałek','wtorek','środa','czwartek','piątek','sobota','niedziela']
 months_pl = ['','stycznia','lutego','marca','kwietnia','maja','czerwca','lipca','sierpnia','września','października','listopada','grudnia']
@@ -420,7 +420,8 @@ months_pl = ['','stycznia','lutego','marca','kwietnia','maja','czerwca','lipca',
 dane = {
   "tytul": tytul,
   "kicker": f"{etykieta} · Redagowane przez AI",
-  "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}, {now.strftime('%H:%M')}",
+  "data_iso": now.strftime('%Y-%m-%dT%H:%M:%SZ'),   # znacznik UTC — przeglądarka formatuje go w czasie PL (Europe/Warsaw)
+  "data_wydania": f"{days_pl[today.weekday()]}, {today.day} {months_pl[today.month]} {today.year}, {now.strftime('%H:%M')}",  # fallback (UTC) gdyby JS/Intl zawiódł
   "numer": etykieta,
   "artykuly": [],  # <-- wstaw artykuły (patrz schemat niżej); każdy z obraz.query (fraza EN)
   "literatura": {},# <-- sekcja „Literatura”: cytat/przysłowie/wiersz + angielski (patrz KROK 2.7 i schemat niżej)
@@ -712,7 +713,7 @@ skopiowaniu nowego wydania do `wydania/`, i nie da się opublikować wydania bez
 wpisu w `index.html` (wpadka 24.07: poranne wydanie poszło bez linku w archiwum).
 
 ```python
-import pathlib, datetime, subprocess, re
+import pathlib, datetime, subprocess, re, html as htmlmod
 
 REPO = subprocess.run(
     "find /home /root /workspace /tmp -maxdepth 6 -name '.git' 2>/dev/null | grep -v '/.git/' | head -1 | xargs dirname 2>/dev/null",
@@ -733,9 +734,11 @@ for f in files:
     except: continue
     label = 'Wydanie poranne' if etype == 'rano' else 'Wydanie wieczorne'
     icon = '☀️' if etype == 'rano' else '🌙'
-    time_str = f' · {tc[:2]}:{tc[2:]}' if tc else ''
+    # Godzina z nazwy pliku jest w UTC; przeglądarka przeliczy ją na czas PL (patrz skrypt niżej).
+    time_utc = f'{tc[:2]}:{tc[2:]}' if tc else ''
+    iso_utc = f'{date_str}T{tc[:2]}:{tc[2:]}:00Z' if tc else ''
     date_fmt = f"{days_pl[d.weekday()]}, {d.day} {months_pl[d.month]} {d.year}"
-    editions.append({'url': f'wydania/{f.name}', 'label': label + time_str, 'icon': icon, 'date': date_fmt, 'first': False})
+    editions.append({'url': f'wydania/{f.name}', 'label': label, 'time': time_utc, 'iso': iso_utc, 'icon': icon, 'date': date_fmt, 'first': False})
 
 if editions: editions[0]['first'] = True
 
@@ -746,10 +749,35 @@ for e in editions: dni.setdefault(e['date'], []).append(e)
 cards = ''.join(
     f'<div class="day"><div class="day-head">{date}</div>' + ''.join(
         f'<a href="{e["url"]}" class="item{" item--latest" if e["first"] else ""}">'
-        + f'<span class="item-label">{e["icon"]} {e["label"]}{"<span class=badge>Najnowsze</span>" if e["first"] else ""}</span>'
+        + f'<span class="item-label">{e["icon"]} {e["label"]}'
+        + (f' &middot; <time class="ed-time" data-iso="{e["iso"]}">{e["time"]}</time>' if e["time"] else '')
+        + ("<span class=badge>Najnowsze</span>" if e["first"] else "") + '</span>'
         + '<span class="item-go">Czytaj &rarr;</span></a>' for e in items) + '</div>\n'
     for date, items in dni.items()
 )
+
+# Raporty finansowe: osobna rutyna wrzuca raport-finansowy/*.md z front matterem
+# Jekylla, więc GitHub Pages serwuje je pod tą samą nazwą z rozszerzeniem .html.
+raporty = []
+for f in sorted((repo / 'raport-finansowy').glob('*.md'), reverse=True):
+    fm = f.read_text(encoding='utf-8')[:800]
+    md_date = re.search(r'^date:\s*(\d{4}-\d{2}-\d{2})', fm, re.M)
+    date_str = md_date.group(1) if md_date else f.stem[:10]
+    try: d = datetime.date.fromisoformat(date_str)
+    except: continue
+    md_title = re.search(r'^title:\s*["\']?(.+?)["\']?\s*$', fm, re.M)
+    title = md_title.group(1).strip() if md_title else f'Przegląd rynku — {d.day} {months_pl[d.month]} {d.year}'
+    raporty.append({'url': f'raport-finansowy/{f.stem}.html', 'title': title, 'sort': (d, f.stem)})
+
+raporty.sort(key=lambda r: r['sort'], reverse=True)
+reports_html = ''
+if raporty:
+    reports_html = '<div class="day day--reports"><div class="day-head">Raporty finansowe</div>' + ''.join(
+        f'<a href="{r["url"]}" class="item{" item--latest" if i == 0 else ""}">'
+        + f'<span class="item-label">📈 {htmlmod.escape(r["title"])}</span>'
+        + '<span class="item-go">Czytaj &rarr;</span></a>' for i, r in enumerate(raporty)
+    ) + '</div>\n'
+
 html = '''<!DOCTYPE html>
 <html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Grzyb Times — archiwum</title>
@@ -776,6 +804,8 @@ h1 a{color:inherit;text-decoration:none}
 .day{margin-top:30px}
 .day-head{font-family:Fraunces,serif;font-weight:700;font-size:1.05em;padding-bottom:8px;margin-bottom:10px;
   border-bottom:1px solid var(--rule)}
+.day--reports{margin-bottom:44px}
+.day--reports .day-head{color:var(--accent);border-bottom-color:var(--accent)}
 .item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 16px;
   background:color-mix(in srgb,var(--card) 45%,var(--paper));border:1px solid var(--rule);border-radius:2px;
   margin-bottom:8px;text-decoration:none;color:var(--ink);transition:border-color .2s}
@@ -792,8 +822,21 @@ footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:upperca
 </style></head>
 <body><div class="wrap">
 <header><div class="kicker">Archiwum wydań</div><h1><a href="/">Grzyb Times</a></h1>
-<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne</div></header>
-''' + cards + '''<footer>Grzyb Times &mdash; redagowane przez AI</footer></div></body></html>'''
+<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne &middot; raporty finansowe</div></header>
+''' + reports_html + cards + '''<footer>Grzyb Times &mdash; redagowane przez AI</footer></div>
+<script>
+/* Godziny wydań zapisane są w UTC (data-iso); pokaż je w czasie polskim (Europe/Warsaw, z DST). */
+document.querySelectorAll('time.ed-time[data-iso]').forEach(function (el) {
+  var d = new Date(el.getAttribute('data-iso'));
+  if (isNaN(d.getTime())) return;
+  try {
+    el.textContent = new Intl.DateTimeFormat('pl-PL', {
+      timeZone: 'Europe/Warsaw', hour: '2-digit', minute: '2-digit', hour12: false
+    }).format(d);
+  } catch (e) {}
+});
+</script>
+</body></html>'''
 (repo / 'index.html').write_text(html, encoding='utf-8')
 print(f'index.html OK — {len(editions)} wydań')
 ```
