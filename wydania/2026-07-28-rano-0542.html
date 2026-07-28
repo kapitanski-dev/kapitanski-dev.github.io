@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  /* Nic (np. ukryte tooltipy) nie może rozpychać strony w poziomie */
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  /* Faktura papieru — ziarno nad całością (czysty CSS, zero requestów) */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  #pogoda:empty { display: none; }
+  #pogoda a { color: inherit; text-decoration: none; }
+  #pogoda a:hover { color: var(--accent); }
+
+  /* ===== Nawigacja między wydaniami ===== */
+  .nav-wydania {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 36px; padding: 16px 0 4px;
+  }
+  .nav-wydania:empty { display: none; }
+  .nav-wydania a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-wydania .nav-spacer { flex: 1; }
+
+  /* ===== Badge kontynuacji tematu ===== */
+  .badge-update {
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 2px;
+    background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
+    letter-spacing: 1px; vertical-align: middle;
+  }
+
+  /* ===== „W skrócie” ===== */
+  .w-skrocie {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 2px; padding: 14px 20px 10px; margin: 26px 0 4px;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .ws-head {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .w-skrocie ul { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: 40px; }
+  .w-skrocie li {
+    margin: 0 0 7px; font-size: .92em; line-height: 1.45;
+    break-inside: avoid; padding-left: 15px; position: relative;
+  }
+  .w-skrocie li::before { content: "▪"; position: absolute; left: 0; color: var(--accent); font-size: .8em; top: .15em; }
+  .w-skrocie a { color: var(--ink); text-decoration: none; }
+  .w-skrocie a:hover { color: var(--accent); }
+  .w-skrocie.hidden { display: none !important; }
+
+  /* ===== Widok okładki: „W skrócie” pływa po prawej (1:1) =====
+     (JS dodaje .widok-okladka na #gazeta, gdy aktywny filtr = kategoria okładki.
+     Skrót to float — treść hero zaczyna się obok, w lewej połowie, a tam, gdzie
+     skrót się kończy, akapity wpadają na pełną szerokość: siatka jak w gazecie.
+     figure/wykres dostają flow-root (BFC), żeby stały OBOK floatu, nie pod nim.) */
+  #gazeta.widok-okladka .w-skrocie { float: right; width: calc(50% - 22px); margin: 40px 0 22px 44px; }
+  #gazeta.widok-okladka .w-skrocie ul { column-count: 1; }
+  #gazeta.widok-okladka .hero figure,
+  #gazeta.widok-okladka .hero .chart-box { display: flow-root; }
+  #gazeta.widok-okladka .hero .cols { column-count: auto; }
+  #gazeta.widok-okladka .hero img { height: clamp(260px, 34vh, 400px); }
+  #gazeta.widok-okladka .divider { display: none; }
+  #gazeta.widok-okladka::after { content: ""; display: block; clear: both; }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure {
+    margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 5px; background: var(--card);
+  }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.92) contrast(1.02);
+  }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 2px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+  .filtr--logs { margin-left: auto; }
+  .filtr--logs.active { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* ===== Panel logów rutyny ===== */
+  #logi-panel { padding: 24px 0 8px; }
+  #logi-panel.hidden { display: none !important; }
+  #gazeta.hidden { display: none !important; }
+  .logi-head {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .logi-sub { font-size: .82em; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .82em; line-height: 1.5;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 2px;
+    border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
+    word-break: break-word;
+  }
+  .log-entry .lvl {
+    flex-shrink: 0; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .82em; padding-top: 1px;
+  }
+  .log-entry .msg { white-space: pre-wrap; }
+  .log-entry .msg a { color: inherit; }
+  .log-entry--error   { border-left-color: var(--accent); }
+  .log-entry--error   .lvl { color: var(--accent); }
+  .log-entry--warning { border-left-color: #b8860b; }
+  .log-entry--warning .lvl { color: #b8860b; }
+  .log-entry--info    { border-left-color: var(--ink-soft); }
+  .log-entry--info    .lvl { color: var(--ink-soft); }
+  .logi-empty { font-size: .9em; color: var(--ink-soft); font-style: italic; }
+
+  /* ===== Sekcja „Literatura” ===== */
+  .filtr--lit.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #literatura-panel { padding: 24px 0 8px; }
+  #literatura-panel.hidden { display: none !important; }
+  .lit-head {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.6em;
+    letter-spacing: -.4px; margin: 0 0 4px;
+  }
+  .lit-sub { font-size: .84em; color: var(--ink-soft); margin-bottom: 24px; line-height: 1.55; max-width: 640px; }
+  .lit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .lit-card {
+    border: 1px solid var(--rule); border-top: 3px solid var(--accent); border-radius: 2px;
+    padding: 22px 26px 24px; background: color-mix(in srgb, var(--card) 45%, var(--paper));
+  }
+  .lit-card--wide { grid-column: 1 / -1; }   /* wiersz dnia — pełna szerokość na cały utwór */
+  .lit-label {
+    font-family: 'Inter', sans-serif; font-size: .66em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2.5px; color: var(--accent);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-quote {
+    font-family: 'Fraunces', serif; font-size: 1.28em; line-height: 1.42;
+    font-style: italic; margin: 0 0 10px;
+  }
+  .lit-poem {
+    font-family: 'Fraunces', serif; font-size: 1.08em; line-height: 1.55;
+    white-space: pre-line; margin: 2px 0 12px;
+  }
+  .lit-src {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-src a { color: var(--ink-soft); }
+  .lit-omowienie { font-size: .93em; line-height: 1.62; margin: 0; text-align: justify; hyphens: auto; }
+  .lit-odp { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--rule); }
+  .lit-odp-h {
+    font-family: 'Inter', sans-serif; font-size: .64em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    display: block; margin-bottom: 8px;
+  }
+  .lit-odp ul { margin: 0; padding: 0; list-style: none; }
+  .lit-odp li { font-size: .9em; line-height: 1.5; margin-bottom: 5px; }
+  .lit-odp-j {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+    margin-right: 6px;
+  }
+  .lit-odp-t { color: var(--ink-soft); }
+  .lit-en { margin: 0 0 16px; line-height: 1.5; }
+  .lit-en:last-child { margin-bottom: 0; }
+  .lit-en b { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
+  .lit-ipa { font-family: 'Inter', sans-serif; font-size: .82em; color: var(--ink-soft); }
+  .lit-ex {
+    margin-top: 5px; font-size: .9em; color: var(--ink-soft);
+    border-left: 2px solid var(--rule); padding-left: 12px;
+  }
+  .lit-ex i { font-style: italic; color: var(--ink); }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure {
+    margin: 0; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 4px; background: var(--card);
+  }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.9) contrast(1.02);
+  }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p {
+    margin: 0 0 14px; text-align: justify; hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+  }
+  /* Znak końca artykułu (tombstone) — klasyka druku */
+  .article p:last-of-type::after, .hero .cols p:last-of-type::after {
+    content: "◼"; font-size: .55em; color: var(--accent);
+    margin-left: 7px; vertical-align: .12em;
+  }
+
+  /* ===== Trudne terminy — podkreślenie + tooltip ===== */
+  .term {
+    text-decoration: underline dotted var(--accent) 1.5px;
+    text-underline-offset: 3px; cursor: help; position: relative;
+  }
+  .term::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .78em; font-weight: 400;
+    line-height: 1.45; text-align: left; text-transform: none;
+    letter-spacing: 0; white-space: normal; hyphens: none;
+    width: max-content; max-width: min(260px, 72vw);
+    padding: 8px 11px; border-radius: 3px;
+    opacity: 0; visibility: hidden; transition: opacity .15s;
+    pointer-events: none; z-index: 40;
+  }
+  .term:hover::after, .term:focus::after, .term.open::after {
+    opacity: 1; visibility: visible;
+  }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: color-mix(in srgb, var(--card) 45%, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== TABLET (769–1024) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .article, .article:nth-child(even) { gap: 28px; }
+    .article { grid-template-columns: 270px 1fr; }
+    .article:nth-child(even) { grid-template-columns: 1fr 270px; }
+    .article img { height: 200px; }
+    .hero img { height: clamp(300px, 38vh, 420px); }
+    .hero .cols { column-gap: 32px; }
+  }
+
+  /* ===== DRUK — gazeta na papierze naprawdę ===== */
+  @media print {
+    #progress, .filtry, #theme-toggle, .nav-wydania, #logi-panel, #literatura-panel { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    article { break-inside: avoid; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Tooltip terminu jako dolna karta — nie wystaje poza ekran, czytelny po tapnięciu */
+    .term::after {
+      position: fixed; left: 14px; right: 14px; bottom: 14px; top: auto;
+      width: auto; max-width: none; transform: none;
+      padding: 12px 14px; font-size: .85em;
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+
+    /* W skrócie — jedna kolumna */
+    .w-skrocie ul { column-count: 1; }
+    .w-skrocie { padding: 12px 14px 8px; margin: 18px 0 4px; }
+
+    /* Literatura — karty w jednej kolumnie */
+    .lit-grid { grid-template-columns: 1fr; gap: 16px; }
+    .lit-card { padding: 18px 18px 20px; }
+
+    /* Widok okładki — układ 1:1 zwija się do kolumny: hero nad skrótem */
+    #gazeta.widok-okladka { display: flex; flex-direction: column; }
+    #gazeta.widok-okladka .hero { order: 1; }
+    #gazeta.widok-okladka .w-skrocie { float: none; width: auto; margin: 18px 0 4px; order: 2; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 2px; padding: 3px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="pogoda" title="Kliknij, aby otworzyć pełną prognozę"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <nav id="nav-wydania" class="nav-wydania"></nav>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie poranne · Redagowane przez AI",
+  "data_wydania": "wtorek, 28 lipca 2026, 05:42",
+  "numer": "Wydanie poranne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Azjatycki krach chipowy: KOSPI z wyłącznikiem po -9,4% — SK Hynix spada 14%, Samsung 13%",
+      "skrot": "KOSPI uruchamia automatyczny wyłącznik po -9,4%; SK Hynix -14%, Samsung -13% — największy azjatycki krach chipowy od miesięcy.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-28/korean-stocks-sink-as-chipmakers-plung-on-deepening-ai-fatigue",
+        "opublikowano": "28.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Yahoo Finance",
+          "url": "https://finance.yahoo.com/markets/world-indices/articles/south-korea-kospi-index-sinks-040623347.html"
+        }
+      ],
+      "obraz": {
+        "query": "South Korea Stock Exchange KOSPI trading floor",
+        "alt": "Parkiet giełdy koreańskiej ze spadającymi wskaźnikami",
+        "kategoria": "Inwestowanie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "-9,4%",
+          "opis": "spadek KOSPI, wywołał automatyczne zawieszenie handlu"
+        },
+        {
+          "wartosc": "-14%",
+          "opis": "spadek akcji SK Hynix"
+        },
+        {
+          "wartosc": "-5%",
+          "opis": "spadek Nvidia na Wall Street noc wcześniej"
+        }
+      ],
+      "akapity": [
+        "Południowokoreański indeks {{KOSPI|główny indeks giełdy w Seulu, barometr branży półprzewodników}} zaliczył w poniedziałek najgłębszy jednodniowy spadek od lat, tracąc 9,4% i uruchamiając automatyczne zawieszenie handlu — instrument używany po raz pierwszy w tej dekadzie. Akcje SK Hynix runęły o 14%, a Samsung Electronics straciły 13%, ciągnąc ze sobą indeksy Nikkei 225 w Tokio (-4%) i tajwański Taiex (-4%).",
+        "Bezpośrednim zapalnikiem był raport Wall Street Journal, według którego Nvidia prowadzi rozmowy o udzieleniu gwarancji finansowych wartości 250 mld USD (~945 mld zł) na budowę supercentrum danych dla OpenAI. Inwestorzy zinterpretowali to jako sygnał, że powrót z inwestycji w AI może zająć znacznie dłużej, niż rynek wcześniej zakładał. Nvidia sama straciła 5% na Wall Street w piątkowy wieczór, sygnalizując kłopoty jeszcze przed otwarciem rynków azjatyckich.",
+        "Na nastroje nałożyła się obawa przed chińską konkurencją: w tym samym dniu na szanghajskiej giełdzie zadebiutował CXMT, chiński producent pamięci {{DRAM|typ pamięci operacyjnej stosowany w serwerach i komputerach}}, którego akcje skoczyły o 460% w pierwszym dniu notowań. Sukces CXMT został odebrany przez rynek jako dowód, że Chiny mogą zagrozić monopolowi Samsung i SK Hynix na rynku pamięci AI.",
+        "Analitycy wskazują na rosnące ryzyko pęknięcia bańki infrastruktury AI: wielkie firmy technologiczne mają raportować wyniki za Q2 2026 w nadchodzących dniach, a rynek będzie uważnie śledzić każdy sygnał dotyczący planowanych wydatków na centra danych. Goldman Sachs obniżył w nocy zalecenie dla sektora chipów azjatyckich do 'neutralne'.",
+        "Przecena zbiegła się z ogólną zmianą sentymentu na rynkach — po czterech tygodniach silnych wzrostów napędzanych optymizmem AI. Jeśli wyniki technologicznych gigantów za Q2 nie potwierdzą popytu na chipy, korekta może się pogłębić i objąć europejskie oraz amerykańskie spółki półprzewodnikowe."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Chiński CXMT debiutuje na giełdzie ze wzrostem +460% — prowincja Anhui zyska 192 mld USD (~726 mld zł)",
+      "skrot": "DRAM-owy gigant CXMT debiutuje w Szanghaju z +460%, stając się największą spółką notowaną w Chinach.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-28/cxmt-listing-creates-192-billion-windfall-for-chinese-province",
+        "opublikowano": "28.07.2026"
+      },
+      "obraz": {
+        "query": "CXMT semiconductor memory chip China",
+        "alt": "Fabryka układów pamięci CXMT w Chinach"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "+460%",
+          "opis": "wzrost kursu akcji CXMT w pierwszym dniu handlu"
+        },
+        {
+          "wartosc": "192 mld USD (~726 mld zł)",
+          "opis": "nominalne zyski prowincji Anhui z debiutu"
+        },
+        {
+          "wartosc": "4.",
+          "opis": "miejsce CXMT na świecie wśród producentów DRAM"
+        }
+      ],
+      "akapity": [
+        "Anhui CXMT — czwarty największy producent pamięci {{DRAM|pamięci operacyjne do komputerów i serwerów}} na świecie — zadebiutował w poniedziałek na szanghajskiej giełdzie, a jego akcje wzrosły o ponad 460% w stosunku do ceny emisyjnej, czyniąc spółkę największą notowaną firmą na chińskich rynkach krajowych. Prowincja Anhui, wieloletni inwestor w CXMT, zebrała nominalne zyski szacowane na 192 mld USD (~726 mld zł) — choć sprzedaży udziałów nie może dokonać przez co najmniej rok.",
+        "Debiut ma znaczenie daleko wykraczające poza bilans jednej prowincji: CXMT jest przez analityków opisywany jako dowód, że chińskie państwowe inwestycje w przemysł półprzewodnikowy przynoszą efekty. Spółka produkuje chipy pamięci DDR5 i HBM dla chińskich centrów danych — dotychczas domenę Samsunga i SK Hynix — i w ciągu roku zamierza potroić zdolności produkcyjne.",
+        "Timing debiutu okazał się wyjątkowo dotkliwy dla rywali z Seulu: informacja o wzroście CXMT trafiła na rynki tego samego dnia, gdy SK Hynix i Samsung odnotowały historyczne jednodniowe spadki. Inwestorzy zaczęli kwestionować długoterminową przewagę koreańskich firm w segmencie pamięci dla AI.",
+        "Mimo euforii debiutu eksperci ostrzegają: wycena CXMT przekracza 50-krotność spodziewanych zysków na 2026 rok, a spółka nadal zależy od zachodniej technologii litograficznej, której eksport Chiny starają się ominąć przez własne projekty."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ropa Brent spada kolejny dzień do 87 USD (~329 zł) — największy jednodniowy spadek od 3 miesięcy",
+      "skrot": "Brent do 87 USD (~329 zł), -8,7% jednego dnia — ropa tanieje na wieściach o „przyjaznych rozmowach\" USA-Iran.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-27/latest-oil-market-news-and-analysis-for-july-28",
+        "opublikowano": "28.07.2026"
+      },
+      "obraz": {
+        "query": "Brent crude oil tanker",
+        "alt": "Tankowiec ropy na morzu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "87 USD (~329 zł)",
+          "opis": "cena baryłki Brent po poniedziałkowej sesji"
+        },
+        {
+          "wartosc": "-8,7%",
+          "opis": "jednodniowy spadek — największy od 3 miesięcy"
+        },
+        {
+          "wartosc": "98,49 USD",
+          "opis": "szczyt z 23 lipca, gdy eskalacja USA-Iran napędzała premię"
+        }
+      ],
+      "akapity": [
+        "Ropa Brent straciła w poniedziałek 8,7% — najszybszy jednodniowy spadek od ponad trzech miesięcy — i znalazła się w okolicach 87 USD (~329 zł) za baryłkę. Tymczasem {{WTI|ropa Texas Intermediate, drugi kluczowy benchmark rynku ropy}} spadła do 81 USD (~306 zł). Jeszcze tydzień temu Brent przekraczał 98 USD na fali premii ryzyka geopolitycznego.",
+        "Głównym czynnikiem przeceny jest utrzymująca się przerwa w atakach USA-Iran i deklaracje Trumpa o 'przyjaznych rozmowach' z Teheranem. Rynki wyceniają malejące ryzyko zakłócenia tranzytu przez Cieśninę Ormuz — jeden z kluczowych węzłów globalnej podaży ropy. Każda godzina bez ataków zmniejsza tzw. premię wojenną wbudowaną w cenę.",
+        "Ważnym kontekstem jest też wzrost podaży: Arabia Saudyjska i pozostałe kraje {{OPEC+|kartelu naftowego skupiającego głównych eksporterów}} nie zdecydowały się na cięcia produkcji mimo wcześniejszych sygnałów, liczyć na wyższe ceny. Tymczasem zaatakowanie przez Ukrainę irańskiego statku na Morzu Kaspijskim — opisywane przez Iran jako statek handlowy — może ponownie zaognić sytuację i odwrócić trend.",
+        "Polska branża paliwowa uważnie obserwuje notowania: premier Tusk zasygnalizował, że rząd rozważy przywrócenie pakietu CPN (tarcza paliwowa), jeśli ropa nie ustabilizuje się przed końcem wakacji. Tańsza ropa mogłaby sprawić, że taka decyzja okaże się zbędna."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Pekin ujawnia: USA zobowiązały się do pułapu 20% na cłach zastępczych na chińskie towary",
+      "skrot": "Chiny ogłaszają, że Waszyngton obiecał nie przekraczać 20% na cłach zastępczych — zostaje 7,5 pp. zapasu do limitu.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-27/china-says-us-pledged-to-cap-replacement-tariffs-at-20",
+        "opublikowano": "27.07.2026"
+      },
+      "obraz": {
+        "query": "US China trade negotiation flags",
+        "alt": "Flagi USA i Chin na spotkaniu handlowym"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "20%",
+          "opis": "deklarowany górny pułap ceł zastępczych USA na towary z Chin"
+        },
+        {
+          "wartosc": "12,5%",
+          "opis": "obecna stawka cła zastępczego — 7,5 pp. poniżej limitu"
+        },
+        {
+          "wartosc": "10–12,5%",
+          "opis": "nowe cła USA na 60 krajów za naruszenia dotyczące pracy przymusowej"
+        }
+      ],
+      "akapity": [
+        "Chińskie Ministerstwo Handlu poinformowało po raz pierwszy publicznie o zobowiązaniu złożonym przez Stany Zjednoczone podczas niedawnych rozmów bilateralnych: Waszyngton miał obiecać, że {{cła zastępcze|tymczasowe stawki celne, które zastąpiły wcześniejsze, wyższe taryfy handlowe}} na chińskie towary nie przekroczą 20%. Obecna stawka wynosi 12,5%, co oznacza, że USA mają do dyspozycji jeszcze 7,5 punktu procentowego przed osiągnięciem obiecanego pułapu.",
+        "Ujawnienie tego zobowiązania jest wyraźnym sygnałem ze strony Pekinu: Chiny chcą zarządzać oczekiwaniami rynkowymi i uciąć spekulacje o eskalacji wojny handlowej. Ministerstwo wskazało, że zobowiązanie padło w kontekście negocjacji dotyczących przedłużenia tymczasowego rozejmu handlowego zawartego przez obie strony wcześniej w tym roku.",
+        "Zapis nie jest prawnie wiążący i może być odwołany przez administrację Trumpa, co rynki dobrze rozumieją — w efekcie reakcja na ogłoszenie była stonowana. Analitycy zwracają uwagę, że Pekin mógł upublicznić informację taktycznie, by utrudnić Trumpowi cofnięcie się z obietnicy bez politycznych kosztów.",
+        "W tle toczą się równoległe negocjacje o redukcji ceł na produkty rolne — Chiny i USA zadeklarowały zasadnicze porozumienie w tej kwestii na ostatniej sesji rozmów, ale szczegóły pozostają niejawne. Dla polskich eksporterów żywności do Chin stabilizacja handlu USA-Chiny może mieć pozytywny efekt uboczny przez zmniejszenie globalnych napięć taryfowych."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Senat USA blokuje budżet obronny 1,15 bln USD (~4,35 bln zł) — Demokraci odrzucają zapisy o wojnie z Iranem",
+      "skrot": "Senat USA 50:46 blokuje NDAA: Demokraci odrzucają przepisy o głębszej integracji z Izraelem i autoryzacji wojny z Iranem.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/28/us-senate-democrats-block-defence-bill-over-iran-war-israel-integration",
+        "opublikowano": "28.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Yahoo Finance",
+          "url": "https://finance.yahoo.com/economy/policy/articles/senate-dems-block-1-15-235119011.html"
+        }
+      ],
+      "obraz": {
+        "query": "US Senate chamber Capitol",
+        "alt": "Izba Senatu USA w Kapitolu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "50:46",
+          "opis": "głosowanie w Senacie — potrzeba było 60 głosów do otwarcia debaty"
+        },
+        {
+          "wartosc": "1,15 bln USD (~4,35 bln zł)",
+          "opis": "roczny budżet obronny autoryzowany przez NDAA"
+        },
+        {
+          "wartosc": "65 lat",
+          "opis": "ile lat z rzędu Kongres uchwalał NDAA — seria pod znakiem zapytania"
+        }
+      ],
+      "akapity": [
+        "Senat Stanów Zjednoczonych zagłosował stosunkiem 50:46 za zablokowaniem debaty nad {{NDAA|coroczna ustawa USA ustalająca wielkość i zasady wydatków obronnych}} na rok budżetowy 2027. Do otwarcia debaty potrzeba było 60 głosów. Demokraci pod wodzą lidera mniejszości Chucka Schumera zagłosowali niemal jednolicie przeciw, nazywając projekt ustawy „blankiem in blanco\" dla działań zbrojnych administracji Trumpa przeciwko Iranowi.",
+        "Główne zastrzeżenia dotyczą dwóch grup przepisów: po pierwsze, wzmocnienia integracji wywiadowczej i wojskowej USA z Izraelem; po drugie, braku klauzuli wymagającej zgody Kongresu na nowe uderzenia na Iran. Projekt przewiduje rekordowy budżet Pentagonu: 1,15 bln USD (~4,35 bln zł), o 27% więcej niż w poprzednim roku.",
+        "Izba Reprezentantów przyjęła tę samą ustawę tydzień wcześniej stosunkiem głosów 245:188. Teraz projekt utknął w Senacie — w sposób, który nie jest do końca precedensem, ale stwarza realne ryzyko dla jednego z nielicznych 'must-pass' aktów prawnych w USA: przez 65 lat Kongres nie ominął NDAA ani razu.",
+        "Nieuchwalenie NDAA nie oznacza automatycznie zamknięcia Pentagonu, ale blokuje wiele programów modernizacyjnych, w tym zakupy rakiet {{Patriot|system obrony przeciwrakietowej krótkiego i średniego zasięgu}} dla Ukrainy. Negocjacje między Demokratami a Republikanami będą musiały znaleźć kompromis przed końcem sesji."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Premier Tusk: Polska może przywrócić pakiet CPN na paliwa jeśli ropa pozostanie niestabilna",
+      "skrot": "Tusk zapowiada możliwy powrót tarczy paliwowej CPN do końca wakacji przy utrzymaniu niestabilności rynku ropy naftowej.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-27/poland-considers-reviving-fuel-price-caps-with-crude-costs-staying-high",
+        "opublikowano": "27.07.2026"
+      },
+      "obraz": {
+        "query": "Poland gas station fuel prices",
+        "alt": "Stacja paliw w Polsce"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "2 tygodnie",
+          "opis": "szacunkowy czas ewentualnej reaktywacji tarczy paliwowej — do końca wakacji"
+        },
+        {
+          "wartosc": "87 USD",
+          "opis": "obecna cena Brent — 11 USD poniżej niedawnego szczytu"
+        },
+        {
+          "wartosc": "-8,7%",
+          "opis": "poniedziałkowy spadek ropy — główny czynnik w decyzji rządu"
+        }
+      ],
+      "akapity": [
+        "Premier Donald Tusk na poniedziałkowej konferencji prasowej zapowiedział, że rząd rozważa reaktywację {{pakietu CPN|regulacja zamrażająca ceny paliw na stacjach i obniżająca akcyzę — stosowana w Polsce 2022–2023 i ponownie w 2026}} na ostatnie dwa tygodnie wakacji szkolnych, jeśli globalna sytuacja na rynku ropy pozostanie niestabilna. Decyzja ma być podjęta przez Ministerstwo Finansów w oparciu o notowania z kolejnych dni.",
+        "Kontekst jest istotny: cena ropy Brent przez kilka tygodni oscylowała w okolicach 98 USD za baryłkę, napędzana premią ryzyka konfliktu USA-Iran. Po poniedziałkowym spadku do 87 USD (~329 zł) presja na rząd zelżała, ale Tusk zaznaczył, że sytuacja może ulec zmianie w ciągu godzin, jeśli rozmowy USA-Iran się posypią.",
+        "Reaktywacja CPN wiązałaby się z kosztem dla budżetu szacowanym przez Ministerstwo Finansów na kilkaset milionów złotych na dwa tygodnie. Opozycja skrytykowała „ad hoc\" charakter decyzji i brak długofalowej polityki energetycznej odpowiadającej na zmienność cen ropy.",
+        "Polska jest jednym z europejskich krajów najbardziej narażonych na zmienność cen ropy ze względu na wysoki udział transportu drogowego w PKB i słabo rozwiniętą alternatywę kolejową na wielu trasach towarowych. Rząd sygnalizował, że ewentualna tarcza paliwowa objęłaby zarówno benzynę, jak i ON, ale nie LPG.",
+        "Ostateczna decyzja ma zapaść do środy — jeśli Brent ustabilizuje się poniżej 90 USD, interwencja cenowa prawdopodobnie nie zostanie wprowadzona."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Netanjahu przybywa do Waszyngtonu: naciska Trumpa na stały nadzór nuklearny Iranu",
+      "skrot": "Netanjahu przyleciał do USA i żąda stałego monitorowania irańskiego programu nuklearnego — mimo braku nowych dowodów jego reaktywacji.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/liveblog/2026/7/28/iran-war-live-trump-touts-friendly-talks-netanyahu-arrives-in-us",
+        "opublikowano": "28.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Bloomberg",
+          "url": "https://www.bloomberg.com/news/articles/2026-07-26/netanyahu-to-press-trump-to-keep-watch-on-iran-s-nuclear-aims"
+        }
+      ],
+      "obraz": {
+        "query": "Benjamin Netanyahu White House",
+        "alt": "Premier Izraela Netanjahu przed Białym Domem"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "8.",
+          "opis": "z kolei spotkanie Netanjahu z Trumpem od początku ich drugich kadencji"
+        },
+        {
+          "wartosc": "10 dni",
+          "opis": "propozycja mediatorów Kataru i Pakistanu dla zawieszenia broni USA-Iran"
+        }
+      ],
+      "akapity": [
+        "Premier Izraela Benjamin Netanjahu wylądował w Waszyngtonie i ma spotkać się z prezydentem Trumpem we wtorek — jest to ich ósme spotkanie od początku drugich kadencji obu przywódców. Na szczycie agendy znajdzie się kwestia irańskiego programu nuklearnego: Netanjahu zamierza naciskać na wprowadzenie stałego mechanizmu weryfikacji, który zagwarantuje, że Iran nie odbuduje zdolności do wyprodukowania bomby.",
+        "Izraelski premier przyznał publicznie, że nie dysponuje nowymi dowodami na to, że Iran aktywnie odbudowuje program nuklearny po serii uderzeń USA i Izraela na kluczowe instalacje. Mimo to Netanjahu argumentuje, że właśnie dlatego niezbędna jest ciągła obserwacja — by potencjalna reaktywacja nie zaskoczyła Zachodu.",
+        "Wizyta ma miejsce w delikatnym momencie dyplomatycznym: USA i Iran są w trzecim dniu faktycznego zawieszenia ataków, a mediatorzy z Kataru i Pakistanu złożyli propozycję 10-dniowego formalnego rozejmu. Netanjahu, wedle źródeł Al Jazeera, jest sceptyczny wobec rozmów i obawia się, że Trump może zawrzeć z Iranem umowę, która wykluczy trwałe zniszczenie jego potencjału nuklearnego.",
+        "Wyjazd Netanjahu do USA odbywa się mimo aktywnego nakazu aresztowania wydanego przez {{MTK|Międzynarodowy Trybunał Karny w Hadze}} — Netanjahu zadeklarował, że nakaz go nie dotyczy i zamierza w nadchodzących dniach przemawiać w ONZ w Nowym Jorku."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "USA-Iran: trzeci dzień przerwy w atakach — Trump mówi o „przyjaznych rozmowach\", Katar i Pakistan proponują 10-dniowy rozejm",
+      "skrot": "Trzeci dzień bez ataków USA-Iran; Trump deklaruje 'przyjazne rozmowy', a mediatorzy z Kataru i Pakistanu składają propozycję 10-dniowego rozejmu.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/27/hopes-of-return-to-diplomacy-as-us-iran-hold-fire-for-third-day",
+        "opublikowano": "27.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Al Jazeera liveblog",
+          "url": "https://www.aljazeera.com/news/liveblog/2026/7/28/iran-war-live-trump-touts-friendly-talks-netanyahu-arrives-in-us"
+        }
+      ],
+      "obraz": {
+        "query": "Strait of Hormuz aerial view",
+        "alt": "Cieśnina Ormuz z lotu ptaka"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "3",
+          "opis": "liczba kolejnych dni przerwy w atakach USA-Iran"
+        },
+        {
+          "wartosc": "10 dni",
+          "opis": "proponowana długość formalnego rozejmu wg Qatar/Pakistan"
+        },
+        {
+          "wartosc": "-8,7%",
+          "opis": "spadek ropy Brent w ciągu dnia — odpowiedź rynku na de-eskalację"
+        }
+      ],
+      "akapity": [
+        "Stany Zjednoczone i Iran weszły w trzeci dzień faktycznej przerwy w atakach wzajemnych — najdłuższej od początku bieżącej rundy konfliktu. Prezydent Trump oświadczył, że Waszyngton prowadzi z Teheranem „bardzo przyjazne rozmowy\", choć zaznaczył, iż nie jest gotowy na przedłużone negocjacje. Iran z kolei powiedział, że to USA szukają wyjścia z konfliktu, i nie potwierdziło istnienia żadnych bezpośrednich rozmów.",
+        "Mediatorzy z Kataru i Pakistanu — kluczowi pośrednicy od początku konfliktu — złożyli obu stronom propozycję 10-dniowego formalnego rozejmu, który miałby otworzyć przestrzeń dla rozmów dyplomatycznych. Według źródeł Al Jazeera strona irańska przyjęła dokument do analizy, ale nie wyraziła jeszcze zgody, uzależniając ewentualną decyzję od oczekiwanego spotkania Trumpa z Netanjahu.",
+        "Kruche zawieszenie ognia nie oznacza pokoju na całym regionie: {{Huti|jemeńskie ugrupowanie zbrojne popierane przez Iran}} przeprowadzili w niedzielę ataki dronami na saudyjskie instalacje naftowe, co Iran zdystansował się od tych działań publicznie. Obawy Teheranu dotyczą też Morza Kaspijskiego — po ataku Ukrainy na irański statek (patrz: inny artykuł) Iran grozi odwetem.",
+        "Trump zaplanował ponadto spotkanie z premierem Izraela Netanjahu, który przyleciał do Waszyngtonu. Izrael jest sceptyczny wobec rozejmu i naciska na gwarancje zniszczenia irańskiego potencjału nuklearnego — co utrudnia znalezienie kompromisu akceptowalnego dla Teheranu.",
+        "Rynki pozytywnie odpowiedziały na de-eskalację: ropa Brent straciła 8,7% w ciągu dnia, a dolar umocnił się wobec walut rynków wschodzących. Kolejnym testem dla trwałości zawieszenia będzie środowe wznowienie rozmów w Doha."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Ukraina niszczy irański statek na Morzu Kaspijskim; Teheran wzywa dyplomatów i zapowiada odpowiedź",
+      "skrot": "Ukraina atakuje irański statek na Morzu Kaspijskim, zabijając marynarza; Iran grozi odwetem i wzywa ukraińskiego chargé d'affaires.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/27/iran-warns-ukraine-of-retaliation-after-deadly-caspian-sea-strike",
+        "opublikowano": "27.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Middle East Eye",
+          "url": "https://www.middleeasteye.net/live-blog/live-blog-update/tehran-summons-ukrainian-diplomats-after-kyiv-bombs-iranian-ship-caspian"
+        },
+        {
+          "nazwa": "Amwaj Media",
+          "url": "https://amwaj.media/en/media-monitor/will-ukrainian-attack-on-iranian-ship-widen-war-to-the-caspian-sea"
+        }
+      ],
+      "obraz": {
+        "query": "Caspian Sea ship tanker",
+        "alt": "Statek towarowy na Morzu Kaspijskim"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "1",
+          "opis": "zabity marynarz na irańskim statku po ataku ukraińskich dronów"
+        },
+        {
+          "wartosc": "3",
+          "opis": "morza objęte teraz konfliktem: Ormuz, Morze Czerwone, Kaspijskie"
+        }
+      ],
+      "akapity": [
+        "Ukraina przeprowadziła w sobotę uderzenie długodystansowe na irański statek handlowy płynący po {{Morzu Kaspijskim|śródlądowe morze między Rosją, Iranem, Azerbejdżanem, Kazachstanem i Turkmenistanem}} z Rosji w kierunku irańskiego portu. Eksplozja — wg Ministerstwa Spraw Zagranicznych Iranu — zabiła jednego marynarza i raniła kilku innych. Prezydent Zełeński pochwalił atak na platformie X, pisząc o „bardzo silnych wynikach\" uderzeń na „statki wykorzystywane do wojskowych dostaw towarów z udziałem Iranu\".",
+        "Teheran przyjął zdecydowanie inne stanowisko: MSZ Iranu określiło zaatakowaną jednostkę jako statek handlowy i wezwał ukraińskiego {{chargé d'affaires|tymczasowy szef misji dyplomatycznej w miejsce ambasadora}} na dywanik. Minister spraw zagranicznych Abbas Araghchi stwierdził, że atak „nie może pozostać bez odpowiedzi\" i stanowi naruszenie Karty ONZ, wzywając Radę Bezpieczeństwa i UE do potępienia Kijowa.",
+        "W tle konflikt interesów: Ukraina od miesięcy starała się zakłócić irańskie dostawy dronów {{Shahed|irański dron kamikadze szeroko stosowany przez Rosję}} i innego uzbrojenia do Rosji. Szlak przez Morze Kaspijskie jest kluczową alternatywą dla lądowej trasy przez Kaukaz objętej sankcjami. Atak pokazuje, że Ukraina gotowa jest otworzyć nowy teatr działań, nawet za cenę zadrażnienia z Iranem.",
+        "Incydent może skomplikować delikatne rozmowy USA-Iran: Teheran ma teraz dodatkowy powód, by twardo negocjować lub zerwać rozmowy, obwiniając — jak powiedział Araghchi — Izraela za „prowokowanie\" Ukrainy. Eksperci Amwaj Media wskazują, że Iran może odpowiedzieć pośrednio przez proksi w Iraku lub Syrii, unikając bezpośredniej konfrontacji z Ukrainą."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Zełeński leci do Waszyngtonu spotkać Trumpa; Nowy PM Wielkiej Brytanii Burnham potwierdza niezmienne wsparcie",
+      "skrot": "Zełeński i Trump spotykają się dziś w Waszyngtonie gdy konflikty ukraiński i irański splatają się; Burnham deklaruje kontynuację dostaw broni.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/7/28/ukraines-zelenskyy-set-to-meet-trump-as-iran-and-ukraine-wars-converge",
+        "opublikowano": "28.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Al Jazeera",
+          "url": "https://www.aljazeera.com/news/2026/7/27/new-uk-pm-burnham-assures-zelenskyy-of-continuing-ukraine-support"
+        }
+      ],
+      "obraz": {
+        "query": "Zelensky Trump White House meeting",
+        "alt": "Spotkanie Zełeńskiego i Trumpa w Białym Domu"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "241 dni",
+          "opis": "tyle astronauta NASA Chris Williams spędził na ISS — para z kosmosem wraca w tym samym dniu"
+        },
+        {
+          "wartosc": "15",
+          "opis": "rannych w nocnym ukraińskim ataku na rosyjskie magazyny Wildberries"
+        }
+      ],
+      "akapity": [
+        "Prezydent Ukrainy Wołodymyr Zełeński przylecial w poniedziałek do Waszyngtonu, gdzie ma spotkać się z Donaldem Trumpem w dniu, gdy do Białego Domu przybywa też premier Izraela Netanjahu. Jednoczesna obecność obu przywódców pod jednym dachem pokazuje skalę dyplomatycznych wyzwań, z którymi mierzy się administracja USA: jednocześnie negocjuje rozejm z Iranem i szuka formuły zakończenia wojny na Ukrainie.",
+        "Dla Kijowa priorytetem rozmów z Trumpem będzie uzyskanie gwarancji kontynuacji dostaw systemów obrony powietrznej — szczególnie pocisków do Patriotów — oraz potwierdzenia, że ewentualna umowa USA-Iran nie ograniczy iranskich dostatw do Rosji. Ukraina obawia się, że dyplomatyczny reset z Teheranem mógłby sprawić, iż Washington przestanie naciskać na Iran w kwestii dronów Shahed.",
+        "Nowy premier Wielkiej Brytanii Andy Burnham, który zaledwie trzy tygodnie temu objął urząd po rezygnacji Starmera, w niedzielę rozmawiał telefonicznie z Zełeńskim i zapewnił go o kontynuacji wsparcia wojskowego i finansowego. Burnham zobowiązał się do utrzymania rocznego pakietu pomocowego na poziomie 3 mld GBP (~16,5 mld zł) i zapowiedział wizytę w Kijowie jeszcze w sierpniu.",
+        "W tle dramatyczny atak Ukrainy na irański statek handlowy na Morzu Kaspijskim — za który Iran grozi odwetem wobec Kijowa. Trump będzie musiał poruszać te kwestie z Zełeńskim ostrożnie, by nie pogrążyć równoległych rozmów z Iranem."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "SpaceX Crew-11: próba ogniowa przerwana 57 sekund przed końcem — start ISS celuje w 31 lipca",
+      "skrot": "Test statyczny Crew-11 przerwany 28 lipca przez błąd ramienia erektora; SpaceX planuje ponowną próbę i start 31 lipca.",
+      "zrodlo": {
+        "nazwa": "Space.com",
+        "url": "https://www.space.com/news/live/spacex-crew-dragon-mission-updates",
+        "opublikowano": "28.07.2026"
+      },
+      "obraz": {
+        "query": "SpaceX Crew Dragon Falcon 9 launch pad",
+        "alt": "Falcon 9 z kapsułą Crew Dragon na wyrzutni"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "57 s",
+          "opis": "czas do planowanego odpalenia silnika, gdy test został przerwany"
+        },
+        {
+          "wartosc": "4",
+          "opis": "liczba astronautów na pokładzie misji Crew-11"
+        },
+        {
+          "wartosc": "31.07.2026",
+          "opis": "planowana data startu po udanej próbie we wtorek"
+        }
+      ],
+      "akapity": [
+        "SpaceX przeprowadziło w poniedziałek planowaną {{próbę statyczną|kontrolowane odpalenie silników rakiety przy zakotwiczonej wyrzutni, potwierdzające gotowość do startu}} rakiety Falcon 9 dla misji Crew-11, która ma dostarczyć na Międzynarodową Stację Kosmiczną czterech astronautów z NASA i Roskosmasu. Odliczanie zostało automatycznie przerwane na 57 sekund przed momentem odpalenia silnika z powodu błędu w układzie ramieniowym erektora — elementu infrastruktury naziemnej.",
+        "Czteroosobowa załoga Crew-11 rano wykonała wcześniej pełną symulację dnia startu: weszli w skafandry, przejechali na wyrzutnię 39-A w centrum KSC i weszli na pokład kapsułki Dragon Endeavour. Wcześniej tego dnia czterej astronauci oficjalnie zakończyli kwarantannę — standardowy protokół zapobiegający przenoszeniu infekcji na stację.",
+        "SpaceX zapowiedziało powtórkę próby ogniowej we wtorek (29.07). Jeśli przebiegnie pomyślnie, start nastąpi zgodnie z planem w czwartek 31 lipca. Misja Crew-11 zastąpi na ISS załogę Crew-10, która przebywa na stacji od marca bieżącego roku.",
+        "Powiązana wiadomość: misja Crew-10 wróci na Ziemię kilka dni po przybyciu Crew-11 — trwa w ten sposób ciągłość obecności ludzi na ISS od ponad ćwierćwiecza. Ostatnia misja NASA realizowana rosyjskim Sojuzem zakończyła się w niedzielę lądowaniem misji MS-28."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Soyuz MS-28 wraca na Ziemię: astronauta NASA i dwaj kosmonauci Roskosmosa po 241 dniach na ISS",
+      "skrot": "Chris Williams i dwóch kosmonautów Roskosmosa wylądowali w Kazachstanie po 241 dniach na ISS — ostatnia NASA-Rosja misja na Sojuzie.",
+      "zrodlo": {
+        "nazwa": "Space.com",
+        "url": "https://www.space.com/space-exploration/human-spaceflight/nasa-astronaut-two-cosmonauts-return-to-earth-soyuz-ms-28",
+        "opublikowano": "27.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "ScienceDaily",
+          "url": "https://www.sciencedaily.com/releases/2026/07/260727012131.htm"
+        }
+      ],
+      "obraz": {
+        "query": "Soyuz spacecraft parachute landing Kazakhstan",
+        "alt": "Kapsuła Sojuz lądująca na spadochronach w Kazachstanie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "241 dni",
+          "opis": "czas pobytu załogi MS-28 na ISS"
+        },
+        {
+          "wartosc": "102 mln mil",
+          "opis": "dystans pokonany przez Soyuz MS-28 (~164 mln km)"
+        },
+        {
+          "wartosc": "3 856",
+          "opis": "liczba orbit Ziemi wykonanych przez załogę"
+        }
+      ],
+      "akapity": [
+        "Kapsuła {{Soyuz MS-28|rosyjska kapsuła kosmiczna obsługująca rotacje załogi na ISS od 1967 roku}} rozłączyła się z Międzynarodową Stacją Kosmiczną w niedzielę o 3:03 czasu wschodnioamerykańskiego i po 3 godz. 24 min. wylądowała bezpiecznie na kazachstańskim stepie, 3 min. 27 sec. po planowym czasie. Na pokładzie znajdowali się: astronauta NASA Chris Williams oraz kosmonauci Roskosmosa Andriej Fedajew i Iwan Wagner.",
+        "Williams, który odbył drugi lot w kosmos, spędził na orbicie 241 dni — wykonał dwa spacery kosmiczne: jeden poświęcony modernizacji systemu zasilania ISS, drugi wymianie wadliwego złącza ramienia robotycznego Canadarm2. Misja Sojuz MS-28 była uruchomiona 27 listopada 2025 roku.",
+        "Symboliczne znaczenie ma fakt, że może to być jedna z ostatnich, jeśli nie ostatnia, misja NASA realizowana przez rosyjski Sojuz w obecnym formacie współpracy. Napięcia polityczne i operacyjne przesunęły rotacje amerykańskich astronautów do kapsuł SpaceX Dragon, a przyszłość stacji jest przedmiotem negocjacji po ogłoszonej przez NASA dacie deorbitacji ISS na 2030 rok.",
+        "Williams potrzebuje teraz standardowego okresu rehabilitacji — zazwyczaj kilku tygodni ćwiczeń — by odzyskać pełną sprawność po długotrwałej nieważkości. Ekipa medyczna czekała na astronautę bezpośrednio na miejscu lądowania w regionie Dżezkazgan."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Nvidia inwestuje 5 mld USD (~18,9 mld zł) w Safe Superintelligence Ilyi Sutskevera — z dostępem do chipów Vera Rubin",
+      "skrot": "Nvidia przeznacza 5 mld USD (~18,9 mld zł) na startup SSI Ilyi Sutskevera; inwestycja obejmuje priorytetowy dostęp do platformy Vera Rubin.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-07-27/nvidia-makes-substantial-investment-in-sutskever-s-ai-startup",
+        "opublikowano": "27.07.2026"
+      },
+      "obraz": {
+        "query": "NVIDIA GPU chip data center",
+        "alt": "Chipy NVIDIA w centrum danych"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "5 mld USD (~18,9 mld zł)",
+          "opis": "inwestycja Nvidii w startup Safe Superintelligence"
+        },
+        {
+          "wartosc": "Vera Rubin",
+          "opis": "platforma chipów nowej generacji Nvidii — dostęp dla SSI"
+        }
+      ],
+      "akapity": [
+        "Nvidia zobowiązała się zainwestować 5 mld USD (~18,9 mld zł) w startup {{SSI|Safe Superintelligence — firma badawcza AI założona przez Ilyę Sutskevera, byłego dyrektora naukowego OpenAI}} Ilyi Sutskevera — co Bloomberg określa jako jedną z największych transakcji w historii firmy. Oprócz finansowania SSI uzyska priorytetowy dostęp do następnej generacji platformy chipowej Nvidii, zwanej Vera Rubin.",
+        "Ilya Sutskever opuścił OpenAI w 2024 roku i założył SSI z misją zbudowania bezpiecznej superinteligencji — podmiotu AI przekraczającego ludzki poziom rozumowania we wszystkich dziedzinach. Firma celowo unikała dotychczas rozgłosu i komercjalizacji, koncentrując się na badaniach fundamentalnych. Inwestycja Nvidii jest sygnałem, że rynek przypisuje SSI realne szanse na dostarczenie przełomowego modelu.",
+        "Transakcja ma strategiczne znaczenie dla Nvidii w kontekście rosnącej konkurencji z Chin: CXMT i inne chińskie firmy chipowe ograniczają monopol Nvidii na rynku pamięci AI, a inwestycja w SSI jest sposobem na umocnienie pozycji w ekosystemie po stronie algorytmów i modeli, nie tylko sprzętu.",
+        "Rynek zareagował chłodno — akcje Nvidii i tak straciły 5% w piątek na doniesieniach o 250-mld-dolarowych gwarancjach finansowych dla OpenAI. Inwestorzy zaczynają kwestionować, czy rosnące zaangażowanie kapitałowe Nvidii w startupy AI nie odciąga zasobów od jej podstawowego biznesu chipowego."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Kimi K3 zdobywa 32% na benchmarku cyberbezpieczeństwa vs 76% dla USA — Amodei wzywa do obowiązkowych testów dla wszystkich modeli",
+      "skrot": "Niezależne testy pokazują Kimi K3 daleko za USA w cyber (32% vs 76%); Amodei z Anthropic proponuje obowiązkowe testy bezpieczeństwa wszystkich modeli AI.",
+      "zrodlo": {
+        "nazwa": "The Decoder",
+        "url": "https://the-decoder.com/kimi-k3-trails-frontier-us-models-by-a-wide-margin-on-cyber-exploits-and-distillation-may-explain-why/",
+        "opublikowano": "28.07.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Bloomberg",
+          "url": "https://www.bloomberg.com/news/articles/2026-07-28/anthropic-s-amodei-rejects-open-model-ban-but-calls-for-testing"
+        }
+      ],
+      "obraz": {
+        "query": "AI model benchmark comparison chart",
+        "alt": "Porównanie wyników modeli AI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "32%",
+          "opis": "wynik Kimi K3 na benchmarku ExploitBench"
+        },
+        {
+          "wartosc": "76%",
+          "opis": "wynik wiodących modeli USA na tym samym benchmarku"
+        },
+        {
+          "wartosc": "2,8 bln",
+          "opis": "liczba parametrów Kimi K3 — rekord dla modelu open-weight"
+        }
+      ],
+      "akapity": [
+        "Pierwsze niezależne testy bezpieczeństwa chińskiego modelu {{Kimi K3|model językowy Moonshot AI o 2,8 bln parametrów, udostępniony open-weight 27.07.2026}} pokazują głęboką lukę: na benchmark {{ExploitBench|zestaw testów mierzący zdolność modeli do automatyzacji ataków cybernetycznych}} K3 uzyska 32%, podczas gdy czołowe modele amerykańskie osiągają 76%. The Decoder i niezależni badacze sugerują, że tak duża luka może wynikać z faktu, iż Kimi K3 jest dystylowany — czyli trenowany na wyjściach modeli US.",
+        "Wynik jest wielowymiarowy: z jednej strony Kimi K3 wyraźnie sprawdza się w kodowaniu i rozumowaniu matematycznym, gdzie zbliża się do Claude Fable 5 i GPT-5.6 Sol. Z drugiej — słabość na ExploitBench może oznaczać, że model jest mniej niebezpieczny w rękach cyberprzestępców, ale też mniej użyteczny dla zastosowań defensywnych.",
+        "W tym samym dniu Dario Amodei, dyrektor generalny Anthropic, oświadczył, że sprzeciwia się przepisom zakazującym publikacji modeli open-weight, ale wzywa do wprowadzenia obowiązkowych testów bezpieczeństwa dla wszystkich modeli — zarówno zamkniętych, jak i otwartych — przed ich publicznym udostępnieniem. Amodei zaproponował też politykę spowalniającą rozwój chińskich modeli AI bez zakazywania open-source.",
+        "Chiny odpowiedziały: rząd chiński zagroził 'wszelkimi niezbędnymi środkami', jeśli USA wprowadzą nowe sankcje na chińskie firmy AI — The Register (28.07.2026) odnotował też chińskie twierdzenie, że to właśnie zachodnie firmy AI dystylują chińskie modele, a nie odwrotnie, w geopolitycznej wojnie narracji.",
+        "Wątek K3/Qwen 3.8 ewoluuje szybciej niż oczekiwano: spór o benchmarki i politykę open-weight może zdominować agendy kluczowych konferencji AI w sierpniu."
+      ],
+      "kontynuacja": true
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Astronomowie wykryli wyjątkowo rzadkie zdarzenie pływowe: wędrująca czarna dziura 10 tys. lat świetlnych od centrum galaktyki",
+      "skrot": "AI-klasyfikator znalazł tidal disruption event dziesiątki tysięcy lat świetlnych od centrum galaktyki — zdarzenie zdarza się raz na 100 tys. lat.",
+      "zrodlo": {
+        "nazwa": "Phys.org",
+        "url": "https://phys.org/news/2026-07-astronomers-universe-rarest-black-hole.html"
+      },
+      "obraz": {
+        "query": "tidal disruption event black hole star galaxy",
+        "alt": "Wizja artystyczna gwiazdy pochłanianej przez czarną dziurę"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "1 mln",
+          "opis": "razy większa masa czarnej dziury od masy Słońca"
+        },
+        {
+          "wartosc": "raz na 100 tys. lat",
+          "opis": "częstotliwość zdarzeń tidal disruption event w jednej galaktyce"
+        },
+        {
+          "wartosc": ">100",
+          "opis": "liczba TDE zidentyfikowanych w ciągu dekady — niemal wszystkie w centrach galaktyk"
+        }
+      ],
+      "akapity": [
+        "Zespół astronomów z Uniwersytetu Karoliny Północnej w Chapel Hill odkrył, przy użyciu klasyfikatora opartego na sztucznej inteligencji, niezwykle rzadkie zdarzenie kosmiczne: {{TDE|tidal disruption event — zjawisko, gdy gwiazda zbliża się zbyt blisko czarnej dziury i zostaje rozerwana przez jej pole grawitacyjne}} ulokowane dziesiątki tysięcy lat świetlnych od centrum swojej galaktyki. Dotychczas niemal wszystkie spośród ponad stu znanych zdarzeń tego typu znajdowały się w jądrach galaktycznych.",
+        "Odkrycie sugeruje, że ogromne czarne dziury — ta ma szacunkową masę miliona Słońc — mogą 'wędrować' przez galaktyki po kolizjach i zlaniach galaktycznych, a nie zawsze osiada w centrum po takiej fuzji. Astrofizycy długo podejrzewali istnienie takich 'koczowniczych' czarnych dziur, ale nigdy wcześniej nie udało się uchwycić jednej w działaniu.",
+        "Kluczową rolę odegrał algorytm AI specjalnie dostrojony do wyszukiwania TDE poza centrami galaktyk: bez tego narzędzia zdarzenie prawdopodobnie zostałoby pominięte w standardowych przeglądach nieba, bo oprogramowanie historycznie zakładało, że TDE zdarzają się wyłącznie w jądrach. Odkrycie zmusza do przepisania modeli symulujących dynamikę galaktyk po zderzeniach.",
+        "Wyniki opublikowano w recenzowanym piśmie astronomicznym. Badacze planują teraz przeszukać archiwa teleskopów w poszukiwaniu wcześniejszych przeoczonych zdarzeń — naukowcy oceniają, że podobnych 'wędrujących' czarnych dziur może być znacznie więcej, niż dotychczas sądzono."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Larwy ochotki nurkują 200 m w jezioro Malawi każdego dnia uciekając przed drapieżnikami — sterują głębokością pęcherzykami powietrza",
+      "skrot": "Larwy ochotki w jeziorze Malawi codziennie nurkują 200 m, regulując głębokość pęcherzykami powietrza — jedyne znane zwierzęta z tą zdolnością.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/"
+      },
+      "obraz": {
+        "query": "Lake Malawi underwater",
+        "alt": "Podwodny widok jeziora Malawi z fauną"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "200 m",
+          "opis": "głębokość, na którą larwy nurkują każdego dnia w ucieczce przed drapieżnikami"
+        },
+        {
+          "wartosc": "pH",
+          "opis": "parametr regulujący rozmiar pęcherzyków powietrznych larw — unikalny mechanizm"
+        }
+      ],
+      "akapity": [
+        "Naukowcy odkryli u larw {{ochotki|małe owady z rodziny Chironomidae, larwy żyją w wodzie i stanowią ważny element diety ryb}} w afrykańskim {{jeziorze Malawi|jedno z największych słodkowodnych jezior świata, leżące na granicy Malawi, Mozambiku i Tanzanii}} mechanizm aktywnego nurkowania, niespotykany wcześniej w świecie zwierzęcym: larwy regulują głębokość zanurzenia przez zmianę pH wewnętrznych pęcherzyków powietrza, które rozszerzają się lub kurczą jak precyzyjny balon.",
+        "Codziennie, gdy słońce wschodzi i drapieżne ryby stają się aktywne w strefie płytkiej, larwy migrują w dół na głębokość 200 metrów. Gdy zapada zmrok, wracają ku powierzchni, by żerować na fitoplankonie. Ta dobowa migracja pionowa jest znana wśród zwierząt morskich, ale mechanizm pH-regulowanego pęcherzyka powietrznego u słodkowodnych owadów nie był nigdy opisany.",
+        "Odkrycie ma znaczenie ekologiczne: larwy ochotki to podstawa łańcucha pokarmowego w jeziorze Malawi i kluczowe ogniwo zasilające tamtejsze rybołówstwo, ważne dla wyżywienia kilku milionów ludzi. Zrozumienie ich migracji pozwoli lepiej przewidywać, jak zmiany temperatury wody wpłyną na rybostany jeziora.",
+        "Wyniki badań, prowadzonych przez międzynarodowy zespół z udziałem uczelni z Malawi i Niemiec, opublikowano w bieżącym numerze periodyku naukowego. Autorzy planują sprawdzić, czy podobny mechanizm działa u spokrewnionych gatunków w innych jeziorach."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Tajemnica Darwina po 150 latach: komputerowe owce dowodzą, że to pasące się zwierzęta tworzą tarasy na zboczach gór",
+      "skrot": "Wirtualne stada owiec w symulacji same tworzą górskie tarasy — potwierdzając hipotezę Darwina sprzed 150 lat.",
+      "zrodlo": {
+        "nazwa": "Phys.org",
+        "url": "https://phys.org/news/2026-07-darwin-150yearold-hillside-mystery-virtual.html"
+      },
+      "obraz": {
+        "query": "terracettes hillside sheep grazing Wales",
+        "alt": "Owce pasące się na stromym zboczu pokrytym terasami"
+      },
+      "akapity": [
+        "Karol Darwin jako jeden z pierwszych naukowców opisał w połowie XIX w. zagadkowe poziome progi — {{terracety|regularne, poziome stopnie tworzące się na stromych zboczach gór i wzgórz}} — widoczne na zboczach gór w Walii, Szkocji i wielu innych regionach świata. Przez 150 lat spierano się, czy tworzą je zjawiska geologiczne, czy właśnie pasące się zwierzęta. Teraz komputerowa symulacja udzieliła jednoznacznej odpowiedzi.",
+        "Zespół badaczy zbudował model, w którym wirtualne owce poruszały się według prostych reguł matematycznych: szukaj trawy, minimalizuj zużycie energii. Bez żadnych dodatkowych założeń, symulowane stada samoistnie wyżłobiły w wirtualnych zboczach wzorzec identyczny z terasami spotykanymi w naturze. Wystarczyły trzy składowe: stromość terenu, preferencja zwierząt do poziomego ruchu i wieloletnia akumulacja śladów.",
+        "Odkrycie tłumaczy jednocześnie, dlaczego tarasy zanikają w regionach, z których usunięto wypas: bez zwierząt zbocza stopniowo wygładzają się erozją. Badacze liczą, że model pomoże w planowaniu wypasu w górskich parkach narodowych i monitorowaniu skutków zmian klimatycznych dla ekosystemów trawiasto-zboczowych.",
+        "To piękny przykład, jak proste zasady — coś tak niewinnego jak owca szukająca trawy — przez setki lat tworzą monumentalne wzorce w krajobrazie. Darwin intuicyjnie wyczuł rozwiązanie, ale brakowało mu narzędzi, by to udowodnić. Dziś zastąpiły je algorytmy."
+      ],
+      "kontynuacja": false
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Sprzed 500 000 lat: wczesny człowiek w Anglii wystrugał wielokrotny użytek — młotek z kości słonia mamuta",
+      "skrot": "Kość słoniowa z Anglii sprzed 500 tys. lat to dowód pierwszego wielokrotnego narzędzia w historii — starszego o 200 tys. lat od dotychczasowych.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/"
+      },
+      "obraz": {
+        "query": "prehistoric stone tool flint England",
+        "alt": "Prymitywne narzędzia krzemienne z prehistorycznej Anglii"
+      },
+      "akapity": [
+        "Naukowcy zbadali kość słoniową wydobytą z angielskiego stanowiska paleolitycznego i doszli do zadziwiającego wniosku: wczesny człowiek — prawdopodobnie {{Homo heidelbergensis|gatunek człowieka prehistorycznego żyjący ok. 600–200 tys. lat temu, wspólny przodek Neandertalczyka i Homo sapiens}} — celowo uformował z niej młotek do ostrzenia krzemiennych narzędzi. Obiekt był używany wielokrotnie — widać na nim ślady naprawy i powtórnego formowania krawędzi roboczej.",
+        "Do tej pory najstarsze znane narzędzia wielokrotnego użytku datowano na ok. 300 000 lat. Angielski okaz cofa tę granicę o kolejne 200 000 lat, do ok. 500 000 lat p.n.e. Oznacza to, że zdolność do planowania — 'ta kość przyda mi się jutro' — jest znacznie starsza, niż sądzono.",
+        "Kość pochodzi z gatunku słonia, który zamieszkiwał Europę w epoce lodowcowej. Odkrycie uzupełnia obraz wczesnych Europejczyków jako nie tyle prymitywnych zbieraczy, co sprawnych rzemieślników zdolnych do abstrakcyjnego myślenia o przyszłości — cechy, którą długo przypisywano wyłącznie anatomicznie współczesnemu Homo sapiens.",
+        "Badania opublikowano w renomowanym piśmie archelogicznym. Autorzy zaznaczają, że angielskie stanowiska paleolityczne w basenach rzecznych są wyjątkowo dobrze zachowane i kryją jeszcze wiele niespodzianek — kolejne wykopaliska zaplanowane są na 2027 rok."
+      ],
+      "kontynuacja": false
+    }
+  ],
+  "literatura": {
+    "cytat": {
+      "tresc": "Kiedy wstajesz niechętnie, niech ta myśl będzie pierwsza: budzę się, by dokonać dzieła właściwego człowiekowi.",
+      "autor": "Marek Aureliusz",
+      "zrodlo": "Rozmyślania, II.1",
+      "omowienie": "Cesarz-filozof Marek Aureliusz pisał 'Rozmyślania' dla siebie — jako osobisty dziennik dyscypliny, nigdy z myślą o publikacji. To zdanie to codzienna automotywacja napisana w nocy dla porannego 'ja'. Wstawać chętnie jest przywilejem, ale działać — obowiązkiem. I w tym prostym rozróżnieniu tkwi cała etyka stoicka: nie pytaj, czy masz ochotę, tylko wstawaj i rób swoje."
+    },
+    "przyslowie": {
+      "tresc": "Prawdziwych przyjaciół poznaje się w biedzie.",
+      "pochodzenie": "przysłowie polskie",
+      "odpowiedniki": [
+        {
+          "jezyk": "ang.",
+          "tresc": "A friend in need is a friend indeed",
+          "tlum": "przyjaciel w potrzebie to dopiero przyjaciel"
+        },
+        {
+          "jezyk": "łac.",
+          "tresc": "Amicus certus in re incerta cernitur",
+          "tlum": "pewny przyjaciel rozpoznawany jest w niepewnych czasach"
+        },
+        {
+          "jezyk": "jp",
+          "tresc": "まさかの時の友こそ真の友 (masaka no toki no tomo koso shin no tomo)",
+          "tlum": "przyjaciel w chwili kryzysu to prawdziwy przyjaciel"
+        }
+      ],
+      "omowienie": "Przysłowie stare jak przyjaźń, bo i ona jest stara jak człowiek. Test prawdziwej więzi nie przychodzi w dobre dni — przychodzi, gdy coś się wali, gdy pieniędzy nie ma, gdy nikt inny nie chce wiedzieć. Dlatego mądrość ludowa we wszystkich kulturach niemal identycznie definiuje przyjaciela: ten, kto nie znika, gdy robi się trudno. Angielski, łacina, japoński — jedno zdanie, ten sam sens."
+    },
+    "wiersz": {
+      "tytul": "Na zdrowie",
+      "autor": "Jan Kochanowski",
+      "tresc": "Szlachetne zdrowie,\nNikt się nie dowie,\nJako smakujesz,\nAż się zepsujesz.\n\nTam człowiek prawie\nWidzi na jawie\nI sam to powie,\nŻe nic nad zdrowie.",
+      "omowienie": "Kochanowski napisał tę fraszkę w XVI wieku, lecz brzmi jakby wyszła spod pióra dziś rano. Zdrowie cenimy dopiero po stracie — i tak samo z wieloma rzeczami, które mamy za oczywiste: spokojem, bezpieczeństwem, ciszą. Nikt nam nie mówi, jak są cenne, gdy je mamy. Dowiadujemy się zawsze zbyt późno. Fraszka, zaledwie osiem wersów, a cała filozofia wdzięczności za to, co jest."
+    },
+    "angielski": {
+      "slowo": "volatile",
+      "wymowa": "/ˈvɒl.ə.taɪl/",
+      "znaczenie": "niestabilny, zmienny, podatny na gwałtowne wahania",
+      "przyklad": "Asian markets were highly volatile this morning. — Azjatyckie rynki były dziś rano wysoce niestabilne.",
+      "zwrot": "to bottom out",
+      "zwrot_znaczenie": "osiągnąć najniższy punkt (o cenach, rynkach, kryzysie)",
+      "zwrot_przyklad": "Analysts expect chip stocks to bottom out by Q3. — Analitycy spodziewają się, że akcje chipowe osiągną dno do III kwartału."
+    }
+  },
+  "logi": [
+    {
+      "poziom": "info",
+      "wiadomosc": "Model rutyny: claude-sonnet-4-6"
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kurs walut (NBP 27.07.2026): 1 USD = 3,78 PLN; 1 EUR = 4,31 PLN. Źródło: money.pl/NBP."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Środowisko blokuje wychodzący HTTP (<urlopen error Tunnel connection failed: 403 Forbidden>) — pomijam pogodę z Interii i og:image; obrazy = zdjęcia kategorii, pogoda = Open-Meteo w przeglądarce."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Azjatycki krach chipowy: KOSPI z wyłącznikiem po -9,4% — SK Hynix spada 14%, Samsung 13%\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Chiński CXMT debiutuje na giełdzie ze wzrostem +460% — prowincja Anhui zyska 192 mld USD (~726 mld zł)\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Ropa Brent spada kolejny dzień do 87 USD (~329 zł) — największy jednodniowy spadek od 3 miesięcy\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Pekin ujawnia: USA zobowiązały się do pułapu 20% na cłach zastępczych na chińskie towary\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Senat USA blokuje budżet obronny 1,15 bln USD (~4,35 bln zł) — Demokraci odrzucają zapisy o wojnie z Iranem\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Premier Tusk: Polska może przywrócić pakiet CPN na paliwa jeśli ropa pozostanie niestabilna\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Netanjahu przybywa do Waszyngtonu: naciska Trumpa na stały nadzór nuklearny Iranu\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „USA-Iran: trzeci dzień przerwy w atakach — Trump mówi o „przyjaznych rozmowach\", Katar i Pakistan proponują 10-dniowy rozejm\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Ukraina niszczy irański statek na Morzu Kaspijskim; Teheran wzywa dyplomatów i zapowiada odpowiedź\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Zełeński leci do Waszyngtonu spotkać Trumpa; Nowy PM Wielkiej Brytanii Burnham potwierdza niezmienne wsparcie\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „SpaceX Crew-11: próba ogniowa przerwana 57 sekund przed końcem — start ISS celuje w 31 lipca\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Soyuz MS-28 wraca na Ziemię: astronauta NASA i dwaj kosmonauci Roskosmosa po 241 dniach na ISS\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Artykuł „Nvidia inwestuje 5 mld USD (~18,9 mld zł) w Safe Superintelligence Ilyi Sutskevera — z dostępem do chipów Vera Rubin\": źródło z 27.07.2026 (1 dni temu) — poza oknem 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Artykuł „Kimi K3 zdobywa 32% na benchmarku cyberbezpieczeństwa vs 76% dla USA — Amodei wzywa do obowiązkowych testów dla wszystkich modeli\": źródło (28.07.2026) bez godziny — dodaj GG:MM(:SS), by potwierdzić okno 12 h."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Czas wykonania rutyny: 32 min 5 s (od startu KROK 0 do wygenerowania wydania)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Zużyte tokeny (≈): wyjście 230 006, wejście 11 798, kontekst z cache 7 437 029."
+    }
+  ],
+  "watki": [
+    "meta-q2-2026 — Meta Platforms raportuje wyniki Q2 2026 jutro 29.07.2026; sprawdzić wyniki, capex AI i reakcję rynku.",
+    "ai-kill-switch-act — ustawa o obowiązkowych mechanizmach wyłączania AI; głosowanie w komisji oczekiwane 29.07–1.08.2026; sprawdzić postęp.",
+    "usa-iran-negocjacje — 3. dzień przerwy, Trump mówi o 'przyjaznych rozmowach'; Katar i Pakistan proponują 10-dniowy rozejm; sprawdzić wynik rozmów i czy Zelenskyy-Trump wpłynął na sytuację.",
+    "zelenskyy-trump-28-07 — Zełeński w Waszyngtonie 28.07; sprawdzić wynik rozmów (obrona powietrzna, sankcje na Iran, dalsze wsparcie).",
+    "spacex-crew-11-launch — start Crew-11 zaplanowany na 31.07.2026; sprawdzić wynik i sukces misji.",
+    "pozary-europa-2026 — pożary we Francji i Hiszpanii wciąż aktywne; sprawdzić postęp gaszenia i ewentualny napływ dodatkowych sił UE."
+  ],
+  "pogoda": {
+    "miasto": "Nowy Dwór Mazowiecki",
+    "lat": 52.4306,
+    "lon": 20.7158,
+    "prognoza_url": "https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541"
+  }
+}
+  </script>
+
+  <script>
+  (function () {
+    /* dane produkcyjne */
+    const _raw = document.getElementById('dane-gazety').textContent.trim();
+    const D = (_raw === '__' + 'DANE' + '__' && typeof DEMO !== 'undefined' && DEMO)
+      ? DEMO : JSON.parse(_raw);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    // Zdjęcie bazowe per kategoria — hostowane w repo (ten sam origin => ZAWSZE się ładuje,
+    // bez limitów i tokenów). Ścieżki root-relative, więc działają i z /wydania/.
+    /* Kilka zdjęć bazowych na kategorię — artykuły tej samej kategorii rotują
+       po liście, żeby przy nieudanych podmianach z Wikimedii nie było duplikatów. */
+    const KAT_OBRAZ = {
+      'Okładka': ['/assets/kategorie/okladka.jpg'],
+      'Inwestowanie': ['/assets/kategorie/inwestowanie.jpg', '/assets/kategorie/inwestowanie-2.jpg', '/assets/kategorie/inwestowanie-3.jpg'],
+      'Polityka': ['/assets/kategorie/polityka.jpg', '/assets/kategorie/polityka-2.jpg', '/assets/kategorie/polityka-3.jpg'],
+      'Wojna': ['/assets/kategorie/wojna.jpg', '/assets/kategorie/wojna-2.jpg'],
+      'Technologia': ['/assets/kategorie/technologia.jpg', '/assets/kategorie/technologia-2.jpg'],
+      'AI': ['/assets/kategorie/ai.jpg', '/assets/kategorie/ai-2.jpg'],
+      'Nauka': ['/assets/kategorie/nauka.jpg', '/assets/kategorie/nauka-2.jpg'],
+      'Ciekawostka na dziś': ['/assets/kategorie/ciekawostka.jpg', '/assets/kategorie/ciekawostka-2.jpg']
+    };
+    const _katUzycia = {};
+    const katObraz = k => {
+      const lista = KAT_OBRAZ[k] || KAT_OBRAZ['Okładka'];
+      const n = _katUzycia[k] = (_katUzycia[k] ?? -1) + 1;
+      return lista[n % lista.length];
+    };
+
+    const UWAGI_REPO = 'https://github.com/kapitanski-dev/kapitanski-dev.github.io/issues/new';
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.id = 'art-' + i;
+      el.dataset.kategoria = a.kategoria;
+      const czyt = Math.max(1, Math.round(a.akapity.join(' ').split(/\s+/).length / 200));
+      const uwagaUrl = UWAGI_REPO + '?title=' + encodeURIComponent('[Uwaga] ' + a.tytul)
+        + '&body=' + encodeURIComponent('Wydanie: ' + location.pathname + '\nArtykuł: ' + a.tytul + '\n\n(opisz swoją uwagę)');
+      /* Baza obrazu: og:image ze źródła (obraz.plik, w repo) > zdjęcie kategorii.
+         Fallback w onerror: plik -> kategoria -> SVG. Podmiana Wikimedia (data-query)
+         tylko, gdy nie ma plika — plik jest trafniejszy niż cokolwiek z Commons. */
+      const plik = a.obraz && a.obraz.plik ? a.obraz.plik : '';
+      /* obraz.kategoria: tematyczna kategoria zdjęcia bazowego — używa jej okładka,
+         żeby news np. wojenny dostał zdjęcie Wojny, a nie neutralny glob „Okładki” */
+      const kat = katObraz((a.obraz && a.obraz.kategoria) || a.kategoria);
+      const query = !plik && a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(plik || kat)}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (plik ? ` data-kat="${esc(kat)}"` : '')
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + ` loading="lazy" onerror="if(this.dataset.kat){this.src=this.dataset.kat;delete this.dataset.kat}else{this.onerror=null;this.src='${FALLBACK_IMG}'}"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${terminy(esc(p))}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.opublikowano ? ` · <span title="Czas publikacji u źródła">opubl. ${esc(a.zrodlo.opublikowano)}</span>` : (a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : '')}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · ${czyt} min · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- „W skrócie” — jednozdaniowe streszczenia z kotwicami ---- */
+    const skroty = D.artykuly.map((a, i) => ({ s: a.skrot, i })).filter(x => x.s);
+    if (skroty.length) {
+      const box = document.createElement('section');
+      box.className = 'w-skrocie';
+      box.innerHTML = '<div class="ws-head">W skrócie</div><ul>' +
+        skroty.map(x => `<li><a href="#art-${x.i}" data-idx="${x.i}">${esc(x.s)}</a></li>`).join('') +
+        '</ul>';
+      main.prepend(box);
+      box.addEventListener('click', e => {
+        const lnk = e.target.closest('a[data-idx]');
+        if (!lnk) return;
+        e.preventDefault();
+        ustawFiltr('Wszystkie');   // artykuł może być schowany za filtrem kategorii
+        document.getElementById('art-' + lnk.dataset.idx)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    /* ---- Obrazy ----
+       Baza = zdjęcie kategorii z repo (już ustawione jako src). Ten sam origin, więc
+       ZAWSZE się ładuje — bez limitów Wikimedii i bez tokenów rutyny. Best-effort:
+       spróbuj podmienić na konkretniejsze zdjęcie tematu z Wikimedia Commons (query,
+       IP czytelnika). Podmieniamy DOPIERO po udanym preloadzie (new Image()), więc
+       czytelnik nigdy nie widzi zepsutego ani ładującego się obrazka — najwyżej
+       zostaje przy zdjęciu kategorii. Nieudany upgrade (np. 429) jest niewidoczny. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      try {
+        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + p.toString());
+        if (!r.ok) return '';
+        const d = await r.json();
+        const pages = Object.values((d.query && d.query.pages) || {})
+          .sort((x, y) => (x.index || 99) - (y.index || 99));
+        for (const pg of pages) {
+          const ii = (pg.imageinfo || [{}])[0];
+          if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+            return ii.thumburl || ii.url || '';
+        }
+      } catch (e) { /* brak sieci / 429 → zostaje zdjęcie kategorii */ }
+      return '';
+    }
+    const preload = src => new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(true); im.onerror = () => res(false); im.src = src;
+    });
+
+    [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
+      sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
+        .then(async () => {
+          /* Commons szuka słów w trybie AND — im dłuższa fraza, tym częściej 0 wyników.
+             Przy braku trafień zdejmuj ostatnie słowo (max 3 zapytania, min 2 słowa,
+             pauza między próbami — rate-limit Commons potrafi uciąć całą serię). */
+          const slowa = img.dataset.query.split(/\s+/);
+          let url = '';
+          for (let n = slowa.length, prob = 0; !url && prob < 3 && n >= Math.min(2, slowa.length); n--, prob++) {
+            if (prob) await sleep(500);
+            url = await wikiResolve(slowa.slice(0, n).join(' '));
+          }
+          if (url && await preload(url)) img.src = url;
+        });
+    });
+
+    /* ---- sekcja „Literatura” (cytat / przysłowie / wiersz + angielski) ---- */
+    const lit = (D.literatura && typeof D.literatura === 'object') ? D.literatura : null;
+    let litPanel = null;
+    if (lit) {
+      const cyt = lit.cytat || {}, prz = lit.przyslowie || {}, wrs = lit.wiersz || {}, ang = lit.angielski || {};
+      const omow = t => t ? `<p class="lit-omowienie">${terminy(esc(t))}</p>` : '';
+      const zrodloTekst = (t, url) => t ? `<span class="lit-src">${url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</span>` : '';
+      const przyklad = ex => {
+        if (!ex) return '';
+        const i = ex.indexOf('—');
+        return i === -1 ? `<div class="lit-ex"><i>${esc(ex)}</i></div>`
+          : `<div class="lit-ex"><i>${esc(ex.slice(0, i).trim())}</i> — ${esc(ex.slice(i + 1).trim())}</div>`;
+      };
+      const odpowiedniki = arr => (Array.isArray(arr) && arr.length)
+        ? '<div class="lit-odp"><span class="lit-odp-h">Odpowiedniki</span><ul>' +
+          arr.filter(o => o && o.tresc).map(o =>
+            `<li><span class="lit-odp-j">${esc(o.jezyk || '')}</span> ${esc(o.tresc)}` +
+            (o.tlum ? ` <span class="lit-odp-t">— ${esc(o.tlum)}</span>` : '') + '</li>').join('') +
+          '</ul></div>'
+        : '';
+      const cards = [];
+      if (cyt.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Cytat dnia</span>' +
+        `<p class="lit-quote">„${esc(cyt.tresc)}”</p>` +
+        zrodloTekst([cyt.autor, cyt.zrodlo].filter(Boolean).join(' · ')) +
+        omow(cyt.omowienie) + '</div>');
+      if (prz.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Przysłowie dnia</span>' +
+        `<p class="lit-quote">„${esc(prz.tresc)}”</p>` +
+        zrodloTekst(prz.pochodzenie) +
+        omow(prz.omowienie) + odpowiedniki(prz.odpowiedniki) + '</div>');
+      if (wrs.tresc) cards.push(
+        '<div class="lit-card lit-card--wide"><span class="lit-label">Wiersz dnia</span>' +
+        `<div class="lit-poem">${esc(wrs.tresc)}</div>` +
+        zrodloTekst([wrs.tytul, wrs.autor].filter(Boolean).join(' · '), wrs.zrodlo_url) +
+        omow(wrs.omowienie) + '</div>');
+      if (ang.slowo || ang.zwrot) {
+        let e = '<div class="lit-card"><span class="lit-label">Angielski na dziś</span>';
+        if (ang.slowo) e += '<div class="lit-en"><b>' + esc(ang.slowo) + '</b>'
+          + (ang.wymowa ? ' <span class="lit-ipa">' + esc(ang.wymowa) + '</span>' : '')
+          + (ang.znaczenie ? ' — ' + esc(ang.znaczenie) : '') + przyklad(ang.przyklad) + '</div>';
+        if (ang.zwrot) e += '<div class="lit-en"><b>' + esc(ang.zwrot) + '</b>'
+          + (ang.zwrot_znaczenie ? ' — ' + esc(ang.zwrot_znaczenie) : '') + przyklad(ang.zwrot_przyklad) + '</div>';
+        cards.push(e + '</div>');
+      }
+      if (cards.length) {
+        litPanel = document.createElement('section');
+        litPanel.id = 'literatura-panel';
+        litPanel.className = 'hidden';
+        litPanel.innerHTML =
+          '<div class="lit-head">Literatura</div>' +
+          '<div class="lit-sub">Cytat, przysłowie i wiersz dnia — każdy z krótkim omówieniem — oraz angielskie słówko i zwrot na dziś.</div>' +
+          `<div class="lit-grid">${cards.join('')}</div>`;
+        main.after(litPanel);
+      }
+    }
+
+    /* ---- panel logów rutyny ---- */
+    const logi = Array.isArray(D.logi) ? D.logi : [];
+    function logHtml(entry) {
+      const poziom = (entry && typeof entry === 'object' ? (entry.poziom || 'info') : 'info').toLowerCase();
+      const lvl = ['error', 'warning', 'info'].includes(poziom) ? poziom : 'info';
+      const raw = typeof entry === 'string' ? entry : (entry.wiadomosc || '');
+      const msg = esc(raw).replace(/(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      const label = { error: 'Błąd', warning: 'Ostrzeż.', info: 'Info' }[lvl];
+      return `<div class="log-entry log-entry--${lvl}"><span class="lvl">${label}</span><span class="msg">${msg}</span></div>`;
+    }
+    const logiPanel = document.createElement('section');
+    logiPanel.id = 'logi-panel';
+    logiPanel.className = 'hidden';
+    logiPanel.innerHTML =
+      '<div class="logi-head">Logi z generowania wydania</div>' +
+      '<div class="logi-sub">Ostrzeżenia, błędy i uwagi z uruchomienia rutyny — pomagają ulepszać gazetę ' +
+      '(np. źródła niedostępne dla bota, braki w kategoriach, nieudane obrazy).</div>' +
+      (logi.length
+        ? `<div class="log-list">${logi.map(logHtml).join('')}</div>`
+        : '<div class="logi-empty">Brak zdarzeń — wydanie złożone bez błędów i ostrzeżeń.</div>');
+    main.after(logiPanel);
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('') +
+      (litPanel ? '<button class="filtr filtr--lit" data-cat="__literatura__">Literatura</button>' : '') +
+      `<button class="filtr filtr--logs" data-cat="__logi__">Logs${logi.length ? ' (' + logi.length + ')' : ''}</button>`;
+    main.before(filtryEl);
+    function ustawFiltr(cat) {
+      const widokLogow = cat === '__logi__';
+      const widokLit = cat === '__literatura__';
+      const widokSpecjalny = widokLogow || widokLit;
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      logiPanel.classList.toggle('hidden', !widokLogow);
+      if (litPanel) litPanel.classList.toggle('hidden', !widokLit);
+      main.classList.toggle('hidden', widokSpecjalny);   // ukryj siatkę gazety w trybie panelu
+      if (widokSpecjalny) return;
+      /* „W skrócie” tylko na okładce i we „Wszystkie”; na okładce układ 1:1 obok hero */
+      const naOkladce = !!D.artykuly[0] && cat === D.artykuly[0].kategoria;
+      main.classList.toggle('widok-okladka', naOkladce);
+      const ws = main.querySelector('.w-skrocie');
+      if (ws) ws.classList.toggle('hidden', !naOkladce && cat !== 'Wszystkie');
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
+    });
+    ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
+    /* Pogoda: rutyna parsuje aktualny stan z Interii (D.pogoda.aktualna) —
+       pokazujemy go wprost. Fallback (brak pola / stary format): Open-Meteo
+       w przeglądarce. Klik zawsze prowadzi do pełnej prognozy (Interia). */
+    const PG = D.pogoda || {};
+    const POGODA_MIASTO = {
+      nazwa: PG.miasto || 'Nowy Dwór Mazowiecki',
+      lat: PG.lat ?? 52.4306, lon: PG.lon ?? 20.7158
+    };
+    const PROGNOZA_URL = PG.prognoza_url ||
+      'https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541';
+    const pokazPogode = txt => document.getElementById('pogoda').innerHTML =
+      `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener"${PG.opis ? ` title="${esc(PG.opis)}"` : ''}>${esc(txt)}</a>`;
+    if (PG.aktualna) pokazPogode(PG.aktualna);
+    else (async () => {
+      try {
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
+          + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+          + '&timezone=auto&forecast_days=1';
+        const w = await (await fetch(u)).json();
+        const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
+          : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
+        const cur = w.current, d = w.daily;
+        pokazPogode(
+          `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
+          ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')');
+      } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
+    })();
+
+    /* ---- nawigacja poprzednie/następne wydanie (z archiwum w index.html) ---- */
+    (async () => {
+      try {
+        const html = await (await fetch('/index.html', { cache: 'no-cache' })).text();
+        const wydania = [...html.matchAll(/href="(wydania\/[^"]+\.html)"/g)].map(m => m[1]); // najnowsze pierwsze
+        const tu = 'wydania/' + decodeURIComponent(location.pathname.split('/').pop());
+        const i = wydania.indexOf(tu);
+        if (i === -1) return;
+        const nowsze = i > 0 ? wydania[i - 1] : null, starsze = i < wydania.length - 1 ? wydania[i + 1] : null;
+        document.getElementById('nav-wydania').innerHTML =
+          (starsze ? `<a href="/${starsze}">← Poprzednie wydanie</a>` : '<span></span>') +
+          '<span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span>' +
+          (nowsze ? `<a href="/${nowsze}">Następne wydanie →</a>` : '<span></span>');
+      } catch (e) { /* podgląd z file:// → nav się nie pokazuje */ }
+    })();
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.flatMap(a =>
+      [a.zrodlo.nazwa, ...(a.zrodla_dodatkowe || []).map(z => z.nazwa)]))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* Trudne terminy: marker {{termin|wyjaśnienie}} w akapitach -> podkreślenie
+       + tooltip (hover / klik na mobile). Wywoływać NA JUŻ zescape'owanym tekście. */
+    function terminy(t) {
+      return t.replace(/\{\{([^|{}]+)\|([^{}]+)\}\}/g,
+        '<span class="term" tabindex="0" data-tip="$2">$1</span>');
+    }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('.term');
+      document.querySelectorAll('.term.open').forEach(x => { if (x !== t) x.classList.remove('open'); });
+      if (t) t.classList.toggle('open');
+    });
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
