@@ -20,7 +20,11 @@ składają wydanie i wypychają je z powrotem do repo.
 | `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach. |
 | `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Opublikowanych wydań nie edytujemy.** |
 | `assets/kategorie/` | Zdjęcia bazowe kategorii (2–3 na kategorię, rotacja przeciw duplikatom). |
-| `raport-finansowy/` | Osobna rutyna: cotygodniowe przeglądy rynku (niezależne od gazety). Pliki `.md` z front matterem Jekylla — Pages serwuje je jako `.html`, a archiwum linkuje automatycznie. |
+| `raport-template.html` | Szablon raportu finansowego (stylistyka gazety). Otwarty bez podstawionej treści pokazuje **podgląd szablonu**. |
+| `routine/instrukcja-raport.md` | Instrukcja publikacji raportu dla rutyny raportowej (analiza i portfel zostają w jej prompcie — repo jest publiczne). |
+| `routine/buduj_raporty.py` | Renderuje `raport-finansowy/*.md` → `.html` po `raport-template.html` (patrz niżej). |
+| `raport-finansowy/` | Osobna rutyna: przeglądy rynku (niezależne od gazety). Źródło = `.md`, strona = zbudowany obok `.html`. |
+| `.nojekyll` | Wyłącza Jekylla na GitHub Pages — całe repo to gotowy statyczny HTML. |
 
 **Cała logika jest w repo.** Rutyny to cienki bootstrap („znajdź repo → przeczytaj
 `routine/instrukcja.md` → wykonaj"). Zmiana czegokolwiek = commit, bez ruszania rutyn.
@@ -106,6 +110,43 @@ Skrypt usuwa pliki wydań **wraz z ich katalogami grafik** i odbudowuje
 `index.html` (tą samą logiką, której używa rutyna — czyta ją z instrukcji).
 Uwaga: pełne odchudzenie repo wymagałoby przepisania historii gita — zwykłe
 usunięcie wystarcza, by strona była czysta.
+
+---
+
+## Raporty finansowe
+
+Pełna procedura dla rutyny: **`routine/instrukcja-raport.md`** (rutyna czyta ją
+z repo przed napisaniem raportu). W skrócie — rutyna pisze **wyłącznie
+markdown**, jeden plik na raport:
+
+```markdown
+---
+title: "Przegląd rynku – 28 lipca 2026"
+date: 2026-07-28
+---
+
+# Przegląd rynku — 28 lipca 2026     ← pierwszy H1 jest wycinany (dubluje nagłówek strony)
+
+> **Kontekst:** …
+```
+
+Nazwa pliku: `raport-finansowy/RRRR-MM-DD-nazwa.md` (data z przodu = kolejność
+w archiwum; drugi raport tego samego dnia → sufiks `-2`). Potem:
+
+```bash
+python3 routine/buduj_raporty.py    # .md → .html po raport-template.html
+python3 routine/buduj_index.py      # wpis w archiwum na stronie głównej
+git add raport-finansowy index.html && git commit -m "Raport …" && git push
+```
+
+`buduj_raporty.py` bierze `title`/`date` z front mattera (H1 = temat bez daty,
+dopisek w nawiasie → kicker, data → pasek pod nagłówkiem), renderuje markdown
+i przelicza nawigację poprzedni/następny **we wszystkich** raportach. Konwerter
+jest bez zależności i obsługuje: nagłówki, akapity, `**bold**`, `*kursywę*`,
+`` `kod` ``, odnośniki, listy `-`/`1.`, cytaty `>`, tabele GFM i `---`.
+
+Archiwum linkuje tylko raporty, które mają zbudowany `.html` — sam `.md` nie
+wystarczy (zabezpieczenie przed 404).
 
 ---
 

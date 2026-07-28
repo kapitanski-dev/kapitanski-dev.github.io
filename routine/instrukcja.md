@@ -756,10 +756,12 @@ cards = ''.join(
     for date, items in dni.items()
 )
 
-# Raporty finansowe: osobna rutyna wrzuca raport-finansowy/*.md z front matterem
-# Jekylla, więc GitHub Pages serwuje je pod tą samą nazwą z rozszerzeniem .html.
+# Raporty finansowe: osobna rutyna wrzuca raport-finansowy/*.md, a
+# routine/buduj_raporty.py renderuje z nich strony .html po raport-template.html.
+# Linkujemy tylko raporty faktycznie zbudowane — inaczej archiwum dałoby 404.
 raporty = []
 for f in sorted((repo / 'raport-finansowy').glob('*.md'), reverse=True):
+    if not f.with_suffix('.html').exists(): continue
     fm = f.read_text(encoding='utf-8')[:800]
     md_date = re.search(r'^date:\s*(\d{4}-\d{2}-\d{2})', fm, re.M)
     date_str = md_date.group(1) if md_date else f.stem[:10]

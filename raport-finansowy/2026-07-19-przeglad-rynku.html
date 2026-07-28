@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przegląd rynku – 19 lipca 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta i faktura papieru — te same zmienne co template.html (gazeta). */
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --up: #1d6b45;
+    --down: #a3271f;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --up: #5fbd8b;
+    --down: #e8776b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.7;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  /* Węższa kolumna niż gazeta — raport to jeden ciąg tekstu do czytania. */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead { text-align: center; padding: 40px 0 0; }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(2.4em, 7vw, 4em);
+    margin: 10px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Spis treści (budowany z H2 przez JS) ===== */
+  #spis {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    padding: 18px 22px; margin: 32px 0 8px; border-radius: 2px;
+  }
+  #spis:empty { display: none; }
+  #spis .spis-tytul {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: .7em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #spis ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  #spis li { position: relative; padding-left: 26px; margin: 5px 0; line-height: 1.45; }
+  #spis li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    position: absolute; left: 0; top: .15em;
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700; color: var(--accent);
+  }
+  #spis a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #spis a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ===== Treść raportu ===== */
+  .raport { padding-bottom: 8px; }
+  .raport > h1 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.8em; line-height: 1.2; margin: 40px 0 12px;
+  }
+  .raport h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.5em; line-height: 1.25;
+    margin: 48px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 20px;
+  }
+  .raport h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.15em; margin: 32px 0 10px; scroll-margin-top: 20px;
+  }
+  .raport h4 {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: .82em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin: 26px 0 8px;
+  }
+  .raport p { margin: 0 0 16px; }
+  .raport strong { font-weight: 700; }
+  .raport a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .raport a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .raport code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  .raport ul, .raport ol { margin: 0 0 18px; padding-left: 0; list-style: none; }
+  .raport li { position: relative; padding-left: 24px; margin: 7px 0; }
+  .raport ul > li::before {
+    content: "▪"; position: absolute; left: 4px; top: -.05em;
+    color: var(--accent); font-size: .85em;
+  }
+  .raport ol { counter-reset: li; }
+  .raport ol > li::before {
+    counter-increment: li; content: counter(li) ".";
+    position: absolute; left: 0; top: 0;
+    font-family: 'Inter', sans-serif; font-size: .8em; font-weight: 700; color: var(--accent);
+  }
+
+  .raport blockquote {
+    margin: 22px 0; padding: 16px 22px;
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    border-radius: 2px;
+  }
+  .raport blockquote p:last-child { margin-bottom: 0; }
+
+  .raport hr {
+    border: none; border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  /* Tabele — sedno raportu; na wąskim ekranie przewijają się poziomo. */
+  .tabela { overflow-x: auto; margin: 22px 0; border: 1px solid var(--rule); border-radius: 2px; }
+  .raport table {
+    border-collapse: collapse; width: 100%;
+    font-family: 'Inter', sans-serif; font-size: .82em; line-height: 1.5;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .raport th, .raport td {
+    padding: 9px 14px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+  }
+  .raport th {
+    font-weight: 700; font-size: .92em; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-soft); white-space: nowrap;
+    border-bottom: 2px solid var(--ink);
+  }
+  .raport tbody tr:last-child td { border-bottom: none; }
+  .raport tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .raport td strong { font-weight: 600; }
+
+  /* ===== Nawigacja między raportami ===== */
+  .nav-raporty {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 46px; padding: 16px 0 4px;
+  }
+  .nav-raporty:empty { display: none; }
+  .nav-raporty a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-raporty a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-raporty .nav-spacer { flex: 1; }
+
+  footer {
+    margin: 40px 0 40px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+  footer a { color: inherit; }
+
+  /* ===== DRUK ===== */
+  @media print {
+    #progress, #theme-toggle, .nav-raporty { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .raport h2, .raport table, .tabela { break-inside: avoid; }
+  }
+
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -1px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+    #spis { padding: 14px 16px; }
+    .raport h2 { font-size: 1.3em; margin-top: 36px; }
+    .raport table { font-size: .78em; }
+    .raport th, .raport td { padding: 8px 10px; }
+    .nav-raporty { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav-raporty .nav-spacer { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker">Raport finansowy</div>
+      <h1><span id="tytul">Przegląd rynku</span></h1>
+      <div class="date-bar">
+        <span id="data-raportu" data-iso="2026-07-19T12:00:00Z">niedziela, 19 lipca 2026</span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+
+    <nav id="spis" aria-label="Spis treści"></nav>
+
+    <article class="raport" id="tresc">
+<blockquote><p><strong>Pierwszy raport w serii.</strong> Brak poprzedniego wydania do porównania — od dziś będziemy śledzić zmiany tydzień do tygodnia.</p></blockquote>
+<p><em>Kurs USD/PLN w dniu raportu: ok. 3,79 zł za dolara.</em></p>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p>Tydzień 14–18 lipca 2026 r. upłynął pod znakiem <strong>dwóch szoków</strong>, które uderzyły w portfele wzrostowe z ekspozycją na AI i chipy:</p>
+<p><strong>Szok #1 — Kimi K3 (tzw. "DeepSeek 2.0"):</strong> 17 lipca chińska firma Moonshot AI pokazała model językowy Kimi K3 — największy publicznie dostępny model świata z 2,8 biliona parametrów. Na benchmarkach dogonił lub pobił czołowe modele amerykańskie (gorszy tylko od Anthropic Claude Fable 5 i OpenAI GPT-5.6), a cena API to 3 USD za milion tokenów wejściowych — kilkanaście razy taniej niż odpowiedniki z USA. Rynek zareagował panicznie: ETF SMH (chipy) runął ponad 6% w piątek, a w skali tygodnia Philadelphia Semiconductor Index stracił ok. 10% — najgorzej od kwietnia 2025. Analogia z "momentem DeepSeek" ze stycznia 2025 r. jest trafna: ten sam mechanizm strachu (tanie chińskie AI = mniejszy popyt na drogie chipy NVIDIA).</p>
+<p><strong>Szok #2 — ostrzeżenie IBM (14 lipca):</strong> Zanim Kimi K3 zdążył namieszać, IBM podał wstępne wyniki za Q2 2026: przychód 17,2 mld USD — o 660 mln USD poniżej prognoz Wall Street. Akcje IBM spadły o 26–29% w jeden dzień (najgorszy wynik od "Czarnego Poniedziałku" 1987 r.). Powód: klienci korporacyjni przesuwają budżety IT <strong>z oprogramowania na sprzęt AI</strong> (serwery, karty GPU, pamięci). To sygnał niejednoznaczny — zły dla IBM i spółek software'owych, ale potencjalnie neutralny lub wręcz dobry dla producentów sprzętu AI: NVIDIA, TSMC, ASML.</p>
+<p><strong>Co uratowało tydzień (fundamenty):</strong> Na przekór panice rynkowej, <strong>TSMC i ASML opublikowały rekordowe wyniki:</strong></p>
+<ul><li>TSMC: przychód w Q2 2026 = 40,2 mld USD (+36% r/r), zysk netto +77,4% r/r — rekordowy poziom. Prognoza na Q3: 44,6–45,8 mld USD. Popyt na chipy AI nie słabnie.</li><li>ASML: przychody Q2 = 9,3 mld EUR, pobicie prognoz. <strong>Drugi raz w tym roku</strong> podniósł prognozę na cały 2026 do 43–45 mld EUR (poprzednio 36–40 mld EUR).</li></ul>
+<p>Mimo doskonałych wyników obie spółki spadły 3–4% w piątek — rynek sprzedawał na dobrych wiadomościach, bo Kimi K3 dominował nastroje.</p>
+<p><strong>Stan rynku na koniec tygodnia:</strong></p>
+<ul><li>S&amp;P 500: ~7 458 pkt (−1,6% tydzień, −1,0% piątek)</li><li>Nasdaq: ~25 520 pkt (−2,9% tydzień)</li><li>SMH (ETF chipów): ~555 USD (−6,3% tydzień, ale wciąż +65% od początku roku!)</li></ul>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (aktywne od miesięcy 1–3 fazy rozruchu)</h3>
+<blockquote><p><strong>Ważna uwaga:</strong> Tom jest teraz w <strong>fazie rozruchu</strong> (miesiąc 1, lipiec 2026) i kupuje tylko ETF-y za 5 000 zł/mies. 9 spółek docelowych <strong>jeszcze nie jest w portfelu</strong> — są analizowane pod kątem przyszłych zakupów.</p></blockquote>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Waga</th><th>Rola w portfelu</th><th>Co się stało w tygodniu</th><th>Teza intakta?</th></tr></thead><tbody><tr><td><strong>IWDA</strong> (MSCI World)</td><td>55%</td><td>Fundament — globalny rynek rozwinięty</td><td>Podążał za S&amp;P 500 / Nasdaq, strata ok. 1,5–2% w tygodniu. Chipy ważą w tym ETF-ie sporo (~25% ekspozycja na USA tech), więc Kimi K3 lekko uderzył.</td><td>✅ Tak — szeroki rynek, fundamenty globalnej gospodarki niezmienione.</td></tr><tr><td><strong>SMH</strong> (producenci chipów)</td><td>15%</td><td>"Rdzeń AI" — na czele TSMC, NVIDIA, ASML</td><td><strong>Najtwardsze uderzenie tygodnia.</strong> −6,3% piątek, −20%+ od czerwcowych rekordów. Ale: TSMC i ASML właśnie pokazały rekordowe wyniki.</td><td>✅ Tak — teza (AI wymaga chipów) intakta. Panika Kimi K3 = szum, nie sygnał.</td></tr><tr><td><strong>RBOT</strong> (robotyka i AI)</td><td>15%</td><td>Humanoidy, automatyzacja przemysłowa</td><td>Brak dokładnych danych tygodniowych — ETF koreluje z sektorem AI/tech, więc podobna presja jak na SMH.</td><td>✅ Tak — Tesla Optimus Gen 3 w produkcji masowej w Fremont, robot ma trafić do sprzedaży komercyjnej w 2026.</td></tr><tr><td><strong>NUKL</strong> (energia jądrowa)</td><td>5%</td><td>Niezależny od AI hype, energochłonne centra danych</td><td>Sektor atomowy relatywnie odporny na chipy-panikę. Cameco (największy holding typowych ETF atomowych) +41% rok do roku, odporny na Kimi K3.</td><td>✅ Tak — centra danych AI potrzebują energii bazowej, popyt na jądrówkę rośnie.</td></tr><tr><td><strong>JEDI</strong> (kosmos i drony)</td><td>5%</td><td>Ekspozycja na sektor kosmiczny / obronny</td><td>Handlował na poziomie 24,58 USD w ostatnim tygodniu (52-tyg. zakres: 21,91–42,99 USD — wyraźnie poniżej szczytu). Sektor kosmiczny pod presją.</td><td>✅ Tak — teza długoterminowa (satelity LEO, obrona) niezmieniona.</td></tr><tr><td><strong>EIMI</strong> (rynki wschodzące)</td><td>5%</td><td>Dywersyfikacja geograficzna</td><td>Rynki azjatyckie pod presją po Kimi K3 (Z.ai w Hongkongu −30% jednego dnia). Rynki wschodzące ogólnie słabszy tydzień.</td><td>✅ Tak — dywersyfikacja działa zgodnie z planem, nawet jeśli w krótkim terminie koreluje z szokiem chińskim.</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze niekupione — obserwowane pod kątem przyszłych zakupów)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga docelowa</th><th>Co się stało</th><th>Czy teza portfela intakta?</th></tr></thead><tbody><tr><td><strong>TSMC</strong></td><td>6%</td><td>Rekordowy Q2 2026: +77% r/r zysku, pobicie prognoz. Q3 guidance: 44,6–45,8 mld USD. Mimo to akcje (ADR TSM) spadły 3,64% w piątek przez Kimi K3 panic. Kurs ok. 210–215 USD ≈ 795–815 PLN.</td><td>✅✅ Bardzo silna — wyniki mówią same za siebie. Spadek po rekordowych danych = okazja do obserwacji.</td></tr><tr><td><strong>NVIDIA</strong></td><td>5%</td><td>Akcje ok. 200 USD (≈ 758 PLN). Blackwell sprzedany z wyprzedzeniem, Q1 FY2027: 81,6 mld USD (+85% r/r). Kimi K3 uderzył sentymentem, akcje −2%+. Prognoza analityków: cel 299–350 USD.</td><td>✅ Intakta — popyt na Blackwell bez zmian. Kimi K3 to szum, nie dane sprzedażowe.</td></tr><tr><td><strong>Google (Alphabet)</strong></td><td>3%</td><td>Google Cloud Q1 +63% r/r (rekord). Backlog chmurowy prawie podwojony do 462 mld USD. <strong>Ale:</strong> Gemini 3.5 Pro spóźnił się po raz trzeci — teraz rynki obstawiają sierpień 7 jako datę premiery. Wyniki Q2 2026: ok. 29 lipca.</td><td>⚠️ Uważać — Cloud świetny, ale opóźnienia Gemini 3.5 Pro niepokojące przy nacisku Kimi K3 i OpenAI.</td></tr><tr><td><strong>Microsoft</strong></td><td>3%</td><td>Azure +40% w Q1. AI przychody: 37 mld USD rocznego przebiegu (+123% r/r). Capex 2026: 190 mld USD. Wyniki Q4 FY2026: ok. 29 lipca.</td><td>✅ Intakta — Azure rośnie dynamicznie, AI monetyzacja realna.</td></tr><tr><td><strong>Amazon</strong></td><td>3%</td><td>AWS +28% w Q1 (37,6 mld USD). Bedrock (platforma AI dla firm) +170% r/r. Capex 2026: 200 mld USD. Wyniki Q2 wkrótce.</td><td>✅ Intakta — AWS rośnie, AI popyt wysoki.</td></tr><tr><td><strong>Tesla</strong></td><td>3%</td><td>Akcje ok. 403 USD (≈ 1 527 PLN). Optimus Gen 3 w masowej produkcji w Fremont od stycznia 2026. V3 zapowiedziany na lato 2026. Sprzedaż komercyjna planowana w 2026. YTD: −9% (słabiej od rynku).</td><td>✅ Intakta — teza na Optimusa trzyma się. Produkcja ruszyła.</td></tr><tr><td><strong>ASML</strong></td><td>3%</td><td>Rekordowy Q2: 9,3 mld EUR (+59% r/r vs 5,8 mld prognoza). <strong>Drugi raz</strong> w roku podniósł prognozę na 2026: 43–45 mld EUR. Mimo to akcje −3,8% w piątek przez Kimi K3 panic.</td><td>✅✅ Bardzo silna — ASML to jedyna firma na świecie robiąca maszyny EUV. Bez ASML nie ma chipów AI.</td></tr><tr><td><strong>Rocket Lab (RKLB)</strong></td><td>2%</td><td>Akcje ok. 67 USD (≈ 254 PLN), <strong>−25% w 30 dni</strong> — to dużo. Ale technicznie: zakończono pełny test silnika Archimedes Vacuum dla Neutron Stage 2. Cel debiutu Neutrona: Q4 2026. Przejęcie Iridium (8 mld USD w gotówce + akcje) ogłoszone 29 czerwca — zamknięcie mid-2027. Space Force VICTUS HAZE: sukces.</td><td>⚠️ Uwaga na Iridium — dług przejęcia może obciążyć bilans; akcje "w kołnierzu fuzji" (cena pod presją do zamknięcia dealu). Teza Neutron intakta, ale ryzyko fuzyjne realne.</td></tr><tr><td><strong>AST SpaceMobile (ASTS)</strong></td><td>2%</td><td>Akcje ok. 58 USD (≈ 220 PLN), −12,7% w tygodniu. FCC zatwierdziła usługę komercyjną w USA. Ale: <strong>przesunięcie uruchomienia kampanii BlueBird z późnego 2026 na wczesny 2027.</strong> Obligacja zamienna na 1 mld USD → strachy przed <strong>rozwodnieniem akcji (29,7%/rok).</strong> Przychody kontraktowe: 1,2 mld USD + 60 operatorów.</td><td>🟡 Żółta flaga — teza intakta długoterminowo, ale opóźnienie i szybkie rozwodnienie wymagają obserwacji. Twarda granica: ciągła usługa komercyjna do końca 2027 + rozważna emisja.</td></tr></tbody></table></div>
+<hr>
+<h2>3. Stan twardych sygnałów</h2>
+<p>To są <strong>jedyne czynniki</strong>, które zmieniałyby skład portfela. Sprawdzam każdy wprost.</p>
+<h3>(a) Dwa kolejne kwartały spadku wydatków gigantów na centra danych</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>Łączne wydatki Microsoft + Google + Amazon + Meta na 2026 r.: <strong>725 mld USD</strong> (+77% r/r vs 410 mld w 2025). Co więcej, Google podniósł prognozę o 5 mld USD, a Meta o 10 mld USD już w trakcie roku. Q2 wyniki tych firm dopiero za 10 dni (ok. 29 lipca) — będą kluczowym testem.</p>
+<h3>(b) Spadek wykorzystania GPU / odpisy na centra danych / upadek dużego wynajmującego</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>NVIDIA Blackwell sprzedany z wyprzedzeniem, zaległości zamówień sięgają środka 2026. TSMC i ASML właśnie pokazały rekordowe wyniki i podnosiły prognozy. IBM ostrzega, że firmy przesuwają budżety IT <strong>w stronę</strong> sprzętu AI — to jest byczym sygnałem dla NVIDIA/TSMC, nie niedźwiedzim.</p>
+<p>⚠️ Kimi K3 to potencjalny zwiastun — jeśli najtańsze modele AI wymagają mniej chipów, popyt może w przyszłości zwolnić. Na razie danych potwierdzających brak.</p>
+<h3>(c) Brak wolumenów produkcji Optimusa przez 18–24 miesiące</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>Tesla prowadzi masową produkcję Optimusa Gen 3 w Fremont od stycznia 2026. V3 ma być zaprezentowany latem 2026. Sprzedaż komercyjna planowana w 2026. Sygnał nie zapalony — teza aktywna.</p>
+<h3>(d) Porażka / duży poślizg rakiety Neutron</h3>
+<p><strong>Status: 🟢 Nie zapalony (ale obserwować)</strong></p>
+<p>Neutron celuje w Q4 2026 — harmonogram utrzymany mimo wcześniejszego problemu z tankiem (pęknięcie podczas testu w styczniu 2026, naprawa zakończona). Właśnie pomyślnie przetestowano silnik Archimedes Vacuum w pełnym czasie lotu. Rocket Lab ma już 5 rezerwacji na Neutrona przed pierwszym startem.</p>
+<p>⚠️ Jedyne ryzyko: przejęcie Iridium za 8 mld USD może absorbować uwagę i gotówkę zarządu — śledzić, czy nie odciągnie zasobów od Neutrona.</p>
+<h3>(e) ASTS bez ciągłej usługi komercyjnej do końca 2027 przy dużym rozwodnieniu</h3>
+<p><strong>Status: 🟡 Nie zapalony, ale kierunek niepokojący</strong></p>
+<ul><li>FCC zatwierdziła usługę w USA ✅</li><li>Uruchomienie kampanii BlueBird przesunięte na <strong>wczesny 2027</strong> (było: późny 2026) — terminal do końca 2027 wciąż daleko</li><li>Rozwodnienie akcji: 29,7% rocznie, obligacja zamienna 1 mld USD w lipcu 2026</li><li>Przychody 2026: prognoza 150–200 mln USD, FY2027: cel ~1 mld USD</li></ul>
+<p><strong>Nie zapalony</strong>, ale ASTS jest najbliżej żółtej linii ze wszystkich pozycji portfela. Warto śledzić każde kolejne uruchomienie satelitów i każdą emisję akcji.</p>
+<hr>
+<h2>4. Werdykt i co dalej obserwować</h2>
+<h3>Werdykt: SZUM — nie sygnał</h3>
+<p>Ten tydzień to klasyczny przykład, kiedy <strong>nagłówki straszą, a dane uspokajają</strong>.</p>
+<p><strong>Argumenty za tym, że to szum:</strong></p>
+<ul><li>TSMC pokazał +77% zysku r/r i podniósł prognozę → popyt na chipy AI nie maleje</li><li>ASML podniósł prognozę na rok po raz drugi → portfel zamówień rośnie</li><li>4 giganci tech utrzymują capex $725 mld USD i podnoszą go w trakcie roku</li><li>Kimi K3 to kolejny "moment DeepSeek" — w 2025 r. podobna panika minęła, a chipy odbiły</li><li>SMH jest wciąż +65% od początku roku — "katastrofa" tygodniowa to korekta w bessowym otoczeniu</li></ul>
+<p><strong>Argumenty wymagające obserwacji (nie paniki):</strong></p>
+<ul><li>Kimi K3 jest realnie tani i dobry — jeśli kolejne miesiące pokażą mniejsze zamówienia na GPU, to będzie sygnał do rewizji</li><li>IBM potwierdził, że budżety korporacyjne uciekają z software'u do hardware'u AI — Google/Microsoft/Amazon musią to potwierdzić 29 lipca po stronie PRZYCHODÓW (nie tylko wydatków)</li><li>Gemini 3.5 Pro spóźniony po raz trzeci — Google traci grunt w wyścigu modeli AI; ale Cloud Google rośnie 63%, więc firm na tym zarabia</li><li>ASTS: tempo rozwodnienia jest szybkie; śledzić każdą nową emisję</li></ul>
+<h3>Co obserwować w najbliższych dniach</h3>
+<div class="tabela"><table><thead><tr><th>Data</th><th>Wydarzenie</th><th>Dlaczego ważne dla portfela</th></tr></thead><tbody><tr><td><strong>22 lipca</strong></td><td>IBM pełne wyniki Q2 2026</td><td>Czy "ucieczka budżetów w hardware AI" jest trwałym trendem? Detal dotyczący dużych klientów.</td></tr><tr><td><strong>27 lipca</strong></td><td>Publiczne wagi Kimi K3</td><td>Jeśli model dostępny dla wszystkich za darmo — panika może wrócić. Albo minie jak DeepSeek.</td></tr><tr><td><strong>~29 lipca</strong></td><td>Wyniki Google (Alphabet) + Microsoft Q4 FY2026</td><td><strong>Najważniejszy test tezy #1</strong> — wzrost Azure/Cloud + podtrzymanie capex = teza zielona</td></tr><tr><td><strong>~29–31 lipca</strong></td><td>Wyniki Amazon Q2</td><td>AWS + Bedrock AI = kolejne potwierdzenie popytu na AI cloud</td></tr><tr><td><strong>Sierpień 2026</strong></td><td>Wyniki NVIDIA (FY Q2)</td><td>Czy Blackwell zamówienia faktycznie trzymają? Czy Kimi K3 zmienił coś w pipeline?</td></tr><tr><td><strong>Q4 2026</strong></td><td>Pierwszy start Neutrona (Rocket Lab)</td><td>Kluczowy krok dla tezy kosmicznej</td></tr><tr><td><strong>Wczesny 2027</strong></td><td>Kampania BlueBird (ASTS)</td><td>Czy timeline zostanie dotrzymany? Ilość nowych emisji akcji?</td></tr></tbody></table></div>
+<h3>Strategia na sierpień</h3>
+<p>Tom jest w <strong>miesiącu 1 fazy rozruchu</strong> — kupuje ETF-y za 5 000 zł/mies. i nic więcej. <strong>Nic w tej analizie nie zmienia tego planu.</strong> Żaden z twardych sygnałów nie zapalił się. Przecena chipów przez Kimi K3 to historycznie okazja, nie powód do hamowania DCA.</p>
+<p>Jedyna decyzja do podjęcia po wynikach 29 lipca: czy kontynuować pełny plan ETF-ów (tak, o ile capex gigantów utrzymany), czy wzmocnić/osłabić wagę SMH w kolejnych wpłatach.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://www.cnbc.com/2026/07/16/stock-market-today-live-updates.html" rel="noopener">S&amp;P 500 closes lower, Nasdaq falls 1%+ as chip stocks suffer — CNBC, 16.07.2026</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/tsmc-q2-2026-earnings-record-112109987.html" rel="noopener">TSMC Q2 2026 earnings: Record profit, AI demand — Yahoo Finance</a></li><li><a href="https://pr.tsmc.com/english/news/3326" rel="noopener">TSMC Second Quarter EPS NT$27.25 — oficjalny komunikat TSMC</a></li><li><a href="https://finance.yahoo.com/technology/articles/asml-raises-2026-guidance-second-114432617.html" rel="noopener">ASML raises 2026 guidance second time, beats Q2 earnings — Yahoo Finance</a></li><li><a href="https://cryptobriefing.com/moonshot-kimi-k3-ai-semiconductor-stocks-selloff/" rel="noopener">Moonshot's Kimi K3 sends AI and semiconductor stocks into tailspin — CryptoBriefing</a></li><li><a href="https://fortune.com/2026/07/17/china-moonshot-kimi-k3-markets-china-ai/" rel="noopener">Markets experience new DeepSeek shock after Kimi K3 — Fortune</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/ibm-expects-second-quarter-revenue-111029599.html" rel="noopener">IBM warns AI boom is squeezing software budgets — Yahoo Finance / RTE</a></li><li><a href="https://valueaddvc.com/ai-spending" rel="noopener">AI Spending Tracker 2026: $725B Total — ValueAddVC</a></li><li><a href="https://www.statista.com/chart/35046/capital-expenditure-of-meta-alphabet-amazon-and-microsoft/" rel="noopener">Big Tech's AI Spending to Reach $725 Billion in 2026 — Statista</a></li><li><a href="https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-acquire-iridium-historic-deal-creating-fully" rel="noopener">Rocket Lab to Acquire Iridium — komunikat inwestorski</a></li><li><a href="https://www.foreignpolicyjournal.com/2026/07/16/rocket-lab-nasdaq-rklb-stock-price-slides-5-5-despite-space-force-victory-neutron-engine-breakthrough/" rel="noopener">Rocket Lab RKLB stock slides, Neutron engine milestone — ForeignPolicyJournal</a></li><li><a href="https://www.fxleaders.com/news/2026/07/16/asts-stock-slides-toward-58-after-1b-convertible-deal-revives-dilution-fears/" rel="noopener">AST SpaceMobile ASTS slides after $1B convertible deal — FX Leaders</a></li><li><a href="https://www.techtimes.com/articles/320736/20260716/rebuilt-gemini-35-pro-misses-third-deadline-google-eyes-stopgap-release.htm" rel="noopener">Gemini 3.5 Pro misses third deadline — TechTimes</a></li><li><a href="https://www.fxleaders.com/news/2026/07/15/nvidia-nvda-stock-price-forecast-nvda-tests-212-as-ai-demand-and-china-shipments-lift-outlook/" rel="noopener">NVIDIA stock analysis July 2026 — FX Leaders</a></li><li><a href="https://ifactoryapp.com/industries/automotive-manufacturing/tesla-optimus-fremont-gen-3-humanoid-2026" rel="noopener">Tesla Optimus Gen 3 mass production — iFACTORY</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 19 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do Toma.</em></p>
+    </article>
+
+    <nav class="nav-raporty"><span></span><span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span><a href="/raport-finansowy/2026-07-23-przeglad-rynku.html">Następny raport &rarr;</a></nav>
+    <footer><a href="/">Grzyb Times</a> &mdash; raport redagowany przez AI. Nie stanowi porady inwestycyjnej.</footer>
+  </div>
+
+<script>
+  /* ---- motyw (wspólny klucz z gazetą — jeden wybór na cały serwis) ---- */
+  const root = document.documentElement;
+  if (localStorage.getItem('gazeta-theme') === 'dark' ||
+      (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+  document.getElementById('theme-toggle').onclick = () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+  };
+
+  /* ---- podgląd DEMO: szablon otwarty bez podstawionej treści ---- */
+  const tresc = document.getElementById('tresc');
+  if (tresc.textContent.trim() === '__' + 'TRESC' + '__') {
+    document.title = 'Raport finansowy — podgląd szablonu';
+    document.getElementById('tytul').textContent = 'Przegląd rynku';
+    document.querySelector('.kicker').textContent = 'Raport finansowy · PODGLĄD SZABLONU';
+    const dt = document.getElementById('data-raportu');
+    dt.removeAttribute('data-iso');
+    dt.textContent = 'Poniedziałek, 1 stycznia 2026';
+    document.querySelector('.nav-raporty').innerHTML =
+      '<span></span><span class="nav-spacer"></span><a href="/">Archiwum</a>' +
+      '<span class="nav-spacer"></span><span></span>';
+    tresc.innerHTML = `
+      <p>To jest <strong>podgląd szablonu</strong> — plik otwarty bez podstawionej treści.
+      Rutyna zastępuje <em><blockquote><p><strong>Pierwszy raport w serii.</strong> Brak poprzedniego wydania do porównania — od dziś będziemy śledzić zmiany tydzień do tygodnia.</p></blockquote>
+<p><em>Kurs USD/PLN w dniu raportu: ok. 3,79 zł za dolara.</em></p>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p>Tydzień 14–18 lipca 2026 r. upłynął pod znakiem <strong>dwóch szoków</strong>, które uderzyły w portfele wzrostowe z ekspozycją na AI i chipy:</p>
+<p><strong>Szok #1 — Kimi K3 (tzw. "DeepSeek 2.0"):</strong> 17 lipca chińska firma Moonshot AI pokazała model językowy Kimi K3 — największy publicznie dostępny model świata z 2,8 biliona parametrów. Na benchmarkach dogonił lub pobił czołowe modele amerykańskie (gorszy tylko od Anthropic Claude Fable 5 i OpenAI GPT-5.6), a cena API to 3 USD za milion tokenów wejściowych — kilkanaście razy taniej niż odpowiedniki z USA. Rynek zareagował panicznie: ETF SMH (chipy) runął ponad 6% w piątek, a w skali tygodnia Philadelphia Semiconductor Index stracił ok. 10% — najgorzej od kwietnia 2025. Analogia z "momentem DeepSeek" ze stycznia 2025 r. jest trafna: ten sam mechanizm strachu (tanie chińskie AI = mniejszy popyt na drogie chipy NVIDIA).</p>
+<p><strong>Szok #2 — ostrzeżenie IBM (14 lipca):</strong> Zanim Kimi K3 zdążył namieszać, IBM podał wstępne wyniki za Q2 2026: przychód 17,2 mld USD — o 660 mln USD poniżej prognoz Wall Street. Akcje IBM spadły o 26–29% w jeden dzień (najgorszy wynik od "Czarnego Poniedziałku" 1987 r.). Powód: klienci korporacyjni przesuwają budżety IT <strong>z oprogramowania na sprzęt AI</strong> (serwery, karty GPU, pamięci). To sygnał niejednoznaczny — zły dla IBM i spółek software'owych, ale potencjalnie neutralny lub wręcz dobry dla producentów sprzętu AI: NVIDIA, TSMC, ASML.</p>
+<p><strong>Co uratowało tydzień (fundamenty):</strong> Na przekór panice rynkowej, <strong>TSMC i ASML opublikowały rekordowe wyniki:</strong></p>
+<ul><li>TSMC: przychód w Q2 2026 = 40,2 mld USD (+36% r/r), zysk netto +77,4% r/r — rekordowy poziom. Prognoza na Q3: 44,6–45,8 mld USD. Popyt na chipy AI nie słabnie.</li><li>ASML: przychody Q2 = 9,3 mld EUR, pobicie prognoz. <strong>Drugi raz w tym roku</strong> podniósł prognozę na cały 2026 do 43–45 mld EUR (poprzednio 36–40 mld EUR).</li></ul>
+<p>Mimo doskonałych wyników obie spółki spadły 3–4% w piątek — rynek sprzedawał na dobrych wiadomościach, bo Kimi K3 dominował nastroje.</p>
+<p><strong>Stan rynku na koniec tygodnia:</strong></p>
+<ul><li>S&amp;P 500: ~7 458 pkt (−1,6% tydzień, −1,0% piątek)</li><li>Nasdaq: ~25 520 pkt (−2,9% tydzień)</li><li>SMH (ETF chipów): ~555 USD (−6,3% tydzień, ale wciąż +65% od początku roku!)</li></ul>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (aktywne od miesięcy 1–3 fazy rozruchu)</h3>
+<blockquote><p><strong>Ważna uwaga:</strong> Tom jest teraz w <strong>fazie rozruchu</strong> (miesiąc 1, lipiec 2026) i kupuje tylko ETF-y za 5 000 zł/mies. 9 spółek docelowych <strong>jeszcze nie jest w portfelu</strong> — są analizowane pod kątem przyszłych zakupów.</p></blockquote>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Waga</th><th>Rola w portfelu</th><th>Co się stało w tygodniu</th><th>Teza intakta?</th></tr></thead><tbody><tr><td><strong>IWDA</strong> (MSCI World)</td><td>55%</td><td>Fundament — globalny rynek rozwinięty</td><td>Podążał za S&amp;P 500 / Nasdaq, strata ok. 1,5–2% w tygodniu. Chipy ważą w tym ETF-ie sporo (~25% ekspozycja na USA tech), więc Kimi K3 lekko uderzył.</td><td>✅ Tak — szeroki rynek, fundamenty globalnej gospodarki niezmienione.</td></tr><tr><td><strong>SMH</strong> (producenci chipów)</td><td>15%</td><td>"Rdzeń AI" — na czele TSMC, NVIDIA, ASML</td><td><strong>Najtwardsze uderzenie tygodnia.</strong> −6,3% piątek, −20%+ od czerwcowych rekordów. Ale: TSMC i ASML właśnie pokazały rekordowe wyniki.</td><td>✅ Tak — teza (AI wymaga chipów) intakta. Panika Kimi K3 = szum, nie sygnał.</td></tr><tr><td><strong>RBOT</strong> (robotyka i AI)</td><td>15%</td><td>Humanoidy, automatyzacja przemysłowa</td><td>Brak dokładnych danych tygodniowych — ETF koreluje z sektorem AI/tech, więc podobna presja jak na SMH.</td><td>✅ Tak — Tesla Optimus Gen 3 w produkcji masowej w Fremont, robot ma trafić do sprzedaży komercyjnej w 2026.</td></tr><tr><td><strong>NUKL</strong> (energia jądrowa)</td><td>5%</td><td>Niezależny od AI hype, energochłonne centra danych</td><td>Sektor atomowy relatywnie odporny na chipy-panikę. Cameco (największy holding typowych ETF atomowych) +41% rok do roku, odporny na Kimi K3.</td><td>✅ Tak — centra danych AI potrzebują energii bazowej, popyt na jądrówkę rośnie.</td></tr><tr><td><strong>JEDI</strong> (kosmos i drony)</td><td>5%</td><td>Ekspozycja na sektor kosmiczny / obronny</td><td>Handlował na poziomie 24,58 USD w ostatnim tygodniu (52-tyg. zakres: 21,91–42,99 USD — wyraźnie poniżej szczytu). Sektor kosmiczny pod presją.</td><td>✅ Tak — teza długoterminowa (satelity LEO, obrona) niezmieniona.</td></tr><tr><td><strong>EIMI</strong> (rynki wschodzące)</td><td>5%</td><td>Dywersyfikacja geograficzna</td><td>Rynki azjatyckie pod presją po Kimi K3 (Z.ai w Hongkongu −30% jednego dnia). Rynki wschodzące ogólnie słabszy tydzień.</td><td>✅ Tak — dywersyfikacja działa zgodnie z planem, nawet jeśli w krótkim terminie koreluje z szokiem chińskim.</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze niekupione — obserwowane pod kątem przyszłych zakupów)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga docelowa</th><th>Co się stało</th><th>Czy teza portfela intakta?</th></tr></thead><tbody><tr><td><strong>TSMC</strong></td><td>6%</td><td>Rekordowy Q2 2026: +77% r/r zysku, pobicie prognoz. Q3 guidance: 44,6–45,8 mld USD. Mimo to akcje (ADR TSM) spadły 3,64% w piątek przez Kimi K3 panic. Kurs ok. 210–215 USD ≈ 795–815 PLN.</td><td>✅✅ Bardzo silna — wyniki mówią same za siebie. Spadek po rekordowych danych = okazja do obserwacji.</td></tr><tr><td><strong>NVIDIA</strong></td><td>5%</td><td>Akcje ok. 200 USD (≈ 758 PLN). Blackwell sprzedany z wyprzedzeniem, Q1 FY2027: 81,6 mld USD (+85% r/r). Kimi K3 uderzył sentymentem, akcje −2%+. Prognoza analityków: cel 299–350 USD.</td><td>✅ Intakta — popyt na Blackwell bez zmian. Kimi K3 to szum, nie dane sprzedażowe.</td></tr><tr><td><strong>Google (Alphabet)</strong></td><td>3%</td><td>Google Cloud Q1 +63% r/r (rekord). Backlog chmurowy prawie podwojony do 462 mld USD. <strong>Ale:</strong> Gemini 3.5 Pro spóźnił się po raz trzeci — teraz rynki obstawiają sierpień 7 jako datę premiery. Wyniki Q2 2026: ok. 29 lipca.</td><td>⚠️ Uważać — Cloud świetny, ale opóźnienia Gemini 3.5 Pro niepokojące przy nacisku Kimi K3 i OpenAI.</td></tr><tr><td><strong>Microsoft</strong></td><td>3%</td><td>Azure +40% w Q1. AI przychody: 37 mld USD rocznego przebiegu (+123% r/r). Capex 2026: 190 mld USD. Wyniki Q4 FY2026: ok. 29 lipca.</td><td>✅ Intakta — Azure rośnie dynamicznie, AI monetyzacja realna.</td></tr><tr><td><strong>Amazon</strong></td><td>3%</td><td>AWS +28% w Q1 (37,6 mld USD). Bedrock (platforma AI dla firm) +170% r/r. Capex 2026: 200 mld USD. Wyniki Q2 wkrótce.</td><td>✅ Intakta — AWS rośnie, AI popyt wysoki.</td></tr><tr><td><strong>Tesla</strong></td><td>3%</td><td>Akcje ok. 403 USD (≈ 1 527 PLN). Optimus Gen 3 w masowej produkcji w Fremont od stycznia 2026. V3 zapowiedziany na lato 2026. Sprzedaż komercyjna planowana w 2026. YTD: −9% (słabiej od rynku).</td><td>✅ Intakta — teza na Optimusa trzyma się. Produkcja ruszyła.</td></tr><tr><td><strong>ASML</strong></td><td>3%</td><td>Rekordowy Q2: 9,3 mld EUR (+59% r/r vs 5,8 mld prognoza). <strong>Drugi raz</strong> w roku podniósł prognozę na 2026: 43–45 mld EUR. Mimo to akcje −3,8% w piątek przez Kimi K3 panic.</td><td>✅✅ Bardzo silna — ASML to jedyna firma na świecie robiąca maszyny EUV. Bez ASML nie ma chipów AI.</td></tr><tr><td><strong>Rocket Lab (RKLB)</strong></td><td>2%</td><td>Akcje ok. 67 USD (≈ 254 PLN), <strong>−25% w 30 dni</strong> — to dużo. Ale technicznie: zakończono pełny test silnika Archimedes Vacuum dla Neutron Stage 2. Cel debiutu Neutrona: Q4 2026. Przejęcie Iridium (8 mld USD w gotówce + akcje) ogłoszone 29 czerwca — zamknięcie mid-2027. Space Force VICTUS HAZE: sukces.</td><td>⚠️ Uwaga na Iridium — dług przejęcia może obciążyć bilans; akcje "w kołnierzu fuzji" (cena pod presją do zamknięcia dealu). Teza Neutron intakta, ale ryzyko fuzyjne realne.</td></tr><tr><td><strong>AST SpaceMobile (ASTS)</strong></td><td>2%</td><td>Akcje ok. 58 USD (≈ 220 PLN), −12,7% w tygodniu. FCC zatwierdziła usługę komercyjną w USA. Ale: <strong>przesunięcie uruchomienia kampanii BlueBird z późnego 2026 na wczesny 2027.</strong> Obligacja zamienna na 1 mld USD → strachy przed <strong>rozwodnieniem akcji (29,7%/rok).</strong> Przychody kontraktowe: 1,2 mld USD + 60 operatorów.</td><td>🟡 Żółta flaga — teza intakta długoterminowo, ale opóźnienie i szybkie rozwodnienie wymagają obserwacji. Twarda granica: ciągła usługa komercyjna do końca 2027 + rozważna emisja.</td></tr></tbody></table></div>
+<hr>
+<h2>3. Stan twardych sygnałów</h2>
+<p>To są <strong>jedyne czynniki</strong>, które zmieniałyby skład portfela. Sprawdzam każdy wprost.</p>
+<h3>(a) Dwa kolejne kwartały spadku wydatków gigantów na centra danych</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>Łączne wydatki Microsoft + Google + Amazon + Meta na 2026 r.: <strong>725 mld USD</strong> (+77% r/r vs 410 mld w 2025). Co więcej, Google podniósł prognozę o 5 mld USD, a Meta o 10 mld USD już w trakcie roku. Q2 wyniki tych firm dopiero za 10 dni (ok. 29 lipca) — będą kluczowym testem.</p>
+<h3>(b) Spadek wykorzystania GPU / odpisy na centra danych / upadek dużego wynajmującego</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>NVIDIA Blackwell sprzedany z wyprzedzeniem, zaległości zamówień sięgają środka 2026. TSMC i ASML właśnie pokazały rekordowe wyniki i podnosiły prognozy. IBM ostrzega, że firmy przesuwają budżety IT <strong>w stronę</strong> sprzętu AI — to jest byczym sygnałem dla NVIDIA/TSMC, nie niedźwiedzim.</p>
+<p>⚠️ Kimi K3 to potencjalny zwiastun — jeśli najtańsze modele AI wymagają mniej chipów, popyt może w przyszłości zwolnić. Na razie danych potwierdzających brak.</p>
+<h3>(c) Brak wolumenów produkcji Optimusa przez 18–24 miesiące</h3>
+<p><strong>Status: 🟢 Nie zapalony</strong></p>
+<p>Tesla prowadzi masową produkcję Optimusa Gen 3 w Fremont od stycznia 2026. V3 ma być zaprezentowany latem 2026. Sprzedaż komercyjna planowana w 2026. Sygnał nie zapalony — teza aktywna.</p>
+<h3>(d) Porażka / duży poślizg rakiety Neutron</h3>
+<p><strong>Status: 🟢 Nie zapalony (ale obserwować)</strong></p>
+<p>Neutron celuje w Q4 2026 — harmonogram utrzymany mimo wcześniejszego problemu z tankiem (pęknięcie podczas testu w styczniu 2026, naprawa zakończona). Właśnie pomyślnie przetestowano silnik Archimedes Vacuum w pełnym czasie lotu. Rocket Lab ma już 5 rezerwacji na Neutrona przed pierwszym startem.</p>
+<p>⚠️ Jedyne ryzyko: przejęcie Iridium za 8 mld USD może absorbować uwagę i gotówkę zarządu — śledzić, czy nie odciągnie zasobów od Neutrona.</p>
+<h3>(e) ASTS bez ciągłej usługi komercyjnej do końca 2027 przy dużym rozwodnieniu</h3>
+<p><strong>Status: 🟡 Nie zapalony, ale kierunek niepokojący</strong></p>
+<ul><li>FCC zatwierdziła usługę w USA ✅</li><li>Uruchomienie kampanii BlueBird przesunięte na <strong>wczesny 2027</strong> (było: późny 2026) — terminal do końca 2027 wciąż daleko</li><li>Rozwodnienie akcji: 29,7% rocznie, obligacja zamienna 1 mld USD w lipcu 2026</li><li>Przychody 2026: prognoza 150–200 mln USD, FY2027: cel ~1 mld USD</li></ul>
+<p><strong>Nie zapalony</strong>, ale ASTS jest najbliżej żółtej linii ze wszystkich pozycji portfela. Warto śledzić każde kolejne uruchomienie satelitów i każdą emisję akcji.</p>
+<hr>
+<h2>4. Werdykt i co dalej obserwować</h2>
+<h3>Werdykt: SZUM — nie sygnał</h3>
+<p>Ten tydzień to klasyczny przykład, kiedy <strong>nagłówki straszą, a dane uspokajają</strong>.</p>
+<p><strong>Argumenty za tym, że to szum:</strong></p>
+<ul><li>TSMC pokazał +77% zysku r/r i podniósł prognozę → popyt na chipy AI nie maleje</li><li>ASML podniósł prognozę na rok po raz drugi → portfel zamówień rośnie</li><li>4 giganci tech utrzymują capex $725 mld USD i podnoszą go w trakcie roku</li><li>Kimi K3 to kolejny "moment DeepSeek" — w 2025 r. podobna panika minęła, a chipy odbiły</li><li>SMH jest wciąż +65% od początku roku — "katastrofa" tygodniowa to korekta w bessowym otoczeniu</li></ul>
+<p><strong>Argumenty wymagające obserwacji (nie paniki):</strong></p>
+<ul><li>Kimi K3 jest realnie tani i dobry — jeśli kolejne miesiące pokażą mniejsze zamówienia na GPU, to będzie sygnał do rewizji</li><li>IBM potwierdził, że budżety korporacyjne uciekają z software'u do hardware'u AI — Google/Microsoft/Amazon musią to potwierdzić 29 lipca po stronie PRZYCHODÓW (nie tylko wydatków)</li><li>Gemini 3.5 Pro spóźniony po raz trzeci — Google traci grunt w wyścigu modeli AI; ale Cloud Google rośnie 63%, więc firm na tym zarabia</li><li>ASTS: tempo rozwodnienia jest szybkie; śledzić każdą nową emisję</li></ul>
+<h3>Co obserwować w najbliższych dniach</h3>
+<div class="tabela"><table><thead><tr><th>Data</th><th>Wydarzenie</th><th>Dlaczego ważne dla portfela</th></tr></thead><tbody><tr><td><strong>22 lipca</strong></td><td>IBM pełne wyniki Q2 2026</td><td>Czy "ucieczka budżetów w hardware AI" jest trwałym trendem? Detal dotyczący dużych klientów.</td></tr><tr><td><strong>27 lipca</strong></td><td>Publiczne wagi Kimi K3</td><td>Jeśli model dostępny dla wszystkich za darmo — panika może wrócić. Albo minie jak DeepSeek.</td></tr><tr><td><strong>~29 lipca</strong></td><td>Wyniki Google (Alphabet) + Microsoft Q4 FY2026</td><td><strong>Najważniejszy test tezy #1</strong> — wzrost Azure/Cloud + podtrzymanie capex = teza zielona</td></tr><tr><td><strong>~29–31 lipca</strong></td><td>Wyniki Amazon Q2</td><td>AWS + Bedrock AI = kolejne potwierdzenie popytu na AI cloud</td></tr><tr><td><strong>Sierpień 2026</strong></td><td>Wyniki NVIDIA (FY Q2)</td><td>Czy Blackwell zamówienia faktycznie trzymają? Czy Kimi K3 zmienił coś w pipeline?</td></tr><tr><td><strong>Q4 2026</strong></td><td>Pierwszy start Neutrona (Rocket Lab)</td><td>Kluczowy krok dla tezy kosmicznej</td></tr><tr><td><strong>Wczesny 2027</strong></td><td>Kampania BlueBird (ASTS)</td><td>Czy timeline zostanie dotrzymany? Ilość nowych emisji akcji?</td></tr></tbody></table></div>
+<h3>Strategia na sierpień</h3>
+<p>Tom jest w <strong>miesiącu 1 fazy rozruchu</strong> — kupuje ETF-y za 5 000 zł/mies. i nic więcej. <strong>Nic w tej analizie nie zmienia tego planu.</strong> Żaden z twardych sygnałów nie zapalił się. Przecena chipów przez Kimi K3 to historycznie okazja, nie powód do hamowania DCA.</p>
+<p>Jedyna decyzja do podjęcia po wynikach 29 lipca: czy kontynuować pełny plan ETF-ów (tak, o ile capex gigantów utrzymany), czy wzmocnić/osłabić wagę SMH w kolejnych wpłatach.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://www.cnbc.com/2026/07/16/stock-market-today-live-updates.html" rel="noopener">S&amp;P 500 closes lower, Nasdaq falls 1%+ as chip stocks suffer — CNBC, 16.07.2026</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/tsmc-q2-2026-earnings-record-112109987.html" rel="noopener">TSMC Q2 2026 earnings: Record profit, AI demand — Yahoo Finance</a></li><li><a href="https://pr.tsmc.com/english/news/3326" rel="noopener">TSMC Second Quarter EPS NT$27.25 — oficjalny komunikat TSMC</a></li><li><a href="https://finance.yahoo.com/technology/articles/asml-raises-2026-guidance-second-114432617.html" rel="noopener">ASML raises 2026 guidance second time, beats Q2 earnings — Yahoo Finance</a></li><li><a href="https://cryptobriefing.com/moonshot-kimi-k3-ai-semiconductor-stocks-selloff/" rel="noopener">Moonshot's Kimi K3 sends AI and semiconductor stocks into tailspin — CryptoBriefing</a></li><li><a href="https://fortune.com/2026/07/17/china-moonshot-kimi-k3-markets-china-ai/" rel="noopener">Markets experience new DeepSeek shock after Kimi K3 — Fortune</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/ibm-expects-second-quarter-revenue-111029599.html" rel="noopener">IBM warns AI boom is squeezing software budgets — Yahoo Finance / RTE</a></li><li><a href="https://valueaddvc.com/ai-spending" rel="noopener">AI Spending Tracker 2026: $725B Total — ValueAddVC</a></li><li><a href="https://www.statista.com/chart/35046/capital-expenditure-of-meta-alphabet-amazon-and-microsoft/" rel="noopener">Big Tech's AI Spending to Reach $725 Billion in 2026 — Statista</a></li><li><a href="https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-acquire-iridium-historic-deal-creating-fully" rel="noopener">Rocket Lab to Acquire Iridium — komunikat inwestorski</a></li><li><a href="https://www.foreignpolicyjournal.com/2026/07/16/rocket-lab-nasdaq-rklb-stock-price-slides-5-5-despite-space-force-victory-neutron-engine-breakthrough/" rel="noopener">Rocket Lab RKLB stock slides, Neutron engine milestone — ForeignPolicyJournal</a></li><li><a href="https://www.fxleaders.com/news/2026/07/16/asts-stock-slides-toward-58-after-1b-convertible-deal-revives-dilution-fears/" rel="noopener">AST SpaceMobile ASTS slides after $1B convertible deal — FX Leaders</a></li><li><a href="https://www.techtimes.com/articles/320736/20260716/rebuilt-gemini-35-pro-misses-third-deadline-google-eyes-stopgap-release.htm" rel="noopener">Gemini 3.5 Pro misses third deadline — TechTimes</a></li><li><a href="https://www.fxleaders.com/news/2026/07/15/nvidia-nvda-stock-price-forecast-nvda-tests-212-as-ai-demand-and-china-shipments-lift-outlook/" rel="noopener">NVIDIA stock analysis July 2026 — FX Leaders</a></li><li><a href="https://ifactoryapp.com/industries/automotive-manufacturing/tesla-optimus-fremont-gen-3-humanoid-2026" rel="noopener">Tesla Optimus Gen 3 mass production — iFACTORY</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 19 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do Toma.</em></p></em> raportem wyrenderowanym z markdownu
+      (<code>routine/buduj_raporty.py</code>).</p>
+      <h2>Sekcja raportu</h2>
+      <p>Akapit z <strong>pogrubieniem</strong>, <em>kursywą</em> i
+      <a href="#">odnośnikiem do źródła</a>. Lorem ipsum dolor sit amet, consectetur
+      adipiscing elit, sed do eiusmod tempor incididunt ut labore.</p>
+      <blockquote><p><strong>Kontekst:</strong> cytat blokowy — używany w raportach na wstęp i wnioski.</p></blockquote>
+      <ul><li>Punkt pierwszy listy</li><li>Punkt drugi listy</li></ul>
+      <div class="tabela"><table>
+        <thead><tr><th>ETF</th><th>Waga</th><th>Zmiana</th><th>Teza</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Przykład A</strong></td><td>40%</td><td>+1,2%</td><td>bez zmian</td></tr>
+          <tr><td><strong>Przykład B</strong></td><td>35%</td><td>−0,8%</td><td>obserwujemy</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Druga sekcja</h2>
+      <p>Spis treści powyżej buduje się automatycznie z nagłówków drugiego poziomu.</p>`;
+  }
+
+  /* ---- spis treści z H2 ---- */
+  const naglowki = [...tresc.querySelectorAll('h2')];
+  if (naglowki.length > 2) {
+    const ol = document.createElement('ol');
+    naglowki.forEach((h, i) => {
+      if (!h.id) h.id = 'sekcja-' + (i + 1);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+    });
+    const spis = document.getElementById('spis');
+    spis.innerHTML = '<div class="spis-tytul">W tym raporcie</div>';
+    spis.appendChild(ol);
+  }
+
+  /* ---- data raportu: ISO (UTC) → czas polski; fallback na tekst w HTML ---- */
+  const elData = document.getElementById('data-raportu');
+  const iso = elData.getAttribute('data-iso');
+  if (iso && !isNaN(new Date(iso).getTime())) {
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(new Date(iso)).reduce((o, x) => (o[x.type] = x.value, o), {});
+      const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+        Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+      const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+        'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      elData.textContent = `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}`;
+    } catch (e) {}
+  }
+
+  /* ---- pasek postępu czytania ---- */
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('progress').style.width =
+      (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+</script>
+</body>
+</html>
