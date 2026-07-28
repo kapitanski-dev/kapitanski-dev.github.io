@@ -34,8 +34,10 @@ def inline(s: str) -> str:
     """Formatowanie w linii. Kolejność ma znaczenie: escape → linki → bold → italic."""
     s = html.escape(s, quote=False)
     s = re.sub(r'`([^`]+)`', r'<code>\1</code>', s)
+    # URL jest już po html.escape (m.in. & → &amp;) — dokładamy tylko cudzysłów,
+    # bo drugie escapowanie zrobiłoby z &amp; → &amp;amp; i rozwaliło adres.
     s = re.sub(r'\[([^\]]+)\]\(([^)\s]+)\)',
-               lambda m: f'<a href="{html.escape(m.group(2), quote=True)}" '
+               lambda m: f'<a href="{m.group(2).replace(chr(34), "&quot;")}" '
                          f'rel="noopener">{m.group(1)}</a>', s)
     s = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', s)
     s = re.sub(r'(?<![\w*])\*([^*\n]+)\*(?![\w*])', r'<em>\1</em>', s)
