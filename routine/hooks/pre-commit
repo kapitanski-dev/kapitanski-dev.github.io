@@ -1,0 +1,13 @@
+#!/bin/sh
+# Przed każdym commitem odśwież archiwum: numer wersji w stopce index.html to
+# numer commita, który właśnie powstaje (KROK 4 liczy `rev-list --count HEAD` + 1).
+# Rutyny chmurowe wołają buduj_index.py wprost i tego hooka nie mają — to
+# zabezpieczenie na ręczne commity z lokalnej maszyny.
+#
+# Instalacja w świeżym klonie:  git config core.hooksPath routine/hooks
+
+python3 routine/buduj_index.py >/dev/null || {
+  echo "pre-commit: buduj_index.py padł — archiwum nieodświeżone, przerywam commit."
+  exit 1
+}
+git add index.html

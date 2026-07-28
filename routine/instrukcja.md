@@ -720,6 +720,21 @@ REPO = subprocess.run(
     shell=True, capture_output=True, text=True).stdout.strip()
 repo = pathlib.Path(REPO)
 (repo / 'wydania').mkdir(exist_ok=True)
+
+# Numer wersji w stopce = numer commita, który ten build opublikuje. Rutyny
+# przebudowują archiwum tuż przed swoim jedynym commitem, więc „+1" celuje
+# dokładnie w commit publikujący. Przy ręcznym pushu: odśwież index na końcu.
+try:
+    _commity = subprocess.run(['git', 'rev-list', '--count', 'HEAD'], cwd=REPO,
+                              capture_output=True, text=True, check=True).stdout.strip()
+    wersja = f'v{int(_commity) + 1}'
+except Exception:
+    wersja = ''
+wersja_html = (
+    f'<span class="wersja"><a href="https://github.com/kapitanski-dev/kapitanski-dev.github.io'
+    f'/commits/main" title="Zbudowano {datetime.date.today().isoformat()}" rel="noopener">'
+    f'{wersja}</a></span>'
+) if wersja else ''
 files = sorted((repo / 'wydania').glob('*.html'), reverse=True)
 
 days_pl = ['Poniedziałek','Wtorek','Środa','Czwartek','Piątek','Sobota','Niedziela']
@@ -820,12 +835,15 @@ h1 a{color:inherit;text-decoration:none}
   letter-spacing:1px;padding:2px 7px;border-radius:2px}
 footer{text-align:center;font-size:.7em;color:var(--soft);text-transform:uppercase;letter-spacing:1px;
   margin-top:60px;border-top:3px double var(--ink);padding-top:16px}
+.wersja{display:block;margin-top:7px;font-size:.9em;letter-spacing:2px;opacity:.7}
+.wersja a{color:inherit;text-decoration:none;border-bottom:1px solid var(--rule)}
+.wersja a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 @media(max-width:600px){body{padding:32px 14px 60px}.item{padding:11px 12px}.item-go{display:none}}
 </style></head>
 <body><div class="wrap">
 <header><div class="kicker">Archiwum wydań</div><h1><a href="/">Grzyb Times</a></h1>
 <div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne &middot; raporty finansowe</div></header>
-''' + reports_html + cards + '''<footer>Grzyb Times &mdash; redagowane przez AI</footer></div>
+''' + reports_html + cards + '''<footer>Grzyb Times &mdash; redagowane przez AI''' + wersja_html + '''</footer></div>
 <script>
 /* Godziny wydań zapisane są w UTC (data-iso); pokaż je w czasie polskim (Europe/Warsaw, z DST). */
 document.querySelectorAll('time.ed-time[data-iso]').forEach(function (el) {

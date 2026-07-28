@@ -17,7 +17,8 @@ składają wydanie i wypychają je z powrotem do repo.
 | `template.html` | Szablon wydania (HTML+CSS+JS). Placeholder `__DANE__` = dane wydania. Otwarty bez danych pokazuje **podgląd Lorem Ipsum** (blok DEMO — rutyna wycina go z wydań). |
 | `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → generacja → publikacja. |
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
-| `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach. |
+| `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach, w stopce numer wersji. |
+| `routine/hooks/pre-commit` | Odświeża `index.html` przed każdym lokalnym commitem (patrz „Numer wersji"). |
 | `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Opublikowanych wydań nie edytujemy.** |
 | `assets/kategorie/` | Zdjęcia bazowe kategorii (2–3 na kategorię, rotacja przeciw duplikatom). |
 | `raport-template.html` | Szablon raportu finansowego (stylistyka gazety). Otwarty bez podstawionej treści pokazuje **podgląd szablonu**. |
@@ -110,6 +111,24 @@ Skrypt usuwa pliki wydań **wraz z ich katalogami grafik** i odbudowuje
 `index.html` (tą samą logiką, której używa rutyna — czyta ją z instrukcji).
 Uwaga: pełne odchudzenie repo wymagałoby przepisania historii gita — zwykłe
 usunięcie wystarcza, by strona była czysta.
+
+---
+
+## Numer wersji
+
+W stopce strony głównej jest `vN` — **numer commita na `main`**, który tę wersję
+opublikował (link prowadzi do historii repo). Liczy go KROK 4 przy budowaniu
+archiwum: `git rev-list --count HEAD` + 1, bo archiwum przebudowuje się tuż
+przed commitem publikującym. Nie ma osobnego pliku z wersją, więc równoległe
+pushe rutyn nie mają o co się pobić.
+
+Warunek: `index.html` musi być przebudowany w tym samym commicie. Rutyny robią
+to same (gazeta w KROKU 5, raport w KROKU 3). Dla commitów z lokalnej maszyny
+pilnuje tego hook — **w świeżym klonie włącz go raz**:
+
+```bash
+git config core.hooksPath routine/hooks
+```
 
 ---
 
