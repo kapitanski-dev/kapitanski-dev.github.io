@@ -57,8 +57,11 @@ Konwerter (`routine/buduj_raporty.py`) jest mały i bez zależności. **Obsługu
 surowego HTML, list zagnieżdżonych, przekreślenia `~~`, przypisów, wyrównania
 kolumn przez `:---:`. Tabele buduj bez pustych wierszy w środku.
 
-Tabele są sednem raportu i na wąskim ekranie przewijają się poziomo — nie bój
-się 5–6 kolumn, ale trzymaj komórki krótkie.
+Tabele są sednem raportu i **nigdy nie przewijają się poziomo**: na szerokim
+ekranie wychodzą poza kolumnę tekstu, a na wąskim każdy wiersz rozkłada się na
+kartę z podpisami kolumn. Dlatego nie bój się 5–6 kolumn. Dwie zasady: nagłówki
+kolumn krótkie (stają się podpisami w kartach) i **pierwsza kolumna to nazwa
+pozycji** (ETF, spółka, sygnał) — na wąskim ekranie jest tytułem karty.
 
 ## KROK 3 — Zbuduj stronę raportu i archiwum
 

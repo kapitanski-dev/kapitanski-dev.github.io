@@ -49,6 +49,17 @@ def komorki(wiersz: str) -> list:
     return [c.strip() for c in wiersz.strip().strip('|').split('|')]
 
 
+def etykieta(naglowek: str) -> str:
+    """Nagłówek kolumny jako czysty tekst do atrybutu `data-etykieta`.
+
+    Na wąskim ekranie tabela rozkłada się na karty i to z tego atrybutu bierze
+    się podpis każdej komórki (patrz `raport-template.html`), więc markdown
+    trzeba z niego zdjąć."""
+    txt = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', naglowek)
+    txt = re.sub(r'[*`]', '', txt)
+    return html.escape(txt.strip(), quote=True)
+
+
 def render(md: str) -> str:
     """Markdown → HTML. Blok po bloku, bez rekurencji poza cytatami."""
     linie = md.split('\n')
@@ -83,9 +94,13 @@ def render(md: str) -> str:
             while i < len(linie) and linie[i].lstrip().startswith('|'):
                 wiersze.append(komorki(linie[i]))
                 i += 1
+            etykiety = [etykieta(c) for c in naglowek]
             thead = ''.join(f'<th>{inline(c)}</th>' for c in naglowek)
             tbody = ''.join(
-                '<tr>' + ''.join(f'<td>{inline(c)}</td>' for c in w) + '</tr>'
+                '<tr>' + ''.join(
+                    f'<td data-etykieta="{etykiety[k]}">{inline(c)}</td>'
+                    if k < len(etykiety) else f'<td>{inline(c)}</td>'
+                    for k, c in enumerate(w)) + '</tr>'
                 for w in wiersze)
             out.append('<div class="tabela"><table><thead><tr>' + thead
                        + '</tr></thead><tbody>' + tbody + '</tbody></table></div>')
