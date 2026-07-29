@@ -13,9 +13,12 @@ import html as htmlmod
 import pathlib
 import re
 import subprocess
+import sys
 from collections import OrderedDict
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import buduj_dane                                          # noqa: E402  (po ustawieniu ścieżki)
 
 DNI = ['Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota', 'Niedziela']
 MIESIACE = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
@@ -39,6 +42,10 @@ h1{font-family:Fraunces,serif;font-weight:900;font-size:clamp(2.8em,8vw,4.5em);l
 h1 a{color:inherit;text-decoration:none}
 .bar{border-top:1px solid var(--rule);border-bottom:3px double var(--ink);padding:10px 0;margin-top:20px;
   font-size:.72em;text-transform:uppercase;letter-spacing:2px;font-weight:600;color:var(--soft)}
+.menu{display:flex;justify-content:center;gap:20px;flex-wrap:wrap;margin-top:14px;
+  font-size:.74em;text-transform:uppercase;letter-spacing:1.5px;font-weight:700}
+.menu a{color:var(--soft);text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px}
+.menu a:hover{color:var(--accent);border-bottom-color:var(--accent)}
 .day{margin-top:30px}
 .day-head{font-family:Fraunces,serif;font-weight:700;font-size:1.05em;padding-bottom:8px;margin-bottom:10px;
   border-bottom:1px solid var(--rule)}
@@ -178,6 +185,9 @@ def raporty() -> str:
 
 def main() -> None:
     (REPO / 'wydania').mkdir(exist_ok=True)
+    # Strony pochodne (szukaj / kalendarz / angielski) jadą z tych samych wydań co
+    # archiwum, więc budujemy je tym samym poleceniem — nie ma jak o nich zapomnieć.
+    buduj_dane.main()
     strona = '''<!DOCTYPE html>
 <html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Grzyb Times — archiwum</title>
@@ -186,7 +196,8 @@ def main() -> None:
 ''' + STYL + '''</head>
 <body><div class="wrap">
 <header><div class="kicker">Archiwum wydań</div><h1><a href="/">Grzyb Times</a></h1>
-<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne &middot; raporty finansowe</div></header>
+<div class="bar">Redagowane przez AI &middot; wydania poranne i wieczorne &middot; raporty finansowe</div>
+<nav class="menu"><a href="/szukaj.html">Szukaj w archiwum</a><a href="/kalendarz.html">Kalendarium</a><a href="/angielski.html">Angielski</a></nav></header>
 ''' + raporty() + wydania() + '''<footer>Grzyb Times &mdash; redagowane przez AI''' + numer_wersji() + '''</footer></div>
 ''' + SKRYPT + '''
 </body></html>'''

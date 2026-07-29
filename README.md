@@ -17,7 +17,10 @@ składają wydanie i wypychają je z powrotem do repo.
 | `template.html` | Szablon wydania (HTML+CSS+JS). Placeholder `__DANE__` = dane wydania. Otwarty bez danych pokazuje **podgląd Lorem Ipsum** (blok DEMO — rutyna wycina go z wydań). |
 | `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → dane → publikacja. |
 | `routine/buduj_wydanie.py` | Dane redakcji (JSON) + config + szablon → gotowe wydanie. Tu mieszkają pogoda, obrazy, kontrole jakości i metryki. |
-| `routine/buduj_index.py` | Buduje `index.html` (archiwum). Wołany przy każdej publikacji i przez hook pre-commit. |
+| `routine/buduj_index.py` | Buduje `index.html` (archiwum) i woła `buduj_dane.py`. Uruchamiany przy każdej publikacji i przez hook pre-commit. |
+| `routine/buduj_dane.py` | Wyłuskuje z wydań i raportów `dane/*.json` dla stron pochodnych. |
+| `szukaj.html` · `kalendarz.html` · `angielski.html` | Strony pochodne (patrz niżej). Wspólna stylistyka: `assets/strony.css`. |
+| `dane/` | Auto-generowane `szukaj.json`, `kalendarz.json`, `angielski.json`. **Nie edytuj ręcznie.** |
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
 | `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach, w stopce numer wersji. |
 | `routine/hooks/pre-commit` | Odświeża `index.html` przed każdym lokalnym commitem (patrz „Numer wersji"). |
@@ -75,6 +78,23 @@ czas czytania · timestamp publikacji u źródła · „Zgłoś uwagę" (GitHub 
 rutyna czyta je przy kolejnym wydaniu) · pogoda z Interii (klik → pełna prognoza) ·
 nawigacja poprzednie/następne · sekcja **Logs** (diagnostyka rutyny, w tym model
 generujący wydanie) · motyw jasny/ciemny · design „paper & ink" (mobile/tablet/desktop + druk).
+
+### Strony pochodne
+
+Trzy statyczne strony żywiące się tym, co gazeta i raporty już wyprodukowały.
+Budują się same przy każdej publikacji (`buduj_index.py` → `buduj_dane.py` → `dane/*.json`),
+więc nie wymagają żadnej pracy od rutyn poza trzymaniem się formatu danych.
+
+| Strona | Co pokazuje | Skąd bierze dane |
+|---|---|---|
+| `/szukaj.html` | Wyszukiwarka wszystkich artykułów (tytuł, skrót, kategoria), z podświetlaniem i filtrem kategorii; link prowadzi do kotwicy artykułu w wydaniu. Działa bez ogonków — „zelenski" znajdzie „Zełenski". | `artykuly[]` ze wszystkich wydań |
+| `/kalendarz.html` | Zapowiedzi z terminami: dziś / w tygodniu / w miesiącu / później / bez daty + „minęło, sprawdź". | `watki` **najnowszego** wydania + `### Co obserwować` **najnowszego** raportu |
+| `/angielski.html` | Wszystkie słowa i zwroty z rubryki „Angielski na dziś" — lista albo fiszki z powtórkami (pudełka Leitnera w `localStorage`). | `literatura.angielski` ze wszystkich wydań |
+
+Kalendarium celowo czyta tylko najnowsze wydanie i najnowszy raport: obie rutyny
+mają obowiązek przenosić otwarte pozycje dalej, więc te dwa pliki są pełnym,
+aktualnym stanem obserwacji. Sięganie głębiej dawałoby wyłącznie duplikaty
+i terminy, które redakcja świadomie porzuciła.
 
 ---
 

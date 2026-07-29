@@ -272,6 +272,19 @@ def kontrola_redakcji(artykuly: list, cfg: dict, log) -> None:
                         f"mniej przy chudym materiale, bez dopychania wodą.")
 
 
+def kontrola_watkow(watki: list, log) -> None:
+    """`watki` zasilają follow-upy następnego wydania i stronę kalendarza, więc
+    mają być obiektami `{data, temat, sprawdzic}` — z gołego zdania trzeba datę
+    zgadywać regexem."""
+    stare = [w for w in watki if not isinstance(w, dict)]
+    if stare:
+        log("warning", f"{len(stare)} z {len(watki)} wątków w starym formacie (goły tekst) — "
+                       f"podawaj obiekty {{\"data\": \"RRRR-MM-DD\", \"temat\": …, \"sprawdzic\": …}}.")
+    bez_daty = [w for w in watki if isinstance(w, dict) and not w.get("data")]
+    if len(bez_daty) == len(watki) and watki:
+        log("info", "Żaden wątek nie ma pola `data` — kalendarium pokaże je bez terminu.")
+
+
 def kontrola_literatury(literatura: dict, cfg: dict, log) -> None:
     """Sekcja składana z własnej wiedzy modelu — ma być kompletna (4/4) w każdym wydaniu."""
     if not (cfg.get('literatura') or {}).get('wlaczona'):
@@ -396,6 +409,7 @@ def main() -> None:
     kontrola_redakcji(dane["artykuly"], cfg, log)
     kontrola_zrodel(dane["artykuly"], cfg, log)
     kontrola_swiezosci(dane["artykuly"], cfg, now, log)
+    kontrola_watkow(dane["watki"], log)
     kontrola_literatury(dane["literatura"], cfg, log)
     metryki(log)
 

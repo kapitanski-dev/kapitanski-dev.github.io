@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grzyb Times — angielski na dziś</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/strony.css">
+<style>
+  .fiszka {
+    background: color-mix(in srgb, var(--card) 55%, var(--paper));
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 34px 24px; text-align: center; min-height: 260px;
+    display: flex; flex-direction: column; justify-content: center; gap: 10px;
+  }
+  .fiszka .haslo {
+    font-family: Fraunces, Georgia, serif; font-weight: 900;
+    font-size: clamp(1.8em, 5.5vw, 2.6em); line-height: 1.15;
+  }
+  .fiszka .wymowa { color: var(--soft); font-size: .95em; }
+  .fiszka .typ {
+    font-size: .68em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--soft); font-weight: 700;
+  }
+  .fiszka .znaczenie { font-size: 1.15em; font-weight: 600; color: var(--accent); }
+  .fiszka .przyklad { font-size: .92em; color: var(--soft); font-style: italic; max-width: 46ch; margin: 0 auto; }
+  .fiszka .rewers { display: none; }
+  .fiszka.odkryta .rewers { display: block; }
+
+  .przyciski { display: flex; gap: 9px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .btn {
+    font: inherit; font-size: .85em; font-weight: 600; cursor: pointer;
+    padding: 10px 22px; border-radius: 2px; border: 1px solid var(--rule);
+    background: none; color: var(--ink); transition: .2s;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn--glowny { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn--glowny:hover { opacity: .88; color: #fff; }
+  .postep {
+    font-size: .74em; text-transform: uppercase; letter-spacing: 1.5px;
+    color: var(--soft); text-align: center; margin-top: 16px;
+  }
+  .postep button {
+    font: inherit; font-size: 1em; letter-spacing: inherit; text-transform: inherit;
+    background: none; border: none; color: var(--soft); cursor: pointer;
+    text-decoration: underline; padding: 0 0 0 8px;
+  }
+  .postep button:hover { color: var(--accent); }
+
+  .wpis .haslo-lista { font-weight: 700; }
+  .wpis .haslo-lista .wymowa { font-weight: 400; color: var(--soft); font-size: .88em; }
+  .wpis .zn { color: var(--accent); }
+  .wpis .przyklad-lista { font-style: italic; font-size: .88em; color: var(--soft); margin-top: 4px; }
+  .wpis hr { border: none; border-top: 1px solid var(--rule); margin: 11px 0; }
+</style>
+</head>
+<body><div class="wrap">
+<header>
+  <div class="kicker">Rubryka Literatura</div>
+  <h1><a href="/">Angielski na dziś</a></h1>
+  <p class="lead">Każde wydanie przynosi jedno słowo i jeden zwrot. Tu zbierają się wszystkie —
+     do przejrzenia albo do powtórki na fiszkach.</p>
+  <nav class="bar">
+    <a href="/">Wydania</a>
+    <a href="/szukaj.html">Szukaj</a>
+    <a href="/kalendarz.html">Kalendarium</a>
+    <a href="/angielski.html" aria-current="page">Angielski</a>
+  </nav>
+</header>
+
+<div class="chipy" style="justify-content:center">
+  <button class="chip" id="tryb-fiszki" type="button" aria-pressed="true">Fiszki</button>
+  <button class="chip" id="tryb-lista" type="button" aria-pressed="false">Cała lista</button>
+</div>
+
+<div id="widok-fiszki">
+  <div id="fiszka" class="fiszka"><p class="pusto">Wczytuję…</p></div>
+  <div id="przyciski" class="przyciski"></div>
+  <p id="postep" class="postep"></p>
+</div>
+
+<div id="widok-lista" hidden></div>
+
+<footer>Grzyb Times &mdash; redagowane przez AI &middot; <a href="/">archiwum wydań</a></footer>
+</div>
+
+<script>
+(function () {
+  const KLUCZ = 'grzyb-angielski-postep';
+  const esc = s => (s || '').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  let karty = [], biezaca = null, poprzedniaId = null;
+  let postep = {};
+  try { postep = JSON.parse(localStorage.getItem(KLUCZ) || '{}'); } catch (e) { postep = {}; }
+  const zapisz = () => { try { localStorage.setItem(KLUCZ, JSON.stringify(postep)); } catch (e) {} };
+
+  /* Każde wydanie daje dwie karty: słowo i zwrot. */
+  function zbudujKarty(wpisy) {
+    const out = [];
+    for (const w of wpisy) {
+      if (w.slowo) out.push({ id: 's:' + w.slowo, typ: 'Słowo', haslo: w.slowo,
+        wymowa: w.wymowa, znaczenie: w.znaczenie, przyklad: w.przyklad, wydanie: w.opis_wydania });
+      if (w.zwrot) out.push({ id: 'z:' + w.zwrot, typ: 'Zwrot', haslo: w.zwrot,
+        wymowa: '', znaczenie: w.zwrot_znaczenie, przyklad: w.zwrot_przyklad, wydanie: w.opis_wydania });
+    }
+    return out;
+  }
+
+  /* Losujemy z puli najsłabiej opanowanych — proste pudełka Leitnera (0–4). */
+  function nastepna() {
+    if (!karty.length) return null;
+    const wg = [...karty].sort((a, b) => (postep[a.id] || 0) - (postep[b.id] || 0));
+    const pula = wg.slice(0, Math.max(1, Math.ceil(wg.length / 3)));
+    const kandydaci = pula.length > 1 ? pula.filter(k => k.id !== poprzedniaId) : pula;
+    return kandydaci[Math.floor(Math.random() * kandydaci.length)];
+  }
+
+  function rysujFiszke() {
+    biezaca = nastepna();
+    if (!biezaca) {
+      document.getElementById('fiszka').innerHTML =
+        '<p class="pusto">Brak słówek — pojawią się wraz z kolejnymi wydaniami.</p>';
+      document.getElementById('przyciski').innerHTML = '';
+      return;
+    }
+    poprzedniaId = biezaca.id;
+    document.getElementById('fiszka').className = 'fiszka';
+    document.getElementById('fiszka').innerHTML =
+      `<div class="typ">${esc(biezaca.typ)}</div>` +
+      `<div class="haslo">${esc(biezaca.haslo)}</div>` +
+      (biezaca.wymowa ? `<div class="wymowa">${esc(biezaca.wymowa)}</div>` : '') +
+      '<div class="rewers">' +
+        `<div class="znaczenie">${esc(biezaca.znaczenie)}</div>` +
+        (biezaca.przyklad ? `<p class="przyklad">${esc(biezaca.przyklad)}</p>` : '') +
+      '</div>';
+    document.getElementById('przyciski').innerHTML =
+      '<button class="btn btn--glowny" id="pokaz" type="button">Pokaż znaczenie</button>';
+    document.getElementById('pokaz').onclick = odkryj;
+    odswiezPostep();
+  }
+
+  function odkryj() {
+    document.getElementById('fiszka').classList.add('odkryta');
+    document.getElementById('przyciski').innerHTML =
+      '<button class="btn" id="powtorz" type="button">Powtórz</button>' +
+      '<button class="btn btn--glowny" id="umiem" type="button">Umiem</button>';
+    document.getElementById('umiem').onclick = () => oceń(1);
+    document.getElementById('powtorz').onclick = () => oceń(-1);
+  }
+
+  function oceń(delta) {
+    const teraz = postep[biezaca.id] || 0;
+    postep[biezaca.id] = Math.max(0, Math.min(4, teraz + delta));
+    zapisz();
+    rysujFiszke();
+  }
+
+  function odswiezPostep() {
+    const opanowane = karty.filter(k => (postep[k.id] || 0) >= 3).length;
+    document.getElementById('postep').innerHTML =
+      `Opanowane: ${opanowane} z ${karty.length}` +
+      '<button id="reset" type="button">wyzeruj postęp</button>';
+    document.getElementById('reset').onclick = () => {
+      if (!confirm('Wyzerować postęp nauki?')) return;
+      postep = {}; zapisz(); rysujFiszke();
+    };
+  }
+
+  function rysujListe(wpisy) {
+    document.getElementById('widok-lista').innerHTML = wpisy.map(w => {
+      const wymowa = w.wymowa ? ` <span class="wymowa">${esc(w.wymowa)}</span>` : '';
+      return '<div class="karta wpis">' +
+        `<div class="haslo-lista">${esc(w.slowo)}${wymowa} — <span class="zn">${esc(w.znaczenie)}</span></div>` +
+        (w.przyklad ? `<div class="przyklad-lista">${esc(w.przyklad)}</div>` : '') +
+        (w.zwrot ? '<hr>' +
+          `<div class="haslo-lista">${esc(w.zwrot)} — <span class="zn">${esc(w.zwrot_znaczenie)}</span></div>` +
+          (w.zwrot_przyklad ? `<div class="przyklad-lista">${esc(w.zwrot_przyklad)}</div>` : '') : '') +
+        `<div class="meta"><span>${esc(w.opis_wydania)}</span>` +
+        `<a href="/${esc(w.wydanie)}" style="color:inherit">wydanie &rarr;</a></div>` +
+        '</div>';
+    }).join('') || '<p class="pusto">Brak wpisów.</p>';
+  }
+
+  function przelacz(naFiszki) {
+    document.getElementById('widok-fiszki').hidden = !naFiszki;
+    document.getElementById('widok-lista').hidden = naFiszki;
+    document.getElementById('tryb-fiszki').setAttribute('aria-pressed', String(naFiszki));
+    document.getElementById('tryb-lista').setAttribute('aria-pressed', String(!naFiszki));
+  }
+  document.getElementById('tryb-fiszki').onclick = () => przelacz(true);
+  document.getElementById('tryb-lista').onclick = () => przelacz(false);
+
+  fetch('/dane/angielski.json').then(r => r.json()).then(d => {
+    const wpisy = (d.angielski || []).reverse();          // najnowsze pierwsze
+    karty = zbudujKarty(wpisy);
+    rysujListe(wpisy);
+    rysujFiszke();
+  }).catch(() => {
+    document.getElementById('fiszka').innerHTML =
+      '<p class="pusto">Nie udało się wczytać słówek (dane/angielski.json).</p>';
+  });
+})();
+</script>
+</body></html>

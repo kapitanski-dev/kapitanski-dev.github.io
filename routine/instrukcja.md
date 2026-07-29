@@ -153,9 +153,17 @@ czy się rozstrzygnął:
 - **wciąż otwarty** → przepisz do `watki` bieżącego wydania;
 - **stracił aktualność / starszy niż 7 dni** → porzuć.
 
-Po redakcji zbuduj `watki` bieżącego wydania: każda zapowiedź przyszłego wydarzenia
-z (przybliżoną) datą to jedno zdanie, np. `"Starship Flight 13 — start zapowiadany
-16.07; sprawdzić wynik"`. Maksymalnie ~6 wątków, najważniejsze.
+Po redakcji zbuduj `watki` bieżącego wydania — każda zapowiedź przyszłego wydarzenia
+to jeden obiekt:
+
+```json
+{"data": "2026-07-31", "temat": "Starship Flight 13", "sprawdzic": "czy start się odbył i z jakim skutkiem"}
+```
+
+`data` w formacie `RRRR-MM-DD`. Gdy termin jest tylko przybliżony, wpisz `null`,
+a określenie czasu daj słownie w `temat` (np. `"Wyniki NVIDIA — sierpień 2026"`).
+Maksymalnie ~6 wątków, najważniejsze. Te wpisy zasilają też stronę `kalendarz.html`,
+więc `temat` pisz zwięźle, po ludzku i bez technicznych slugów (`meta-q2-2026` ❌).
 
 ### Oszczędzaj tokeny
 
@@ -345,7 +353,7 @@ Zapisz **jeden plik** `/tmp/grzyb_dane.json` (narzędzie Write) o strukturze:
   "model": "<Twoja dokładna nazwa/ID modelu — wiesz, kim jesteś>",
   "artykuly": [ ... ],
   "literatura": { ... },
-  "watki": ["Zapowiedź do sprawdzenia w następnym wydaniu — z datą"],
+  "watki": [{"data": "2026-07-31", "temat": "Starship Flight 13", "sprawdzic": "czy start się odbył"}],
   "logi": [{"poziom": "info", "wiadomosc": "Kurs USD/PLN: 3,79 (money.pl, 29.07.2026)."}]
 }
 ```

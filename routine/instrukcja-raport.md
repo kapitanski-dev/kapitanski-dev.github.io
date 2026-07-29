@@ -89,9 +89,14 @@ buduje się z nich, więc ma być co najmniej 3):
 6. **Źródła** — lista `- [tytuł — serwis](url)`.
 
 Sekcja 5 musi kończyć się podsekcją **`### Co obserwować`** — to wejście dla
-następnego raportu (KROK 0), więc nagłówek nazywaj dokładnie tak, a każda pozycja
-ma mieć **termin** i **dlaczego to ważne**. Tabela (`Termin | Co czekamy | Dlaczego
-ważne`) sprawdza się tu równie dobrze jak lista punktowa:
+następnego raportu (KROK 0) **oraz dla strony `kalendarz.html`**, więc nagłówek
+nazywaj dokładnie tak, a każda pozycja ma mieć **termin** i **dlaczego to ważne**.
+Tabela (`Termin | Co czekamy | Dlaczego ważne`) sprawdza się tu równie dobrze jak
+lista punktowa.
+
+**Termin pisz tak, żeby dało się go odczytać jako datę:** `30.07.2026`,
+`5 sierpnia 2026` albo — gdy znasz tylko okres — `sierpień 2026`. Rok podawaj
+zawsze. „Dziś wieczorem" czy „w przyszłym tygodniu" zestarzeją się w dniu publikacji.
 
 ```markdown
 - **30.07 (czwartek)** — wyniki Amazona za Q2: wzrost AWS i utrzymanie capexu.

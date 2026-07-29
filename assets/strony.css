@@ -1,0 +1,119 @@
+/* Wspólna stylistyka stron pochodnych (szukaj / angielski / kalendarz).
+   Ta sama paleta „paper & ink" co gazeta, archiwum i raporty. */
+
+:root {
+  --paper: #faf7f0; --ink: #17150f; --soft: #55503f;
+  --rule: #d8d2c2; --accent: #8a1c1c; --card: #fff;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #14130f; --ink: #ece7da; --soft: #a39d8b;
+    --rule: #35322a; --accent: #e0655a; --card: #1d1b16;
+  }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--paper); color: var(--ink);
+  padding: 44px 24px 80px; line-height: 1.6;
+  background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+    color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+}
+body::before {
+  content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+  opacity: .045; mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+@media (prefers-color-scheme: dark) {
+  body { background-image: none; }
+  body::before { opacity: .06; mix-blend-mode: screen; }
+}
+
+.wrap { max-width: 780px; margin: 0 auto; }
+
+/* ===== Nagłówek ===== */
+header { text-align: center; margin-bottom: 28px; }
+.kicker {
+  font-size: .7em; text-transform: uppercase; letter-spacing: 4px; color: var(--soft);
+  display: flex; align-items: center; justify-content: center; gap: 16px;
+}
+.kicker::before, .kicker::after {
+  content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+}
+h1 {
+  font-family: Fraunces, Georgia, serif; font-weight: 900;
+  font-size: clamp(2.2em, 6vw, 3.4em); letter-spacing: -1px; line-height: 1.05;
+  margin: 10px 0 4px;
+}
+h1 a { color: inherit; text-decoration: none; transition: color .2s; }
+h1 a:hover { color: var(--accent); }
+.lead { color: var(--soft); font-size: .9em; max-width: 52ch; margin: 6px auto 0; }
+.bar {
+  border-top: 1px solid var(--rule); border-bottom: 3px double var(--ink);
+  padding: 9px 0; margin-top: 18px; font-size: .72em; text-transform: uppercase;
+  letter-spacing: 2px; font-weight: 600; color: var(--soft);
+  display: flex; justify-content: center; gap: 18px; flex-wrap: wrap;
+}
+.bar a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+.bar a:hover, .bar a[aria-current] { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ===== Sterowanie ===== */
+.szukajka {
+  width: 100%; font: inherit; font-size: 1.05em; padding: 13px 16px;
+  background: color-mix(in srgb, var(--card) 55%, var(--paper));
+  border: 1px solid var(--rule); border-radius: 2px; color: var(--ink);
+}
+.szukajka:focus { outline: none; border-color: var(--accent); }
+.chipy { display: flex; flex-wrap: wrap; gap: 7px; margin: 14px 0 6px; }
+.chip {
+  font: inherit; font-size: .78em; font-weight: 600; cursor: pointer;
+  padding: 5px 12px; border-radius: 2px; color: var(--soft);
+  background: none; border: 1px solid var(--rule); transition: .2s;
+}
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.licznik {
+  font-size: .74em; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--soft); margin: 16px 0 10px;
+}
+
+/* ===== Karty ===== */
+.karta {
+  display: block; text-decoration: none; color: var(--ink);
+  background: color-mix(in srgb, var(--card) 45%, var(--paper));
+  border: 1px solid var(--rule); border-left: 3px solid var(--rule);
+  border-radius: 2px; padding: 14px 16px; margin-bottom: 9px; transition: border-color .2s;
+}
+a.karta:hover { border-color: var(--accent); }
+.karta h2 {
+  font-family: Fraunces, Georgia, serif; font-size: 1.05em; font-weight: 700;
+  line-height: 1.3; margin-bottom: 5px;
+}
+.karta p { font-size: .9em; color: var(--soft); }
+.meta {
+  font-size: .72em; text-transform: uppercase; letter-spacing: 1.2px;
+  color: var(--soft); margin-top: 7px; display: flex; gap: 10px; flex-wrap: wrap;
+}
+.meta .kat { color: var(--accent); font-weight: 700; }
+mark { background: color-mix(in srgb, var(--accent) 22%, transparent); color: inherit; }
+
+.grupa { margin: 30px 0 12px; }
+.grupa h2 {
+  font-family: Fraunces, Georgia, serif; font-size: 1.1em; font-weight: 700;
+  padding-bottom: 7px; border-bottom: 1px solid var(--rule);
+}
+.grupa--dzis h2 { color: var(--accent); border-bottom-color: var(--accent); }
+.pusto { color: var(--soft); font-style: italic; padding: 22px 0; text-align: center; }
+
+footer {
+  text-align: center; font-size: .7em; color: var(--soft); text-transform: uppercase;
+  letter-spacing: 1px; margin-top: 56px; border-top: 3px double var(--ink); padding-top: 15px;
+}
+footer a { color: inherit; }
+
+@media (max-width: 600px) {
+  body { padding: 30px 14px 60px; }
+  .karta { padding: 12px 13px; }
+}

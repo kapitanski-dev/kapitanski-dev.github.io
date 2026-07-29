@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grzyb Times — kalendarium</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/strony.css">
+<style>
+  .termin {
+    font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: .95em;
+    color: var(--accent); margin-bottom: 3px;
+  }
+  .karta--minelo { opacity: .68; }
+  .karta--minelo .termin { color: var(--soft); }
+  .zrodlo-info {
+    font-size: .78em; color: var(--soft); text-align: center;
+    margin: 18px 0 4px; font-style: italic;
+  }
+</style>
+</head>
+<body><div class="wrap">
+<header>
+  <div class="kicker">Co przed nami</div>
+  <h1><a href="/">Kalendarium</a></h1>
+  <p class="lead">Zapowiedzi, które gazeta i raporty finansowe obiecały sprawdzić:
+     wyniki spółek, decyzje, starty, głosowania.</p>
+  <nav class="bar">
+    <a href="/">Wydania</a>
+    <a href="/szukaj.html">Szukaj</a>
+    <a href="/kalendarz.html" aria-current="page">Kalendarium</a>
+    <a href="/angielski.html">Angielski</a>
+  </nav>
+</header>
+
+<div id="tresc"></div>
+<p id="zrodlo-info" class="zrodlo-info"></p>
+
+<footer>Grzyb Times &mdash; redagowane przez AI &middot; <a href="/">archiwum wydań</a></footer>
+</div>
+
+<script>
+(function () {
+  const esc = s => (s || '').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const dzisISO = new Date().toLocaleDateString('sv-SE', { timeZone: 'Europe/Warsaw' });
+  const zaDni = n => {
+    const d = new Date(dzisISO + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+
+  function karta(p, minelo) {
+    const cel = p.url ? `/${esc(p.url)}` : null;
+    const tag = cel ? 'a' : 'div';
+    const href = cel ? ` href="${cel}"` : '';
+    return `<${tag} class="karta${minelo ? ' karta--minelo' : ''}"${href}>` +
+      `<div class="termin">${esc(p.termin || 'bez terminu')}${p.przyblizony ? ' (w przybliżeniu)' : ''}</div>` +
+      `<p>${esc(p.opis)}</p>` +
+      `<div class="meta"><span class="kat">${esc(p.skad)}</span><span>${esc(p.opis_zrodla)}</span></div>` +
+      `</${tag}>`;
+  }
+
+  function grupa(tytul, pozycje, klasa, minelo) {
+    if (!pozycje.length) return '';
+    return `<section class="grupa ${klasa || ''}"><h2>${esc(tytul)}</h2></section>` +
+           pozycje.map(p => karta(p, minelo)).join('');
+  }
+
+  fetch('/dane/kalendarz.json').then(r => r.json()).then(d => {
+    const poz = d.kalendarz || [];
+    const tydzien = zaDni(7), miesiac = zaDni(31), tydzienWstecz = zaDni(-7);
+
+    const dzis    = poz.filter(p => p.data === dzisISO);
+    const wKrotce = poz.filter(p => p.data > dzisISO && p.data <= tydzien);
+    const dalej   = poz.filter(p => p.data > tydzien && p.data <= miesiac);
+    const pozniej = poz.filter(p => p.data > miesiac);
+    const bezDaty = poz.filter(p => !p.data);
+    const minione = poz.filter(p => p.data && p.data < dzisISO && p.data >= tydzienWstecz);
+
+    const html =
+      grupa('Dziś', dzis, 'grupa--dzis') +
+      grupa('W ciągu tygodnia', wKrotce) +
+      grupa('W tym miesiącu', dalej) +
+      grupa('Później', pozniej) +
+      grupa('Bez konkretnej daty', bezDaty) +
+      grupa('Minęło — sprawdź, czy się rozstrzygnęło', minione, '', true);
+
+    document.getElementById('tresc').innerHTML = html ||
+      '<p class="pusto">Kalendarium jest puste — najnowsze wydanie i raport nie zapowiadały niczego z terminem.</p>';
+    document.getElementById('zrodlo-info').textContent =
+      'Lista pochodzi z najnowszego wydania gazety i najnowszego raportu finansowego — ' +
+      'obie rutyny same przenoszą do nich pozycje, które wciąż są otwarte.';
+  }).catch(() => {
+    document.getElementById('tresc').innerHTML =
+      '<p class="pusto">Nie udało się wczytać kalendarium (dane/kalendarz.json).</p>';
+  });
+})();
+</script>
+</body></html>

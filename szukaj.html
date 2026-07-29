@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grzyb Times — szukaj w archiwum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700;9..144,900&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/strony.css">
+</head>
+<body><div class="wrap">
+<header>
+  <div class="kicker">Archiwum</div>
+  <h1><a href="/">Grzyb Times</a></h1>
+  <p class="lead">Przeszukaj wszystkie artykuły opublikowane w gazecie — po tytule, streszczeniu i kategorii.</p>
+  <nav class="bar">
+    <a href="/">Wydania</a>
+    <a href="/szukaj.html" aria-current="page">Szukaj</a>
+    <a href="/kalendarz.html">Kalendarium</a>
+    <a href="/angielski.html">Angielski</a>
+  </nav>
+</header>
+
+<input id="q" class="szukajka" type="search" placeholder="Czego szukasz? np. Iran, Nvidia, Fed…"
+       autocomplete="off" autofocus aria-label="Szukaj w archiwum">
+<div id="chipy" class="chipy"></div>
+<div id="licznik" class="licznik"></div>
+<div id="wyniki"></div>
+
+<footer>Grzyb Times &mdash; redagowane przez AI &middot; <a href="/">archiwum wydań</a></footer>
+</div>
+
+<script>
+(function () {
+  const LIMIT = 60;
+  let artykuly = [], kategoria = '';
+
+  const bezOgonkow = s => (s || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0142/g, 'l');
+  const esc = s => (s || '').replace(/[&<>"]/g, c =>
+    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function podswietl(tekst, slowa) {
+    /* Szukamy bez ogonków, podświetlamy w oryginale. Najpierw znaczymy trafione
+       znaki na masce, dopiero potem składamy HTML — dzięki temu kolejne słowo nie
+       może trafić w środek wstawionego <mark>, a escapowanie idzie znak po znaku.
+       Gdyby normalizacja zmieniła długość tekstu, indeksy przestają pasować —
+       wtedy rezygnujemy z podświetlenia zamiast psuć wynik. */
+    const plaski = bezOgonkow(tekst);
+    if (!slowa.length || plaski.length !== tekst.length) return esc(tekst);
+
+    const maska = new Array(tekst.length).fill(false);
+    for (const w of slowa) {
+      if (w.length < 2) continue;
+      let i = 0, pos;
+      while ((pos = plaski.indexOf(w, i)) !== -1) {
+        for (let k = pos; k < pos + w.length; k++) maska[k] = true;
+        i = pos + w.length;
+      }
+    }
+
+    let out = '', otwarte = false;
+    for (let i = 0; i < tekst.length; i++) {
+      if (maska[i] && !otwarte) { out += '<mark>'; otwarte = true; }
+      else if (!maska[i] && otwarte) { out += '</mark>'; otwarte = false; }
+      out += esc(tekst[i]);
+    }
+    return out + (otwarte ? '</mark>' : '');
+  }
+
+  function rysuj() {
+    const fraza = document.getElementById('q').value.trim();
+    const slowa = bezOgonkow(fraza).split(/\s+/).filter(Boolean);
+    let trafienia = artykuly;
+    if (kategoria) trafienia = trafienia.filter(a => a.kategoria === kategoria);
+    if (slowa.length) {
+      trafienia = trafienia.filter(a => {
+        const stog = a._szukaj;
+        return slowa.every(w => stog.includes(w));
+      });
+    }
+
+    document.getElementById('licznik').textContent =
+      trafienia.length === 0 ? '' :
+      `${trafienia.length} ${trafienia.length === 1 ? 'artykuł' : 'artykułów'}` +
+      (trafienia.length > LIMIT ? ` — pokazuję ${LIMIT} najnowszych` : '');
+
+    const box = document.getElementById('wyniki');
+    if (!trafienia.length) {
+      box.innerHTML = '<p class="pusto">' + (fraza || kategoria
+        ? 'Nic nie znalazłem. Spróbuj innego słowa.'
+        : 'Wpisz szukaną frazę albo wybierz kategorię.') + '</p>';
+      return;
+    }
+    box.innerHTML = trafienia.slice(0, LIMIT).map(a =>
+      `<a class="karta" href="/${esc(a.wydanie)}">` +
+        `<h2>${podswietl(a.tytul, slowa)}</h2>` +
+        (a.skrot ? `<p>${podswietl(a.skrot, slowa)}</p>` : '') +
+        `<div class="meta"><span class="kat">${esc(a.kategoria)}</span>` +
+        `<span>${esc(a.opis_wydania)}</span>` +
+        (a.zrodlo ? `<span>${esc(a.zrodlo)}</span>` : '') + '</div>' +
+      '</a>').join('');
+  }
+
+  fetch('/dane/szukaj.json').then(r => r.json()).then(d => {
+    artykuly = (d.artykuly || []).reverse();              // najnowsze pierwsze
+    artykuly.forEach(a => { a._szukaj = bezOgonkow(a.tytul + ' ' + a.skrot + ' ' + a.kategoria); });
+
+    const kategorie = [...new Set(artykuly.map(a => a.kategoria))].filter(Boolean).sort();
+    document.getElementById('chipy').innerHTML = kategorie.map(k =>
+      `<button class="chip" type="button" aria-pressed="false" data-kat="${esc(k)}">${esc(k)}</button>`).join('');
+    document.getElementById('chipy').addEventListener('click', e => {
+      const btn = e.target.closest('.chip');
+      if (!btn) return;
+      kategoria = kategoria === btn.dataset.kat ? '' : btn.dataset.kat;
+      document.querySelectorAll('.chip').forEach(c =>
+        c.setAttribute('aria-pressed', String(c.dataset.kat === kategoria)));
+      rysuj();
+    });
+
+    // Głębokie linkowanie: /szukaj.html?q=iran
+    const zUrl = new URLSearchParams(location.search).get('q');
+    if (zUrl) document.getElementById('q').value = zUrl;
+    rysuj();
+  }).catch(() => {
+    document.getElementById('wyniki').innerHTML =
+      '<p class="pusto">Nie udało się wczytać indeksu archiwum (dane/szukaj.json).</p>';
+  });
+
+  document.getElementById('q').addEventListener('input', rysuj);
+})();
+</script>
+</body></html>

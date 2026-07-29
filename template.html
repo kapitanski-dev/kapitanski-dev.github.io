@@ -955,6 +955,22 @@ __DANE__
     });
     ustawFiltr(domyslnaKat);          // start na okładce
 
+    /* Wejście z zewnątrz na konkretny artykuł (#art-N — tak linkuje wyszukiwarka
+       archiwum). Przeglądarka próbuje skoczyć do kotwicy, zanim JS wyrenderuje
+       artykuły, a domyślny filtr i tak trzyma widok na okładce — więc obsługujemy
+       to sami, po złożeniu wydania. */
+    function skoczDoKotwicy() {
+      const m = /^#art-(\d+)$/.exec(location.hash || '');
+      if (!m) return;
+      const cel = document.getElementById('art-' + m[1]);
+      if (!cel) return;
+      ustawFiltr('Wszystkie');        // artykuł bywa schowany za filtrem kategorii
+      cel.classList.add('in-view');   // nie czekaj z animacją na przewijanie
+      cel.scrollIntoView({ block: 'start' });
+    }
+    skoczDoKotwicy();
+    window.addEventListener('hashchange', skoczDoKotwicy);
+
     /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
     /* Pogoda: rutyna parsuje aktualny stan z Interii (D.pogoda.aktualna) —
        pokazujemy go wprost. Fallback (brak pola / stary format): Open-Meteo
