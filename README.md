@@ -24,7 +24,9 @@ składają wydanie i wypychają je z powrotem do repo.
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
 | `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach, w stopce numer wersji. |
 | `routine/hooks/pre-commit` | Odświeża `index.html` przed każdym lokalnym commitem (patrz „Numer wersji"). |
-| `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Opublikowanych wydań nie edytujemy.** |
+| `wydania/` | Gotowe wydania `RRRR-MM-DD-{rano\|wieczor}-GGMM.html` + `wydania/img/` (pobrane grafiki artykułów). **Wydań nie edytujemy — jedyny wyjątek: automat dobiera grafiki do NAJNOWSZEGO wydania (patrz „Dwa środowiska"). Archiwalnych nie rusza nic.** |
+| `.github/workflows/` | GitHub Actions: dobranie grafik po publikacji + nocna kontrola linków. |
+| `routine/dobierz_obrazy.py` · `routine/sprawdz_wydanie.py` | Skrypty wołane przez Actions; obie da się uruchomić lokalnie. |
 | `assets/kategorie/` | Zdjęcia bazowe kategorii (2–3 na kategorię, rotacja przeciw duplikatom). |
 | `raport-template.html` | Szablon raportu finansowego (stylistyka gazety). Otwarty bez podstawionej treści pokazuje **podgląd szablonu**. |
 | `routine/instrukcja-raport.md` | Instrukcja publikacji raportu dla rutyny raportowej (analiza i portfel zostają w jej prompcie — repo jest publiczne). |
@@ -78,6 +80,38 @@ czas czytania · timestamp publikacji u źródła · „Zgłoś uwagę" (GitHub 
 rutyna czyta je przy kolejnym wydaniu) · pogoda z Interii (klik → pełna prognoza) ·
 nawigacja poprzednie/następne · sekcja **Logs** (diagnostyka rutyny, w tym model
 generujący wydanie) · motyw jasny/ciemny · design „paper & ink" (mobile/tablet/desktop + druk).
+
+### Dwa środowiska: rutyna i GitHub Actions
+
+Ten system działa w dwóch miejscach o odwrotnych mocnych stronach:
+
+| | Rutyna (sesja Claude Code w chmurze) | GitHub Actions |
+|---|---|---|
+| Model — wybiera, ocenia, redaguje | **tak** | nie, to goły skrypt |
+| WebSearch / WebFetch | tak | brak |
+| Zwykły ruch HTTP do dowolnej domeny | **nie** — proxy przepuszcza tylko GitHuba i API Anthropic | **tak** |
+| Koszt | tokeny | darmowe minuty (repo publiczne) |
+
+**Rutyna ma osąd, ale nie ma internetu. Actions ma internet, ale nie ma osądu.**
+Stąd podział: co wymaga wyboru — rutyna; co mechaniczne, ale potrzebuje otwartej
+sieci — Actions. Actions nigdy nie podejmuje decyzji redakcyjnej.
+
+**`grafiki-wydania.yml`** (na push do `wydania/*.html`) — dokańcza publikację:
+pobiera `og:image` ze stron źródłowych, dopisuje `obraz.plik`, przebudowuje archiwum
+i commituje. Wchodzi **wyłącznie w najnowsze wydanie**; pilnują tego dwa niezależne
+zabezpieczenia (workflow podaje tylko pliki z pusha, a `dobierz_obrazy.py` i tak
+odmawia pracy na czymkolwiek poza najnowszym plikiem). Pętli commitów nie ma:
+push wykonany wbudowanym `GITHUB_TOKEN` nie wyzwala kolejnych przebiegów — dlatego
+świadomie nie podpinamy tu własnego PAT-a.
+
+**`nocna-kontrola.yml`** (4:27 UTC) — niczego nie zmienia. Sprawdza spójność wydań
+i czy linki źródeł żyją, a usterkę zgłasza jako issue `[Auto] Usterki w wydaniach`,
+które rutyna czyta w KROK 0.5; gdy problem zniknie, sam je zamyka. **HTTP 403 nie
+jest usterką** — Bloomberg i phys.org blokują boty na sprawnych stronach (19 z 50
+sprawdzonych linków), więc liczą się tylko 404, 410 i brak domeny.
+
+Kanał zwrotny jest ten sam co dla czytelników: automat znajduje martwy link, ale
+nowego źródła nie wybiera — oddaje sprawę tam, gdzie jest model.
 
 ### Strony pochodne
 

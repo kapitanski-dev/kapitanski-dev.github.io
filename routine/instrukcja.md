@@ -33,21 +33,30 @@ w każdej kategorii**, **`wydanie.akapity`** (limit akapitów na artykuł),
 `zrodla_pierwotne` i tryb researchu wtórnego. **Nie zgaduj — użyj wartości z pliku.**
 Łączna liczba artykułów wydania = suma pól `liczba`.
 
-## KROK 0.5 — Uwagi czytelników (GitHub Issues)
+## KROK 0.5 — Zgłoszenia (GitHub Issues)
 
-Czytelnicy zgłaszają uwagi przyciskiem „Zgłoś uwagę” (issue z tytułem `[Uwaga] …`).
-Pobierz otwarte zgłoszenia — jedno tanie wywołanie, publiczne API bez tokena:
+Do repo trafiają dwa rodzaje zgłoszeń: uwagi czytelników (przycisk „Zgłoś uwagę”
+przy artykule, tytuł `[Uwaga] …`) i usterki techniczne wykryte przez nocną kontrolę
+(`[Auto] …`). Pobierz jedne i drugie — jedno tanie wywołanie, publiczne API bez tokena:
 
 ```bash
 curl -s "https://api.github.com/repos/kapitanski-dev/kapitanski-dev.github.io/issues?state=open&per_page=20" \
- | python3 -c "import json,sys; [print('-', i['title'], '::', (i.get('body') or '')[:300].replace(chr(10),' ')) for i in json.load(sys.stdin) if i['title'].startswith('[Uwaga]')]"
+ | python3 -c "import json,sys; [print('-', i['title'], '::', (i.get('body') or '')[:500].replace(chr(10),' ')) for i in json.load(sys.stdin) if i['title'].startswith(('[Uwaga]','[Auto]'))]"
 ```
 
-- **Uwzględnij zasadne uwagi** (błąd merytoryczny, prośba o temat/doprecyzowanie)
-  w bieżącym wydaniu i zaloguj każdą: `{"poziom": "info", "wiadomosc": "Uwaga czytelnika uwzględniona: <tytuł> — <co zrobiono>"}`.
-- Uwagę bezzasadną lub nie na teraz pomiń bez logowania.
-- **Nie odpowiadaj na issue i nie zamykaj ich** — to robi użytkownik.
-- Brak zgłoszeń = idź dalej, nic nie loguj.
+**`[Uwaga]` — uwagi czytelników.** Uwzględnij zasadne (błąd merytoryczny, prośba
+o temat lub doprecyzowanie) w bieżącym wydaniu i zaloguj każdą:
+`{"poziom": "info", "wiadomosc": "Uwaga czytelnika uwzględniona: <tytuł> — <co zrobiono>"}`.
+Uwagę bezzasadną lub nie na teraz pomiń bez logowania. **Nie odpowiadaj i nie zamykaj** —
+to robi użytkownik.
+
+**`[Auto]` — usterki od automatu**, najczęściej martwe linki źródeł (404). Nie
+naprawisz starego wydania i nie masz tego robić, ale **weź to pod uwagę przy
+dzisiejszym doborze źródeł**: serwis, który regularnie wraca w tych zgłoszeniach,
+przestał być wiarygodny — sięgaj po niego ostrożniej albo wcale. Tych zgłoszeń też
+nie zamykaj: zamyka je sam automat, gdy problem zniknie.
+
+Brak zgłoszeń = idź dalej, nic nie loguj.
 
 ## KROK 1 — Research
 

@@ -1,0 +1,41 @@
+# Niezależny kontroler: czy opublikowane wydania są spójne i czy linki źródeł żyją.
+#
+# Ten workflow NICZEGO nie zmienia w repo — nie commituje i nie dotyka wydań.
+# Znalezioną usterkę oddaje tam, gdzie jest model: zakłada (albo aktualizuje)
+# zgłoszenie `[Auto] Usterki w wydaniach`, które rutyna czyta w KROK 0.5.
+# Gdy usterki znikną, skrypt sam zamyka swoje zgłoszenie.
+#
+# Pora: 4:27 UTC, czyli po porannej rutynie (3:06 UTC) i po dobraniu grafik —
+# kontrola obejmuje więc świeże wydanie. Celowo nie o pełnej godzinie.
+
+name: Nocna kontrola wydań
+
+on:
+  schedule:
+    - cron: '27 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: nocna-kontrola
+  cancel-in-progress: false
+
+jobs:
+  kontrola:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      # Skrypt korzysta wyłącznie z biblioteki standardowej — nie ma co instalować.
+
+      - name: Sprawdź wydania i zgłoś usterki
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 routine/sprawdz_wydanie.py --wydania 3 --issue
