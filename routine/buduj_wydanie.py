@@ -83,11 +83,16 @@ def pogoda_z_interii(pogoda: dict, log) -> None:
 
 # ------------------------------------------------------------------ obrazy ---
 
-def pobierz_og_image(artykuly: list, katalog: pathlib.Path, prefix: str, log) -> None:
+def pobierz_og_image(artykuly: list, katalog: pathlib.Path, prefix: str, log,
+                     kontekst: str = "") -> None:
     """Warstwa 1 obrazów: og:image artykułu źródłowego → repo (ten sam origin).
 
     Porażka = artykuł zostaje przy zdjęciu swojej kategorii; przeglądarka może je
-    jeszcze podmienić przez Wikimedię wg `obraz.query`."""
+    jeszcze podmienić przez Wikimedię wg `obraz.query`.
+
+    Artykuły, które mają już `obraz.plik`, są pomijane — dzięki temu funkcja jest
+    idempotentna i może ją wywołać po publikacji `routine/dobierz_obrazy.py`
+    (środowisko rutyny nie ma wyjścia HTTP w świat, GitHub Actions ma)."""
     try:
         from PIL import Image
     except ImportError:
@@ -100,6 +105,8 @@ def pobierz_og_image(artykuly: list, katalog: pathlib.Path, prefix: str, log) ->
 
     bledy = {}
     for i, a in enumerate(artykuly):
+        if a["obraz"].get("plik"):
+            continue                                      # grafika już jest
         try:
             html = urllib.request.urlopen(
                 urllib.request.Request(a["zrodlo"]["url"], headers=UA), timeout=12
@@ -131,7 +138,8 @@ def pobierz_og_image(artykuly: list, katalog: pathlib.Path, prefix: str, log) ->
             top = max(bledy, key=bledy.get)
             diag = f" Najczęstszy błąd ({bledy[top]}×): {top}"
         log("warning" if (udane == 0 and bledy) else "info",
-            f"Obrazy: {udane}/{len(artykuly)} ze źródeł; pozostałe = zdjęcia kategorii.{diag}")
+            f"Obrazy: {udane}/{len(artykuly)} ze źródeł; pozostałe = zdjęcia kategorii."
+            f"{kontekst}{diag}")
 
 
 # ---------------------------------------------------------------- kontrole ---

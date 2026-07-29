@@ -1,0 +1,73 @@
+# Dokończenie publikacji: dobranie grafik ze stron źródłowych.
+#
+# Rutyna gazety nie ma wyjścia HTTP w świat (proxy przepuszcza tylko GitHuba
+# i API Anthropic), więc warstwa og:image nie pobrała ani jednej grafiki od
+# 20.07.2026. Ten workflow ma pełny internet i robi tę mechaniczną część kilka
+# minut po publikacji — decyzji redakcyjnych nie podejmuje.
+#
+# Pętli commitów nie ma z definicji: push wykonany wbudowanym GITHUB_TOKEN-em nie
+# wyzwala kolejnych przebiegów. Dlatego świadomie NIE podpinamy tu własnego PAT-a.
+
+name: Grafiki wydania
+
+on:
+  push:
+    branches: [main]
+    paths: ['wydania/*.html']
+  workflow_dispatch:        # ręczne odpalenie na najnowszym wydaniu
+
+permissions:
+  contents: write
+
+concurrency:
+  group: grafiki-wydania    # dwa wydania pod rząd nie wejdą sobie w drogę
+  cancel-in-progress: false
+
+jobs:
+  og-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # potrzebne do `git diff` po pushu i do rebase'a
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet pillow
+
+      - name: Dobierz grafiki źródeł
+        run: |
+          NOWE=""
+          if [ "${{ github.event_name }}" = "push" ]; then
+            NOWE=$(git diff --name-only "${{ github.event.before }}" "${{ github.sha }}" \
+                   -- 'wydania/*.html' 2>/dev/null || true)
+          fi
+          echo "Wydania z tego pusha: ${NOWE:-(brak — biorę najnowsze)}"
+          # Bez argumentów skrypt sam bierze najnowsze wydanie; archiwalnych i tak
+          # nie tknie — pilnuje tego zabezpieczenie w samym skrypcie.
+          python3 routine/dobierz_obrazy.py $NOWE
+
+      - name: Commit, jeśli grafiki przybyły
+        run: |
+          # Grafiki są nowymi plikami, ale zapis ZAWSZE zmienia też HTML wydania
+          # (pole obraz.plik) — to jest wiarygodny sygnał, że cokolwiek się udało.
+          if git diff --quiet -- 'wydania/*.html'; then
+            echo "Brak nowych grafik — nie commituję."
+            exit 0
+          fi
+          git config user.email "grzyb-times@auto.bot"
+          git config user.name "Grzyb Times Bot"
+          # Numer wersji w stopce celuje w commit, który właśnie powstaje.
+          python3 routine/buduj_index.py
+          git add wydania index.html dane
+          git commit -m "Grafiki źródeł do najnowszego wydania"
+          for i in 1 2 3; do
+            # Do main pushują też rutyny gazety i raportu — jak one, rebase i ponów.
+            git pull --rebase origin main && git push origin main && exit 0
+            echo "Push nieudany (próba $i) — ponawiam za 5 s."
+            sleep 5
+          done
+          exit 1
