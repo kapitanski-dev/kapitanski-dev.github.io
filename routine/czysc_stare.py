@@ -2,9 +2,8 @@
 """Czyszczenie starych wydań Grzyb Times.
 
 Usuwa z `wydania/` pliki starsze niż --dni (wraz z ich katalogami grafik
-`wydania/img/DATA-WYDANIE/`) i odbudowuje index.html tą samą logiką, której
-używa rutyna (kod KROK 4 czytany wprost z routine/instrukcja.md — jedna
-prawda, zero duplikacji).
+`wydania/img/DATA-WYDANIE/`) i odbudowuje index.html tym samym skryptem,
+którego używają rutyny (routine/buduj_index.py).
 
 Użycie:
     python3 routine/czysc_stare.py --dni 60          # usuń starsze niż 60 dni
@@ -16,6 +15,7 @@ import datetime
 import pathlib
 import re
 import shutil
+import subprocess
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parent.parent
@@ -57,16 +57,8 @@ def main() -> None:
         print(f"[DRY] Do usunięcia: {usuniete} wydań. Uruchom bez --dry, by usunąć.")
         return
 
-    # Odbuduj index.html kodem KROK 4 z instrukcji (ta sama logika co rutyna).
-    md = (REPO / "routine" / "instrukcja.md").read_text(encoding="utf-8")
-    kod = re.search(r"## KROK 4.*?```python\n(.*?)```", md, re.S)
-    if not kod:
-        sys.exit("Nie znalazłem kodu KROK 4 w routine/instrukcja.md — index.html nieodświeżony.")
-    exec(re.sub(
-        r"REPO = subprocess\.run\(.*?\)\.stdout\.strip\(\)",
-        f"REPO = {str(REPO)!r}",
-        kod.group(1), count=1, flags=re.S,
-    ))
+    # Odbuduj index.html tym samym skryptem, którego używają rutyny.
+    subprocess.run([sys.executable, str(REPO / "routine" / "buduj_index.py")], check=True)
     print(f"Usunięto {usuniete} wydań; index.html odbudowany. Teraz: git add -A && git commit && git push")
 
 

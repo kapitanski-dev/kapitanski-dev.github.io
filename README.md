@@ -15,7 +15,9 @@ składają wydanie i wypychają je z powrotem do repo.
 |---|---|
 | `config.yaml` | **Konfiguracja, którą edytujesz Ty.** Kategorie i liczby artykułów, źródła, liczba akapitów, pogoda, tryb researchu wtórnego. |
 | `template.html` | Szablon wydania (HTML+CSS+JS). Placeholder `__DANE__` = dane wydania. Otwarty bez danych pokazuje **podgląd Lorem Ipsum** (blok DEMO — rutyna wycina go z wydań). |
-| `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → generacja → publikacja. |
+| `routine/instrukcja.md` | Pełna instrukcja dla AI: research → redakcja → dane → publikacja. |
+| `routine/buduj_wydanie.py` | Dane redakcji (JSON) + config + szablon → gotowe wydanie. Tu mieszkają pogoda, obrazy, kontrole jakości i metryki. |
+| `routine/buduj_index.py` | Buduje `index.html` (archiwum). Wołany przy każdej publikacji i przez hook pre-commit. |
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
 | `index.html` | Auto-generowane archiwum (strona główna): sekcja raportów finansowych + wydania grupowane po dniach, w stopce numer wersji. |
 | `routine/hooks/pre-commit` | Odświeża `index.html` przed każdym lokalnym commitem (patrz „Numer wersji"). |
@@ -35,26 +37,35 @@ składają wydanie i wypychają je z powrotem do repo.
 ## Jak to działa
 
 ```
-cron (7:00 / 19:00) → rutyna klonuje repo → config.yaml + template.html + instrukcja.md
+cron → rutyna klonuje repo → config.yaml + template.html + instrukcja.md
       ↓
 uwagi czytelników (GitHub Issues „[Uwaga] …”) + wątki z poprzedniego wydania (follow-upy)
       ↓
 research (WebSearch) wg kategorii i źródeł; rubryka ocen: realny skutek > skala > nowość
       ↓
-redakcja: 4 akapity, skróty, kwoty z ~PLN, tooltipy {{termin|wyjaśnienie}}, timestampy źródeł
+redakcja: akapity, skróty, kwoty z ~PLN, tooltipy {{termin|wyjaśnienie}}, timestampy źródeł
       ↓
-skrypt: JSON → template (__DANE__), og:image artykułów do wydania/img/, pogoda z Interii,
-        walidacje (kategorie, liczby, akapity) → logi
+model zapisuje JEDEN plik /tmp/grzyb_dane.json (artykuły, literatura, wątki, logi)
       ↓
-index.html + git commit + push → GitHub Pages
+buduj_wydanie.py: dane → template (__DANE__), pogoda, og:image, kontrole jakości → logi
+      ↓
+buduj_index.py + git commit + push → GitHub Pages
 ```
+
+Model nie pisze kodu budującego wydanie — cała mechanika i kontrole siedzą
+w `routine/buduj_wydanie.py`. Wcześniej skrypt był wklejony w instrukcji i model
+przepisywał go z palca przy każdym wydaniu: kosztowało to tokeny wyjścia, gubiło
+polskie znaki w logach i po cichu zmieniało logikę kontroli.
 
 ### Obrazy (trzy warstwy, wszystkie automatyczne)
 1. **og:image artykułu źródłowego** — skrypt pobiera grafikę newsa i commituje do
-   `wydania/img/…` (ten sam origin ⇒ ładuje się zawsze; zero tokenów LLM).
-2. Fallback: **zdjęcie kategorii** z `assets/kategorie/` (rotacja 2–3 zdjęć).
+   `wydania/img/…`. **W praktyce nie działa:** środowisko rutyn siedzi za proxy,
+   które przepuszcza tylko GitHub i API Anthropic, więc od 20.07.2026 pobrano
+   0 grafik. Kod zostaje — sam się odblokuje, jeśli proxy się zmieni.
+2. Realny obraz: **zdjęcie kategorii** z `assets/kategorie/` (rotacja 2–3 zdjęć).
 3. Bonus: przeglądarka czytelnika może podmienić zdjęcie kategorii na trafniejsze
-   z Wikimedia Commons (`obraz.query`).
+   z Wikimedia Commons (`obraz.query`) — to jedyna działająca ścieżka do zdjęcia
+   związanego z konkretnym tematem.
 
 ### Funkcje wydania
 „W skrócie" (jednozdaniowe streszczenia z kotwicami) · filtry kategorii (start:
@@ -117,13 +128,15 @@ usunięcie wystarcza, by strona była czysta.
 ## Numer wersji
 
 W stopce strony głównej jest `vN` — **numer commita na `main`**, który tę wersję
-opublikował (link prowadzi do historii repo). Liczy go KROK 4 przy budowaniu
-archiwum: `git rev-list --count HEAD` + 1, bo archiwum przebudowuje się tuż
-przed commitem publikującym. Nie ma osobnego pliku z wersją, więc równoległe
-pushe rutyn nie mają o co się pobić.
+opublikował (link prowadzi do historii repo). Liczy go `buduj_index.py`:
+`git rev-list --count HEAD` + 1, bo archiwum przebudowuje się tuż przed commitem
+publikującym. Nie ma osobnego pliku z wersją, więc równoległe pushe rutyn nie
+mają o co się pobić. Klon w środowisku rutyny bywa płytki i licznik wtedy kłamał
+(29.07 rutyna wpisała `v52` przy 91 commitach), dlatego skrypt najpierw robi
+`git fetch --unshallow`.
 
 Warunek: `index.html` musi być przebudowany w tym samym commicie. Rutyny robią
-to same (gazeta w KROKU 5, raport w KROKU 3). Dla commitów z lokalnej maszyny
+to same (gazeta w KROKU 4, raport w KROKU 4). Dla commitów z lokalnej maszyny
 pilnuje tego hook — **w świeżym klonie włącz go raz**:
 
 ```bash
@@ -135,8 +148,12 @@ git config core.hooksPath routine/hooks
 ## Raporty finansowe
 
 Pełna procedura dla rutyny: **`routine/instrukcja-raport.md`** (rutyna czyta ją
-z repo przed napisaniem raportu). W skrócie — rutyna pisze **wyłącznie
-markdown**, jeden plik na raport:
+z repo przed napisaniem raportu). Raport jest **ciągiem dalszym poprzedniego**:
+każdy kończy się listą „Co obserwować” z terminami, a następny zaczyna od
+sprawdzenia, co się z niej rozstrzygnęło — dzięki temu lista obserwacji żyje
+w repo, a nie w prompcie rutyny, i się nie starzeje.
+
+W skrócie — rutyna pisze **wyłącznie markdown**, jeden plik na raport:
 
 ```markdown
 ---
@@ -171,14 +188,20 @@ wystarczy (zabezpieczenie przed 404).
 
 ## Rutyny chmurowe
 
-| Wydanie | Cron | Publikuje |
-|---|---|---|
-| Poranne | 7:00 (`0 5 * * *` UTC) | `wydania/…-rano-GGMM.html` |
-| Wieczorne | 19:00 (`0 17 * * *` UTC) | `wydania/…-wieczor-GGMM.html` |
+| Rutyna | Cron (UTC) | Stan | Publikuje |
+|---|---|---|---|
+| Grzyb Times — poranne | `0 3 * * *` (5:00 PL) | włączona | `wydania/…-rano-GGMM.html` |
+| Grzyb Times — wieczorne | `0 17 * * *` (19:00 PL) | wyłączona | `wydania/…-wieczor-GGMM.html` |
+| Przegląd rynku i portfela | `0 6 1 * *` | wyłączona (na żądanie) | `raport-finansowy/…` |
 
-Model generujący każde wydanie jest logowany w sekcji **Logs** tego wydania.
-Do repo pushują też inne rutyny (raport-finansowy) — dlatego zawsze
-`git pull --rebase` przed własnym pushem.
+Wszystkie chodzą na `claude-sonnet-5`. Model generujący wydanie jest logowany
+w sekcji **Logs** (pole `model` w danych redakcji). Do repo pushują różne rutyny
+— dlatego zawsze `git pull --rebase` przed własnym pushem.
+
+**Okno świeżości dopasowuje się do kadencji:** `buduj_wydanie.py` liczy je jako
+czas od poprzedniego wydania + 2 h (w granicach 12–36 h). Przy dwóch wydaniach
+dziennie wychodzi ~12 h, przy jednym ~24 h — dlatego włączenie lub wyłączenie
+wydania wieczornego nie wymaga zmian w instrukcji.
 
 ---
 

@@ -1,6 +1,6 @@
 #!/bin/sh
 # Przed każdym commitem odśwież archiwum: numer wersji w stopce index.html to
-# numer commita, który właśnie powstaje (KROK 4 liczy `rev-list --count HEAD` + 1).
+# numer commita, który właśnie powstaje (`rev-list --count HEAD` + 1).
 # Rutyny chmurowe wołają buduj_index.py wprost i tego hooka nie mają — to
 # zabezpieczenie na ręczne commity z lokalnej maszyny.
 #
