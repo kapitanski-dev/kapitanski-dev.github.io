@@ -188,7 +188,7 @@ Ten tydzień zamienia się w *stress test* dla tezy AI: rynek pyta głośno **"k
 - **Rentowności obligacji rosną**: droższy dług = mniejszy apetyt na ryzyko = presja na spółki wzrostowe
 
 **Co to oznacza dla strategii:**
-Tom jest w **miesiącu 1 fazy rozruchu** — kupuje ETF-y za 5 000 zł/mies. **Nic z tej analizy nie zmienia tego planu.** Żaden z pięciu twardych sygnałów nie zapalił się. Tesla jest największym powodem do uwagi, ale sygnał (c) zacznie być realny dopiero w 2027 roku, jeśli produkcja nadal nie ruszy.
+Portfel jest w **miesiącu 1 fazy rozruchu** — kupuje ETF-y za 5 000 zł/mies. **Nic z tej analizy nie zmienia tego planu.** Żaden z pięciu twardych sygnałów nie zapalił się. Tesla jest największym powodem do uwagi, ale sygnał (c) zacznie być realny dopiero w 2027 roku, jeśli produkcja nadal nie ruszy.
 
 Dzisiejsza przecena Nasdaq jest psychologicznie bolesna, ale portfel DCA benefituje ze spadków — kupujemy więcej ETF-ów po niższej cenie.
 
@@ -239,4 +239,4 @@ Dzisiejsza przecena Nasdaq jest psychologicznie bolesna, ale portfel DCA benefit
 
 ---
 
-*Raport wygenerowany automatycznie 23 lipca 2026 r. (wydanie wieczorne). Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do Toma.*
+*Raport wygenerowany automatycznie 23 lipca 2026 r. (wydanie wieczorne). Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do właściciela portfela.*

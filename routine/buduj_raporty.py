@@ -202,9 +202,14 @@ def zbuduj(plik: pathlib.Path, szablon: str, sasiedzi: dict) -> pathlib.Path:
                            ('__KICKER__', kicker),
                            ('__DATA_ISO__', data_iso),
                            ('__DATA__', data_txt),
-                           ('__NAWIGACJA__', nawigacja),
-                           ('__TRESC__', tresc)):
+                           ('__NAWIGACJA__', nawigacja)):
         strona = strona.replace(klucz, wartosc)
+    # `__TRESC__` jest w szablonie DWA razy: raz jako miejsce na raport, raz jako
+    # słowo w tekście podglądu („Rutyna zastępuje __TRESC__ raportem…”). Ślepe
+    # podstawienie wstrzykiwało cały raport również tam — do wnętrza literału
+    # szablonowego JS. Każda strona nosiła przez to drugą kopię treści (audyt
+    # 29.07), a apostrof odwrotny albo `${` w raporcie rozwaliłby skrypt strony.
+    strona = strona.replace('__TRESC__', tresc, 1)
 
     cel = plik.with_suffix('.html')
     cel.write_text(strona, encoding='utf-8')

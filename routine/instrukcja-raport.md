@@ -107,6 +107,12 @@ Język: po polsku, prosto — czytelnik nie jest finansistą. Bez żargonu, a je
 termin jest konieczny, wyjaśnij go po ludzku w tym samym zdaniu. Raport trafia na
 publiczną stronę, więc pisz jak do publikacji.
 
+**Żadnych danych osobowych — strona jest publiczna.** Nie pisz o właścicielu
+portfela z imienia ani nazwiska, nawet jeśli padnie w prompcie rutyny; nie podawaj
+nazwy pracodawcy, adresu, miasta ani kontaktu. Pisz bezosobowo: „portfel jest
+w fazie rozruchu”, „decyzje należą do właściciela portfela”. Audyt 29.07 wyłapał
+imię w pięciu opublikowanych raportach — trafiło tam wprost z promptu.
+
 ## KROK 3 — Markdown, który renderuje szablon
 
 Konwerter (`routine/buduj_raporty.py`) jest mały i bez zależności. **Obsługuje:**

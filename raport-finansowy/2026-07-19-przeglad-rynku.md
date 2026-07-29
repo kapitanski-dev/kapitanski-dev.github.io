@@ -40,7 +40,7 @@ Mimo doskonałych wyników obie spółki spadły 3–4% w piątek — rynek sprz
 
 ### ETF-y (aktywne od miesięcy 1–3 fazy rozruchu)
 
-> **Ważna uwaga:** Tom jest teraz w **fazie rozruchu** (miesiąc 1, lipiec 2026) i kupuje tylko ETF-y za 5 000 zł/mies. 9 spółek docelowych **jeszcze nie jest w portfelu** — są analizowane pod kątem przyszłych zakupów.
+> **Ważna uwaga:** Portfel jest teraz w **fazie rozruchu** (miesiąc 1, lipiec 2026) i kupuje tylko ETF-y za 5 000 zł/mies. 9 spółek docelowych **jeszcze nie jest w portfelu** — są analizowane pod kątem przyszłych zakupów.
 
 | ETF | Waga | Rola w portfelu | Co się stało w tygodniu | Teza intakta? |
 |-----|------|-----------------|-------------------------|---------------|
@@ -147,7 +147,7 @@ Ten tydzień to klasyczny przykład, kiedy **nagłówki straszą, a dane uspokaj
 
 ### Strategia na sierpień
 
-Tom jest w **miesiącu 1 fazy rozruchu** — kupuje ETF-y za 5 000 zł/mies. i nic więcej. **Nic w tej analizie nie zmienia tego planu.** Żaden z twardych sygnałów nie zapalił się. Przecena chipów przez Kimi K3 to historycznie okazja, nie powód do hamowania DCA.
+Portfel jest w **miesiącu 1 fazy rozruchu** — kupuje ETF-y za 5 000 zł/mies. i nic więcej. **Nic w tej analizie nie zmienia tego planu.** Żaden z twardych sygnałów nie zapalił się. Przecena chipów przez Kimi K3 to historycznie okazja, nie powód do hamowania DCA.
 
 Jedyna decyzja do podjęcia po wynikach 29 lipca: czy kontynuować pełny plan ETF-ów (tak, o ile capex gigantów utrzymany), czy wzmocnić/osłabić wagę SMH w kolejnych wpłatach.
 
@@ -173,4 +173,4 @@ Jedyna decyzja do podjęcia po wynikach 29 lipca: czy kontynuować pełny plan E
 
 ---
 
-*Raport wygenerowany automatycznie 19 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do Toma.*
+*Raport wygenerowany automatycznie 19 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do właściciela portfela.*

@@ -16,7 +16,7 @@ layout: default
 
 Czwartek 23 lipca był bolesny: **S&P 500 spadł 1,21% (do 7 408 pkt), Nasdaq −2,15% (do 25 138 pkt)** — to największy jednodniowy cios od miesięcy. Oberwało się przede wszystkim spółkom technologicznym: **Google −6,9% do ~318 USD, Tesla −14,4%**. Powód? Inwestorzy przestraszyli się astronomicznych nakładów na infrastrukturę AI, które giganci zapowiadają na 2026 rok, i przez chwilę zapomnieli, że te same wyniki kwartalne były absolutnie rekordowe.
 
-Paradoks tygodnia: firmy z portfela Toma raportują **najlepsze wyniki w historii** — a ich kurs akcji spada, bo wydają za dużo na AI. Teza portfela opiera się właśnie na tym, że te wydatki są zasadne. Rynek się waha. Tom się nie musi.
+Paradoks tygodnia: firmy z portfela raportują **najlepsze wyniki w historii** — a ich kurs akcji spada, bo wydają za dużo na AI. Teza portfela opiera się właśnie na tym, że te wydatki są zasadne. Rynek się waha. Portfel się nie musi.
 
 **Nowe zdarzenia od czwartkowego wieczornego raportu:**
 - AST SpaceMobile (ASTS) przeprowadziło emisję obligacji zamiennych za **1 mld USD**, kurs spadł do ~57,89 USD (z ponad 62 USD wczoraj) — wzrosło ryzyko rozmywania udziałów.

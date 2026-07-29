@@ -68,7 +68,7 @@ Akcje spadły ok. 3% po zamknięciu giełdy.
 
 ### ETF-y (aktywne — kupowane w fazie rozruchu za 5 000 zł/mies.)
 
-> Tom jest w **1. miesiącu fazy rozruchu** (lipiec 2026) i kupuje tylko ETF-y. Dziewięć spółek docelowych wciąż niekupionych — analizowane pod kątem przyszłych zakupów po 3. miesiącu.
+> Portfel jest w **1. miesiącu fazy rozruchu** (lipiec 2026) i kupuje tylko ETF-y. Dziewięć spółek docelowych wciąż niekupionych — analizowane pod kątem przyszłych zakupów po 3. miesiącu.
 
 | ETF | Waga | Kurs (przybliżony) | Co zmieniło się od 19.07 | Teza intakta? |
 |-----|------|--------------------|--------------------------|---------------|
@@ -181,7 +181,7 @@ Ten tydzień przyniósł jedno z najważniejszych potwierdzeń tezy AI w histori
 - NUKL: YTD −7,8% — sektor atomowy wciąż słabszy niż reszta portfela
 
 **Co to oznacza dla strategii:**
-Tom jest w miesiącu 1 fazy rozruchu — kupuje ETF-y za 5 000 zł/mies. **Nic z tej analizy nie zmienia tego planu.** Żaden z pięciu twardych sygnałów nie zapalił się. Wyniki Google właśnie potwierdziły, że AI cloud thesis to fakty, nie obietnice.
+Portfel jest w miesiącu 1 fazy rozruchu — kupuje ETF-y za 5 000 zł/mies. **Nic z tej analizy nie zmienia tego planu.** Żaden z pięciu twardych sygnałów nie zapalił się. Wyniki Google właśnie potwierdziły, że AI cloud thesis to fakty, nie obietnice.
 
 ---
 
@@ -230,4 +230,4 @@ Tom jest w miesiącu 1 fazy rozruchu — kupuje ETF-y za 5 000 zł/mies. **Nic z
 
 ---
 
-*Raport wygenerowany automatycznie 23 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do Toma.*
+*Raport wygenerowany automatycznie 23 lipca 2026 r. Nie jest poradą inwestycyjną. Decyzje inwestycyjne należą wyłącznie do właściciela portfela.*

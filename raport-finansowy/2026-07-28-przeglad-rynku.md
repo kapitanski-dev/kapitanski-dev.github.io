@@ -40,7 +40,7 @@ Wall Street Journal poinformował, że NVIDIA jest w rozmowach o zagwarantowaniu
 
 Rynek obawia się: *a co, jeśli AI nie zarobi wystarczająco, żeby OpenAI spłaciło dług?* Wtedy cały domek z kart się posypuje.
 
-**Dlaczego to nie jest jeszcze katastrofa dla portfela Toma:** OpenAI to specyficzny gracz, nie Google, Microsoft czy Amazon. Ci trzej giganci wydają WŁASNE pieniądze z własnych zysków — mają na to cash. Środa i czwartek pokażą, czy Azure, AWS i ich wyniki potwierdzają organiczny popyt, czy może i oni mają problemy.
+**Dlaczego to nie jest jeszcze katastrofa dla portfela:** OpenAI to specyficzny gracz, nie Google, Microsoft czy Amazon. Ci trzej giganci wydają WŁASNE pieniądze z własnych zysków — mają na to cash. Środa i czwartek pokażą, czy Azure, AWS i ich wyniki potwierdzają organiczny popyt, czy może i oni mają problemy.
 
 **2. Wielka wyprzedaż chipów w Azji i USA**
 
@@ -186,7 +186,7 @@ Dzisiejsza wyprzedaż (NVIDIA -5%, SK Hynix -14%, Kospi -10,84%) pokazuje, jak s
 
 1. **"Circular AI financing" — NVIDIA/OpenAI** to strukturalne ryzyko systemowe. Jeśli ten model ma naśladowców (i ma, bo branża tak działa), popyt na chipy może być "bardziej finansowy niż fundamentalny."
 2. **Tesla Q2: EPS miss 39%, Optimus = zero.** FCF ujemne, $25 mld capex roczny potwierdzone. Tesla jest w fazie "jemy kapitał, czekamy na owoce." Zegar Optimusa tyka.
-3. **SMH ETF stracił w ostatnim miesiącu ok. 9,5%** — to poważna korekta sektora, który jest 15% portfela Toma.
+3. **SMH ETF stracił w ostatnim miesiącu ok. 9,5%** — to poważna korekta sektora, który jest 15% portfela.
 4. **NUKL -10% w ostatnim miesiącu** — tańsza ropa redukuje krótkoterminową premię za energię alternatywną; strukturalna teza AI → jądrówka pozostaje, ale cierpliwość potrzebna.
 5. **Stopy procentowe: 33% szans na podwyżkę Fedu jutro** — niespodziewana podwyżka = zły dzień dla całego tech.
 
