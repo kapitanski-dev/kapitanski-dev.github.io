@@ -90,6 +90,9 @@
     letter-spacing: -1px;
     line-height: 1;
   }
+  /* Winieta jest linkiem do archiwum — jak logo w serwisie. */
+  .masthead h1 a { color: inherit; text-decoration: none; transition: color .2s; }
+  .masthead h1 a:hover { color: var(--accent); }
   .date-bar {
     display: flex; justify-content: space-between; align-items: center;
     font-family: 'Inter', sans-serif;
@@ -536,7 +539,7 @@
   <div class="wrap">
     <header class="masthead">
       <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
-      <h1 id="tytul-gazety">Gazeta Codzienna</h1>
+      <h1><a id="tytul-gazety" href="/" title="Wróć do archiwum wydań">Gazeta Codzienna</a></h1>
       <div class="date-bar">
         <span id="numer-wydania"></span>
         <span id="pogoda" title="Kliknij, aby otworzyć pełną prognozę"></span>
