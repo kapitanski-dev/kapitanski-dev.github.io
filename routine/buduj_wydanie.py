@@ -23,6 +23,9 @@ import sys
 import urllib.parse
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import literatura_historia                                # noqa: E402  (obok w routine/)
+
 REPO = pathlib.Path(__file__).resolve().parent.parent
 
 UA = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
@@ -182,13 +185,23 @@ def kontrola_swiezosci(artykuly: list, cfg: dict, now: datetime.datetime, log) -
     przez co realne błędy ginęły w szumie)."""
     okno = okno_swiezosci(now)
     weekend = now.astimezone(TZ_PL).weekday() >= 5
-    stare, bez_godziny, niejasne = [], [], []
+    # `okno_min_h` z configu: kategorie, w których temat nie starzeje się przez dobę
+    # (Nauka, Ciekawostka — badania publikują się nierówno), mają własną dolną granicę.
+    okna_kategorii = {k['nazwa']: k['okno_min_h'] for k in (cfg.get('kategorie') or [])
+                      if k.get('okno_min_h')}
+    dzis = now.astimezone(TZ_PL).date()
+    stare, bez_godziny, niejasne, dzisiejsze = [], [], [], 0
     for a in artykuly:
         opublikowano = (a.get("zrodlo") or {}).get("opublikowano", "")
         if not opublikowano:
             continue                                      # brak pola jest dozwolony
         dt, ma_czas = parsuj_date(opublikowano)
-        limit = max(48, okno) if (weekend and a.get("kategoria") == "Inwestowanie") else okno
+        if dt and dt.date() == dzis:
+            dzisiejsze += 1
+        kategoria = a.get("kategoria")
+        limit = max(okno, okna_kategorii.get(kategoria, 0))
+        if weekend and kategoria == "Inwestowanie":
+            limit = max(48, limit)
         if dt is None:
             niejasne.append(a["tytul"])
         elif ma_czas:
@@ -212,7 +225,19 @@ def kontrola_swiezosci(artykuly: list, cfg: dict, now: datetime.datetime, log) -
     if niejasne:
         log("warning", f"{len(niejasne)} art. z niejasnym timestampem źródła (np. „{niejasne[0][:50]}”) — "
                        f"format DD.MM.YYYY[ GG:MM].")
-    print(f"Okno świeżości: {okno} h | poza oknem: {len(stare)} | bez godziny: {len(bez_godziny)}")
+    # Wydanie bez newsów z dnia publikacji = noc nieodrobiona. Wpadka 30.07.2026:
+    # 16 z 17 artykułów z datą 29.07, a przez noc Rosja wystrzeliła w Ukrainę 70+ rakiet
+    # i 280 dronów, jeden obiekt spadł w Polsce (Tarnawa-Kolonia) — gazeta o tym nie
+    # wspomniała ani słowem, choć Al Jazeera (źródło z listy) pisała o nocnym ataku.
+    if len(artykuly) >= 5 and dzisiejsze < 2:
+        log("warning", f"Tylko {dzisiejsze} z {len(artykuly)} art. ma datę źródła z dnia wydania "
+                       f"({dzis.strftime('%d.%m.%Y')}) — noc/poranek wygląda na nieodrobiony. "
+                       f"Sprawdź, co wydarzyło się od poprzedniego wydania (zwłaszcza w Wojnie) "
+                       f"i czy któryś wątek nie dotyczy Polski.")
+    szersze = ", ".join(f"{k}: {v} h" for k, v in okna_kategorii.items() if v > okno)
+    print(f"Okno świeżości: {okno} h{f' (szersze — {szersze})' if szersze else ''} | "
+          f"poza oknem: {len(stare)} | bez godziny: {len(bez_godziny)} | "
+          f"z dnia wydania: {dzisiejsze}/{len(artykuly)}")
 
 
 def kontrola_zrodel(artykuly: list, cfg: dict, log) -> None:
@@ -293,14 +318,71 @@ def kontrola_watkow(watki: list, log) -> None:
         log("info", "Żaden wątek nie ma pola `data` — kalendarium pokaże je bez terminu.")
 
 
-def kontrola_literatury(literatura: dict, cfg: dict, log) -> None:
+def kontrola_literatury(literatura: dict, cfg: dict, artykuly: list, log) -> None:
     """Sekcja składana z własnej wiedzy modelu — ma być kompletna (4/4) w każdym wydaniu."""
-    if not (cfg.get('literatura') or {}).get('wlaczona'):
+    lit_cfg = cfg.get('literatura') or {}
+    if not lit_cfg.get('wlaczona'):
         return
     braki = [k for k in ('cytat', 'przyslowie', 'wiersz', 'angielski') if not literatura.get(k)]
     if braki:
         log("warning", f"Literatura niekompletna — brak: {', '.join(braki)}. "
                        f"Ta sekcja nie zależy od sieci, składasz ją z własnej wiedzy.")
+
+    # Rutyna nie pamięta poprzednich przebiegów, więc bez tej kontroli rubryka wraca
+    # do tych samych pozycji (audyt 30.07.2026: Kochanowski 5 wierszy z 6, „Kuj żelazo,
+    # póki gorące” dwa dni po sobie). Lista zajętych: routine/literatura_historia.py.
+    for problem in literatura_historia.kolizje(literatura, lit_cfg.get('bez_powtorek_wydan', 30)):
+        log("warning", f"Powtórka w Literaturze — {problem}. Rubryka ma być za każdym razem "
+                       f"inna: `python3 routine/literatura_historia.py` wypisuje zajęte pozycje.")
+
+    for problem in nawiazania_do_newsow(literatura, artykuly):
+        log("warning", f"Literatura wraca do newsów — {problem}. Omówienie mówi o samym "
+                       f"tekście (sens, obraz, kontekst powstania), nie o wydarzeniach wydania.")
+
+
+# Zwroty, którymi omówienie przykleja się do wydania zamiast mówić o tekście.
+DOKLEJENIA = ('dzisiejsz', 'w tym wydaniu', 'w dzisiejszym', 'jak w artyku',
+              'powyższy artykuł', 'opisywan', 'jak donosi', 'w kontekście dzisiejsz',
+              'bieżące wydanie', 'na tle wydarzeń', 'wydarzeń dnia', 'newsów')
+# Wyrazy pisane w tytułach z wielkiej litery, których omówienie może użyć bez związku
+# z newsem (pierwszy wyraz tytułu, nazwy ogólne) — nie liczą się jako doklejenie.
+STOP_SLOWA = {'polska', 'polski', 'polsce', 'polak', 'europa', 'europy', 'europie',
+              'świat', 'świata', 'bóg', 'boga', 'ziemia', 'ziemi', 'naukowcy', 'nowy',
+              'nowa', 'nowe', 'odkryto', 'badanie', 'badacze', 'według', 'coraz',
+              'dlaczego', 'pierwszy', 'pierwsza', 'człowiek', 'ludzie'}
+
+
+def nawiazania_do_newsow(literatura: dict, artykuly: list) -> list:
+    """Czy omówienia w Literaturze doklejają się do wydania — rubryka ma być OD NIEGO
+    ODERWANA (feedback czytelnika 30.07.2026: „opisy dalej powiązane z artykułami,
+    a to powinno być świeże spojrzenie”).
+
+    Dwa sygnały: zwrot wprost odsyłający do wydania oraz nazwa własna, która występuje
+    w tytułach artykułów tego wydania (Iran, Fed, Meta). Nazwy własne z tytułów są
+    najtwardszym dowodem doklejenia — omówienie wiersza Norwida nie ma powodu wspominać
+    o Fedzie. Nazwy dopasowujemy przez przedrostek (min. 4 znaki), bo polszczyzna je
+    odmienia: tytuł „Iran ostrzelał…” a omówienie „po ataku Iranu” to ta sama nazwa."""
+    WIELKA = r'[A-ZŻŹĆĄŚĘŁÓŃ][\wążźćńółęśĄŻŹĆŃÓŁĘŚ]{2,}'
+    slowa = lambda tekst: [w.lower() for w in re.findall(WIELKA, tekst or "")
+                           if w.lower() not in STOP_SLOWA]
+    ta_sama = lambda a, b: a == b or (min(len(a), len(b)) >= 3
+                                      and (a.startswith(b) or b.startswith(a)))
+    z_tytulow = {w for a in artykuly for w in slowa(a.get('tytul'))}
+
+    problemy = []
+    for pole in ('cytat', 'przyslowie', 'wiersz'):
+        wpis = literatura.get(pole) or {}
+        omowienie = wpis.get('omowienie') or ''
+        if not omowienie:
+            continue
+        trafienia = [z for z in DOKLEJENIA if z in omowienie.lower()]
+        autor = slowa(wpis.get('autor'))            # autor omawianego tekstu to norma
+        trafienia += [w for w in slowa(omowienie)
+                      if any(ta_sama(w, t) for t in z_tytulow)
+                      and not any(ta_sama(w, x) for x in autor)]
+        if trafienia:
+            problemy.append(f"omówienie „{pole}” zawiera „{trafienia[0]}”")
+    return problemy
 
 
 # --------------------------------------------------------------- metryki -----
@@ -418,7 +500,7 @@ def main() -> None:
     kontrola_zrodel(dane["artykuly"], cfg, log)
     kontrola_swiezosci(dane["artykuly"], cfg, now, log)
     kontrola_watkow(dane["watki"], log)
-    kontrola_literatury(dane["literatura"], cfg, log)
+    kontrola_literatury(dane["literatura"], cfg, dane["artykuly"], log)
     metryki(log)
 
     # Higiena: publikujemy logi jednego przebiegu, bez powtórek.

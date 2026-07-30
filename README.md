@@ -1,7 +1,7 @@
 # Grzyb Times
 
-Cyfrowa gazeta redagowana przez AI, publikowana **2× dziennie** (rano i wieczorem)
-na GitHub Pages: **https://kapitanski-dev.github.io**
+Cyfrowa gazeta redagowana przez AI, publikowana **codziennie rano** (rutyna wieczorna
+istnieje, ale jest wyłączona) na GitHub Pages: **https://kapitanski-dev.github.io**
 
 Wydania generują dwie chmurowe rutyny Claude Code (cron), które klonują to repo,
 czytają z niego konfigurację + szablon + instrukcję, robią research w sieci,
@@ -19,6 +19,7 @@ składają wydanie i wypychają je z powrotem do repo.
 | `routine/buduj_wydanie.py` | Dane redakcji (JSON) + config + szablon → gotowe wydanie. Tu mieszkają pogoda, obrazy, kontrole jakości i metryki. |
 | `routine/buduj_index.py` | Buduje `index.html` (archiwum) i woła `buduj_dane.py`. Uruchamiany przy każdej publikacji i przez hook pre-commit. |
 | `routine/buduj_dane.py` | Wyłuskuje z wydań i raportów `dane/*.json` dla stron pochodnych. |
+| `routine/literatura_historia.py` | Co w rubryce „Literatura" już było — pamięć rubryki dla rutyny (wywołanie w KROK 2.7) i kontrola powtórek w `buduj_wydanie.py`. |
 | `szukaj.html` · `kalendarz.html` · `angielski.html` | Strony pochodne (patrz niżej). Wspólna stylistyka: `assets/strony.css`. |
 | `dane/` | Auto-generowane `szukaj.json`, `kalendarz.json`, `angielski.json`. **Nie edytuj ręcznie.** |
 | `routine/czysc_stare.py` | Czyszczenie starych wydań (patrz niżej). |
@@ -143,8 +144,13 @@ kategorie:
     liczba: 3               # ile artykułów; suma liczb = wielkość wydania
     zakres: "co obejmuje… (i czego NIE — zakazy pisz wprost)"
     wykres: preferowany     # preferowany | opcjonalny | nie
+    okno_min_h: 72          # opcjonalnie: minimalne okno świeżości dla tej kategorii
 ```
 - Kolejność = ważność; pierwsza kategoria (Okładka, `liczba: 1`) = artykuł otwierający.
+- `okno_min_h` poszerza okno świeżości tylko w tej kategorii. Domyślnie okno liczy się
+  od poprzedniego wydania (~12–26 h), co pasuje do rynków i polityki, ale nie do nauki:
+  badanie z przedwczoraj jest tak samo świeże jak wczorajsze. Nauka i Ciekawostka mają
+  72 h (audyt 30.07.2026: „Nauka" wyszła 1/2, bo kandydat z 28.07 wypadł poza okno).
 - Nowa kategoria wymaga zdjęcia: `assets/kategorie/<nazwa>.jpg` (≤1000px JPEG)
   + wpis w mapie `KAT_OBRAZ` w `template.html` (lista = rotacja).
 
@@ -153,6 +159,16 @@ Zamknięta lista `zrodla_pierwotne` (link artykułu musi z niej pochodzić).
 **Przed dodaniem domeny sprawdź jej `robots.txt`** — jeśli blokuje `Claude-User`,
 jest bezużyteczna (tak wypadły reuters.com, apnews.com, cnbc.com, theverge.com).
 Research wtórny: `research_wtorny.tryb` = `nigdy | wyjatkowo | swobodnie`.
+
+### Rubryka „Literatura" — `config.yaml`
+Cytat, przysłowie, wiersz i angielskie słówko. Dwie reguły trzymają jej charakter:
+- **Oderwana od newsów.** Omówienie mówi o samym tekście, nie o wydarzeniach wydania —
+  to ma być oddech po dwudziestu artykułach. `buduj_wydanie.py` zgłasza `warning`, gdy
+  w omówieniu wypłynie nazwa własna z tytułu artykułu albo zwrot typu „jak w dzisiejszym".
+- **Bez powtórek** (`literatura.bez_powtorek_wydan`, domyślnie 30 wydań). Rutyna startuje
+  bez pamięci, więc wracała do tych samych pozycji (audyt 30.07.2026: Kochanowski w 5
+  wierszach z 6). `routine/literatura_historia.py` wypisuje zajęte pozycje przed składem
+  rubryki, a `buduj_wydanie.py` sprawdza je jeszcze raz przy budowie wydania.
 
 ### Pogoda — `config.yaml`
 `pogoda.prognoza_url` (strona Interii dla miasta; skrypt parsuje z niej aktualny
@@ -244,9 +260,15 @@ wystarczy (zabezpieczenie przed 404).
 
 | Rutyna | Cron (UTC) | Stan | Publikuje |
 |---|---|---|---|
-| Grzyb Times — poranne | `0 3 * * *` (5:00 PL) | włączona | `wydania/…-rano-GGMM.html` |
+| Grzyb Times — poranne | `0 6 * * *` (8:00 PL) | włączona | `wydania/…-rano-GGMM.html` |
 | Grzyb Times — wieczorne | `0 17 * * *` (19:00 PL) | wyłączona | `wydania/…-wieczor-GGMM.html` |
 | Przegląd rynku i portfela | `0 6 1 * *` | wyłączona (na żądanie) | `raport-finansowy/…` |
+
+**Dlaczego poranne o 8:00, a nie o 5:00:** polskie serwisy publikują nocne wydarzenia
+od ~7:00, więc wydanie o 5:30 systematycznie mijało się z nocą. Wpadka 30.07.2026:
+o 3:40 rosyjska rakieta spadła pod Tarnawą-Kolonią, a pap.pl i bankier.pl podały to
+o 7:20–7:29 — dwie godziny po publikacji wydania. Przy jednym wydaniu dziennie to
+jedyne okno na nocne newsy z Polski.
 
 Wszystkie chodzą na `claude-sonnet-5`. Model generujący wydanie jest logowany
 w sekcji **Logs** (pole `model` w danych redakcji). Do repo pushują różne rutyny

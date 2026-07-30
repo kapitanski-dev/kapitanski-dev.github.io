@@ -76,11 +76,56 @@ przy dwóch wydaniach dziennie wychodzi ~12 h, przy jednym ~24 h. Weekend + kate
   (`zrodlo.opublikowano`), nie datą, w której news wypłynął w wyszukiwarce.
   Uchwała sprzed dwóch tygodni to nie news dnia, nawet jeśli akurat pojawił się
   o niej wpis (wpadka 22.07: rezolucja PE z 08.07 trafiła do wydania).
-- **Okno obowiązuje KAŻDĄ kategorię — także Ciekawostkę i Naukę.** Nie ma tematów
-  „ponadczasowych”: odkrycie, rekord i ciekawostka też mają datę publikacji
-  (wpadka 22.07: rekin goblin sprzed 14 dni i „pszczoły potu” z kwietnia).
+- **Okno obowiązuje KAŻDĄ kategorię.** Nie ma tematów „ponadczasowych”: odkrycie,
+  rekord i ciekawostka też mają datę publikacji (wpadka 22.07: rekin goblin sprzed
+  14 dni i „pszczoły potu” z kwietnia).
+- **`okno_min_h` w kategorii poszerza okno tylko dla niej.** Nauka i Ciekawostka mają
+  72 h: recenzowane badanie z przedwczoraj jest tak samo świeże jak wczorajsze, a
+  serwisy naukowe publikują nierówno (audyt 30.07: „Nauka” złożona 1/2, bo kandydat
+  z Nature Astronomy z 28.07 wypadł poza okno 26 h). To NIE zgoda na tematy sprzed
+  tygodnia — 72 h to twardy sufit, a deduplikacja względem naszych wydań obowiązuje
+  jak wszędzie. Sprawdź `okno_min_h` w `config.yaml`, nie zgaduj.
 - Gdy w kategorii nie ma nic w oknie — daj mniej artykułów. Nie łataj luki starym tematem.
+  Zanim jednak zejdziesz poniżej `liczba`, **przejdź całą listę źródeł kategorii**:
+  Nauka to nie tylko sciencedaily.com i phys.org, ale też eurekalert.org (komunikaty
+  wprost od czasopism — największy dzienny wolumen), naukawpolsce.pl (polskie badania),
+  sciencenews.org, sciencealert.com i livescience.com. Luka po jednym zapytaniu to
+  najczęściej za wąski research, nie brak materiału na świecie.
 - Skrypt raportuje wiek źródeł **zbiorczo**; nie loguj tego ręcznie.
+
+### Przegląd nocy i polski trop (OBOWIĄZKOWY, przed kategoriami)
+
+Wydanie poranne powstaje po 8:00 rano (rutyna startuje o 6:00 UTC — przesunięta z 3:00
+UTC po wpadce opisanej niżej), więc **noc jest jego najważniejszym materiałem** — i
+jednocześnie najłatwiejszym do przespania: polskie serwisy publikują nocne wydarzenia
+dopiero od ~7:00, a WebSearch indeksuje świeże newsy z opóźnieniem. Zanim zaczniesz
+wypełniać kategorie, zadaj dwa pytania wprost:
+
+1. **Co wydarzyło się w nocy?** Ostrzały, ataki, incydenty, decyzje z innych strefy
+   czasowych. Pytaj o dzisiejszą datę wprost („mass attack Ukraine 30 July”, „overnight
+   strikes”), nie o „najnowsze wiadomości”. Nocne wydarzenie należy do wydania nawet
+   jeśli szczegóły są jeszcze niepełne — wtedy pisz to, co potwierdzone, a niewiadome
+   nazwij niewiadomymi.
+2. **Czy cokolwiek dotyka POLSKI?** Przestrzeń powietrzna, NATO, granica, wojsko,
+   infrastruktura, ewakuacje, decyzje rządu. Gazetę czyta Polak: incydent na terytorium
+   Polski bije wagą podobny news z drugiego końca świata i **zasługuje na okładkę**.
+   Sprawdź to osobnym zapytaniem, nie licz na to, że wypadnie z researchu kategorii.
+
+**Gdy polskie serwisy jeszcze milczą, weź źródła obcojęzyczne z listy** (aljazeera.com
+działa 24/7) — to one pierwsze podają nocne wydarzenia z Europy Wschodniej, często
+z polskim wątkiem w środku tekstu („Poland scrambled fighter jets”).
+
+Wpadka, której to zapobiega (30.07.2026): w nocy Rosja wystrzeliła w Ukrainę 70+ rakiet
+i ~280 dronów, o 3:40 obiekt wleciał w polską przestrzeń powietrzną i spadł pod
+Tarnawą-Kolonią (10-metrowy lej, 70 km od granicy, F-16 w powietrzu). Wydanie z 5:29
+nie miało o tym ani słowa — trzy miejsca w kategorii Wojna zajęły tematy z 29.07,
+a nocny atak opisywała Al Jazeera, czyli źródło z naszej listy. Sam polski krater
+wypłynął na pap.pl i bankier.pl dopiero o 7:20–7:29 — dwie godziny PO publikacji, więc
+jego złapać nie było jak (stąd przesunięcie rutyny na 8:00), ale nocnego ostrzału
+Ukrainy z polskim wątkiem owszem.
+
+Skrypt to kontroluje: wydanie, w którym **mniej niż 2 artykuły mają datę źródła z dnia
+publikacji**, dostaje `warning` „noc/poranek wygląda na nieodrobiony”.
 
 ### `zrodlo.opublikowano` — pełna data i czas
 
@@ -315,11 +360,42 @@ Wszystko poszło gładko — zostaw `logi` puste (gazeta pokaże „Brak zdarze�
 Stała rubryka wydania (własny przycisk w pasku filtrów) — lekki, kulturalny kontrapunkt
 dla newsów. Buduj ją tylko, gdy `config.yaml → literatura.wlaczona` jest `true`
 (inaczej zostaw `"literatura": {}`). Cztery elementy, każdy z pierwszych trzech
-z omówieniem na JEDEN akapit. Powiązanie z wydarzeniami dnia jest **opcjonalne** —
-nie dopasowuj na siłę; wybieraj rzeczy dobre i ciekawe same w sobie.
+z omówieniem na JEDEN akapit.
+
+### Dwie żelazne zasady tej rubryki
+
+**1. ZERO związku z newsami — to ma być świeże spojrzenie.** Czytelnik przechodzi tu
+po dwudziestu artykułach o wojnie i stopach procentowych; rubryka jest oddechem, nie
+kolejnym komentarzem do wydania. Omówienie mówi o **samym tekście**: co znaczy, na
+jakim obrazie stoi, skąd się wzięło, dlaczego warto na nim zatrzymać wzrok, jak brzmi
+w uchu. **Nie wolno** nawiązywać do artykułów tego wydania — ani wprost („jak
+w dzisiejszym artykule”, „w kontekście wydarzeń dnia”), ani przez nazwy z newsów
+(Iran, Fed, Meta, Ukraina). Skrypt to sprawdza: nazwa własna z tytułu artykułu albo
+zwrot odsyłający do wydania = `warning` w Logs. (Feedback czytelnika 30.07: „opisy
+są dalej powiązane z artykułami, a to powinno być świeże spojrzenie”. Wcześniejsza
+wersja instrukcji dopuszczała takie powiązanie — już nie.)
+
+**2. ZERO powtórek.** Rutyna startuje bez pamięci poprzednich przebiegów, więc bez
+sprawdzenia archiwum wracasz do tych samych, najoczywistszych pozycji (audyt 30.07:
+Kochanowski w 5 wierszach z 6, „Na zdrowie” i „Kuj żelazo, póki gorące” po dwa razy
+w trzy dni, `resilience` dwa razy w trzy dni). **Zanim zaczniesz składać rubrykę,
+wypisz listę zajętą:**
+
+```bash
+python3 routine/literatura_historia.py     # okno z config.yaml (30 wydań)
+```
+
+Zasady na podstawie tej listy: **wiersz, przysłowie, cytat, słowo i zwrot** nie mogą
+się powtórzyć w całym oknie, a **autor wiersza i autor cytatu** — w 10 ostatnich
+wydaniach. Skrypt budujący wydanie sprawdza to jeszcze raz i loguje każdą powtórkę
+jako `warning`, więc obejście „nikt nie zauważy” nie istnieje. Świat jest ogromny:
+setki poetów, tysiące przysłów — jeśli sięgasz po Kochanowskiego trzeci raz w tygodniu,
+problem jest w Twoim doborze, nie w zasobie.
 
 1. **Cytat dnia** — myśl znanego autora. Podaj `autor` i (jeśli znasz) `zrodlo` (dzieło)
    albo `"przypisywane"`, gdy atrybucja niepewna. Cytuj wiernie; nie zmyślaj autorstwa.
+   Wyjdź poza żelazną piątkę mądrości motywacyjnych (Churchill, Einstein, Buffett):
+   filozofia, literatura, nauka, sztuka, myśl spoza Europy — cytat ma zaskakiwać.
 2. **Przysłowie dnia** — **czysty random, BEZ związku z newsami**. Baza: przysłowie polskie
    (`tresc`, `pochodzenie: "przysłowie polskie"`). W `odpowiedniki` podaj obce wersje
    w stałej kolejności: **angielski (`ang.`), łaciński (`łac.`), japoński (`jp`)** — każdy
@@ -333,23 +409,39 @@ nie dopasowuj na siłę; wybieraj rzeczy dobre i ciekawe same w sobie.
    ostateczność). wolnelektury.pl to co najwyżej opcjonalna weryfikacja tekstu; jej
    403/niedostępność NIE jest powodem, by pominąć wiersz (audyt 23.07: 403 → wiersz zniknął,
    tak MA NIE być) i nie logujemy tego. ŻELAZNA zasada: **tylko domena publiczna** — autor
-   zmarły ponad 70 lat temu. Bezpieczni: Kochanowski, Mickiewicz, Słowacki, Norwid,
-   Konopnicka, Asnyk, Leśmian, Tuwim, Horacy. ZAKAZ: Miłosz (†2004), Szymborska (†2012),
-   Herbert (†1998), Staff (†1957).
+   zmarły ponad 70 lat temu. ZAKAZ: Miłosz (†2004), Szymborska (†2012), Herbert (†1998),
+   Staff (†1957), Lechoń (†1956).
+
+   **Rotuj autorów i epoki** — wiersz z każdego wydania ma pochodzić od kogoś innego niż
+   dziesięć poprzednich (kontrola w skrypcie). Bezpieczna pula jest szeroka, korzystaj
+   z całej: renesans i barok (Kochanowski, Rej, Sęp-Szarzyński, J.A. Morsztyn, Naruszewicz),
+   oświecenie (Krasicki, Trembecki, Karpiński), romantyzm (Mickiewicz, Słowacki, Norwid,
+   Krasiński, Fredro), pozytywizm i Młoda Polska (Konopnicka, Asnyk, Kasprowicz, Przerwa-Tetmajer,
+   Wyspiański), dwudziestolecie (Leśmian, Tuwim †1953, Gałczyński †1953,
+   Pawlikowska-Jasnorzewska †1945, Baczyński †1944). Poeci obcy też są w puli (Horacy,
+   Katullus, Szekspir, Blake, Dickinson, Heine, Baudelaire, Verlaine, Rilke †1926, Bashō) —
+   ale ich **przekład** też musi być w domenie publicznej: albo klasyczny stary przekład,
+   albo podaj oryginał i własne, dosłowne tłumaczenie w omówieniu.
 4. **Angielski na dziś** — jedno przydatne `slowo` (z `wymowa` w IPA, `znaczenie` po polsku,
    `przyklad` w formacie `"zdanie EN — tłumaczenie PL"`) oraz jeden idiomatyczny `zwrot`
    (`zwrot_znaczenie`, `zwrot_przyklad` w tym samym formacie). Poziom średnio-zaawansowany,
-   słownictwo przydatne przy czytaniu prasy.
+   słownictwo przydatne przy czytaniu prasy — ale **nie ciągle to samo poletko**: `resilience`,
+   `volatile`, `deterrence`, `leverage` i `to weather the storm` już były (patrz lista zajęta).
+   Zdanie przykładowe nie musi być z gazety; codzienna sytuacja jest równie dobra.
 
 Cała sekcja powstaje z **własnej wiedzy** — nie zależy od sieci, więc ma być KOMPLETNA
 (4/4) w każdym wydaniu; skrypt ostrzega przy brakach.
 
+Poniższy JSON pokazuje **wyłącznie strukturę pól** — treści są celowo puste, żeby nie
+wracały do wydań. (Wpadka 25–27.07: `resilience` i `to weather the storm` z dawnego
+przykładu trafiły wprost do dwóch wydań.)
+
 ```json
 {
-  "cytat": {"tresc": "Kto nie idzie naprzód, ten się cofa.", "autor": "J.W. Goethe", "zrodlo": "przypisywane", "omowienie": "Jeden akapit — sens myśli."},
-  "przyslowie": {"tresc": "Nie ma tego złego, co by na dobre nie wyszło.", "pochodzenie": "przysłowie polskie", "odpowiedniki": [{"jezyk": "ang.", "tresc": "Every cloud has a silver lining", "tlum": "każda chmura ma srebrną podszewkę"}, {"jezyk": "łac.", "tresc": "Per aspera ad astra", "tlum": "przez trudy do gwiazd"}, {"jezyk": "jp", "tresc": "七転び八起き (nana korobi ya oki)", "tlum": "upadaj siedem razy, wstań osiem"}], "omowienie": "Jeden akapit — sens przysłowia."},
-  "wiersz": {"tytul": "Tytuł", "autor": "Autor", "tresc": "Cały wiersz,\nwers po wersie.", "omowienie": "Jeden akapit — interpretacja."},
-  "angielski": {"slowo": "resilience", "wymowa": "/rɪˈzɪl.jəns/", "znaczenie": "odporność", "przyklad": "The market showed resilience. — Rynek wykazał się odpornością.", "zwrot": "to weather the storm", "zwrot_znaczenie": "przetrwać trudny okres", "zwrot_przyklad": "They weathered the storm. — Przetrwali trudny okres."}
+  "cytat": {"tresc": "<cytat>", "autor": "<autor>", "zrodlo": "<dzieło albo „przypisywane”>", "omowienie": "Jeden akapit o samej myśli — bez odniesień do newsów."},
+  "przyslowie": {"tresc": "<przysłowie polskie>", "pochodzenie": "przysłowie polskie", "odpowiedniki": [{"jezyk": "ang.", "tresc": "<wersja angielska>", "tlum": "<dosłowne tłumaczenie>"}, {"jezyk": "łac.", "tresc": "<wersja łacińska>", "tlum": "<dosłowne tłumaczenie>"}, {"jezyk": "jp", "tresc": "<zapis japoński (transkrypcja)>", "tlum": "<dosłowne tłumaczenie>"}], "omowienie": "Jeden akapit o sensie przysłowia."},
+  "wiersz": {"tytul": "<tytuł>", "autor": "<autor z domeny publicznej>", "tresc": "<cały wiersz,\nwers po wersie>", "omowienie": "Jeden akapit o tekście: obraz, forma, kontekst powstania."},
+  "angielski": {"slowo": "<słowo>", "wymowa": "<IPA>", "znaczenie": "<po polsku>", "przyklad": "<zdanie EN> — <tłumaczenie PL>", "zwrot": "<idiom>", "zwrot_znaczenie": "<po polsku>", "zwrot_przyklad": "<zdanie EN> — <tłumaczenie PL>"}
 }
 ```
 
@@ -379,12 +471,16 @@ python3 routine/buduj_wydanie.py rano /tmp/grzyb_dane.json   # albo: wieczor
 
 Skrypt dokłada nagłówek wydania, pogodę, obrazy, metryki i **kontrole jakości**
 (kategorie, liczby artykułów i akapitów, świeżość źródeł, poprawność linków,
-kompletność Literatury), a wynik zapisuje do `/tmp/grzyb_times.html` oraz nazwę pliku
-do `/tmp/grzyb_filename`.
+kompletność Literatury, powtórki i doklejenia w Literaturze), a wynik zapisuje
+do `/tmp/grzyb_times.html` oraz nazwę pliku do `/tmp/grzyb_filename`.
 
 **Przeczytaj wypisane logi.** Wpis `error` oznacza realny błąd redakcji (zła kategoria,
 link do strony głównej, źródło spoza listy) — **popraw dane i uruchom skrypt ponownie**,
 zamiast publikować wydanie z błędem. `warning` przemyśl; `info` zostaw.
+
+Dwa `warningi` traktuj jak `error`, bo obie rzeczy naprawiasz w minutę bez researchu:
+**powtórkę w Literaturze** (podmień pozycję na taką, której nie ma na liście zajętej)
+i **Literaturę wracającą do newsów** (przepisz omówienie tak, by mówiło o samym tekście).
 
 ## KROK 4 — Publikacja
 

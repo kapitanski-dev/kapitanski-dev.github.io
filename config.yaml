@@ -28,6 +28,13 @@ pogoda:
 # Łączna liczba artykułów wydania = suma wszystkich `liczba`.
 # Pierwsza kategoria „Okładka" (liczba: 1) = wielki artykuł otwierający
 # wydanie, wybierany jako NAJWAŻNIEJSZA wiadomość dnia z dowolnego tematu.
+# `okno_min_h` (opcjonalne) = minimalne okno świeżości dla kategorii w godzinach.
+# Domyślnie okno liczy się od poprzedniego wydania (~12–26 h), co pasuje do newsów
+# rynkowych i politycznych, ale nie do nauki: recenzowane badanie z przedwczoraj
+# jest tak samo świeże jak wczorajsze, a serwisy naukowe publikują nierówno
+# (audyt 30.07.2026: „Nauka” złożona 1/2, bo kandydat z Nature Astronomy z 28.07
+# wypadł poza okno 26 h). Tam, gdzie temat nie starzeje się przez dobę, dajemy
+# szersze okno — deduplikacja względem naszych wcześniejszych wydań i tak obowiązuje.
 # ------------------------------------------------------------
 kategorie:
   - nazwa: Okładka
@@ -73,12 +80,14 @@ kategorie:
       co odkryto, w jakim badaniu / czasopiśmie, co z tego wynika. NIE technologia
       konsumencka i NIE AI (osobne kategorie)."
     wykres: opcjonalny
+    okno_min_h: 72
   - nazwa: Ciekawostka na dziś
     liczba: 2
     zakres: "lekka ciekawostka na koniec — natura, historia, niezwykłe zjawiska,
       miejsca i rekordy. NIE poważne doniesienia badawcze (od nich jest kategoria
       Nauka) i NIE technologia."
     wykres: nie
+    okno_min_h: 72
 
 # ------------------------------------------------------------
 # ŹRÓDŁA PIERWOTNE — zamknięta lista. Każdy artykuł MUSI
@@ -107,6 +116,15 @@ zrodla_pierwotne:
   - phys.org
   - sciencenews.org    # dziennikarstwo naukowe (Society for Science), bez paywalla
   - livescience.com    # codzienny popularnonaukowy; lżejsze tematy też pod Ciekawostkę
+  # Dołożone po audycie 30.07.2026 („Nauka” 1/2 — za mało kandydatów w oknie):
+  - eurekalert.org     # komunikaty prasowe wprost od czasopism i uczelni (AAAS);
+                       # największy dzienny wolumen twardych doniesień, zawsze z nazwą
+                       # czasopisma i datą — pierwszy przystanek dla kategorii Nauka
+  - naukawpolsce.pl    # serwis naukowy PAP — polskie badania i polski punkt widzenia
+  - sciencealert.com   # duży dzienny wolumen, dobrze zbudowane omówienia badań;
+                       # lżejsze tematy nadają się też pod Ciekawostkę
+  # ODRZUCONE przy tym samym audycie: medicalxpress.com — robots.txt jawnie zamyka
+  # /news/ dla ClaudeBot/GPTBot (medycynę bierzemy z eurekalert.org i sciencedaily.com).
   # Uzupełnienie braków (audyt logów 19.07.2026):
   - finance.yahoo.com  # globalne rynki, działa też w weekendy (Inwestowanie);
                        # zastąpił marketwatch.com, który blokuje bota (błąd 400, audyt 20.07.2026)
@@ -132,12 +150,19 @@ research_wtorny:
 
 # ------------------------------------------------------------
 # LITERATURA — stała rubryka wydania (cytat / przysłowie / wiersz
-# dnia z omówieniem powiązanym z wydarzeniami + angielskie słówko
-# i zwrot). Szczegóły składu: routine/instrukcja.md (KROK 2.7).
+# dnia z omówieniem + angielskie słówko i zwrot). Rubryka jest
+# ODERWANA od newsów: omówienie mówi o samym tekście, nie o wydarzeniach
+# dnia — to ma być świeże spojrzenie, nie kolejny komentarz do wydania.
+# Szczegóły składu: routine/instrukcja.md (KROK 2.7).
 # `zrodlo_wierszy` — biblioteka poezji w domenie publicznej (bot ma
 # dostęp; sprawdzone 22.07.2026). Cytat/przysłowie/angielski model
 # składa z własnej wiedzy (atrybucję cytatu może zweryfikować w sieci).
+# `bez_powtorek_wydan` — ile ostatnich wydań stanowi listę zakazaną:
+# rutyna startuje bez pamięci, więc bez tej listy wraca do tych samych
+# wierszy i przysłów (audyt 30.07.2026: Kochanowski 5 wierszy z 6,
+# „Na zdrowie” i „Kuj żelazo…” po dwa razy w trzy dni).
 # ------------------------------------------------------------
 literatura:
   wlaczona: true
   zrodlo_wierszy: wolnelektury.pl   # API: /api/genres/wiersz/books/?format=json
+  bez_powtorek_wydan: 30
