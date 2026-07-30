@@ -153,6 +153,11 @@ kategorie:
   72 h (audyt 30.07.2026: „Nauka" wyszła 1/2, bo kandydat z 28.07 wypadł poza okno).
 - Nowa kategoria wymaga zdjęcia: `assets/kategorie/<nazwa>.jpg` (≤1000px JPEG)
   + wpis w mapie `KAT_OBRAZ` w `template.html` (lista = rotacja).
+  Zdjęcia bierz **tylko z licencją CC0 / domeny publicznej** (Wikimedia Commons ma
+  filtr licencji) — strona jest publiczna, a repo nie ma miejsca na atrybucję.
+- Kategorie z własnym słownictwem (Java, architektura, narzędzia AI) nie wymagają
+  zmian w instrukcji poza dopisaniem źródeł: czytelnik jest programistą, więc
+  markerem `{{termin|wyjaśnienie}}` oznaczamy żargon SPOZA IT, nie techniczny.
 
 ### Źródła — `config.yaml`
 Zamknięta lista `zrodla_pierwotne` (link artykułu musi z niej pochodzić).

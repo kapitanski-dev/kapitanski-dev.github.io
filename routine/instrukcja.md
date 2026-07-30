@@ -91,6 +91,12 @@ przy dwóch wydaniach dziennie wychodzi ~12 h, przy jednym ~24 h. Weekend + kate
   wprost od czasopism — największy dzienny wolumen), naukawpolsce.pl (polskie badania),
   sciencenews.org, sciencealert.com i livescience.com. Luka po jednym zapytaniu to
   najczęściej za wąski research, nie brak materiału na świecie.
+- **Software Development AI** ma cztery obszary i osobne źródła do każdego — jedno
+  zapytanie ich nie obsłuży. Narzędzia AI dla programistów: github.blog (changelog
+  Copilota), anthropic.com, devblogs.microsoft.com. Java i Spring: spring.io,
+  inside.java, infoq.com. Architektura i praktyki: martinfowler.com, infoq.com.
+  Trzymaj obszary w rotacji między wydaniami — dwa artykuły dziennie z tego samego
+  obszaru przez tydzień to nie jest przegląd branży.
 - Skrypt raportuje wiek źródeł **zbiorczo**; nie loguj tego ręcznie.
 
 ### Przegląd nocy i polski trop (OBOWIĄZKOWY, przed kategoriami)

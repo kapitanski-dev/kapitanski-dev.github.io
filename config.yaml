@@ -63,16 +63,42 @@ kategorie:
       przełomy inżynieryjne i materiałowe, półprzewodniki, przemysł kosmiczny,
       cyberbezpieczeństwo, telekomunikacja, oprogramowanie.
       NIE PISZ o: AI, chipach AI i centrach danych (od tego jest osobna kategoria
-      AI); pozwach, procesach, ugodach i sporach prawnych firm; sprawach
-      antymonopolowych. Liczy się technika i postęp, nie sądy i korporacyjne
-      przepychanki."
+      AI); programowaniu, językach, frameworkach i narzędziach deweloperskich
+      (kategoria Software Development AI); pozwach, procesach, ugodach i sporach
+      prawnych firm; sprawach antymonopolowych. Liczy się technika i postęp, nie
+      sądy i korporacyjne przepychanki."
     wykres: opcjonalny
   - nazwa: AI
     liczba: 2
     zakres: "sztuczna inteligencja: nowe modele i możliwości, laboratoria AI
       (OpenAI, Anthropic, Google DeepMind, xAI, Meta), wdrożenia i produkty AI,
-      regulacje AI, chipy i infrastruktura pod AI, humanoidy i robotyka"
+      regulacje AI, chipy i infrastruktura pod AI, humanoidy i robotyka.
+      NIE PISZ o: narzędziach AI dla programistów i funkcjach asystentów kodowania
+      (Claude Code, GitHub Copilot, agenty w IDE) — od tego jest kategoria
+      Software Development AI. Premiera modelu należy tutaj, ale „co nowego umie
+      w kodzie” — tam."
     wykres: opcjonalny
+  - nazwa: Software Development AI
+    liczba: 2
+    zakres: "wytwarzanie oprogramowania okiem praktyka. Cztery obszary, trzymaj je
+      w rotacji między wydaniami zamiast wracać codziennie do tego samego:
+      (1) NARZĘDZIA AI DLA PROGRAMISTÓW — nowe funkcje Claude/Claude Code i GitHub
+      Copilota, agenty w IDE, MCP, code review wspierane modelem;
+      (2) JAK SIĘ DZIŚ WYTWARZA OPROGRAMOWANIE — praktyki i metodyki, dane o
+      produktywności zespołów, wnioski z wdrożeń AI w firmach, bezpieczeństwo
+      łańcucha zależności;
+      (3) JAVA I SPRING — wydania JDK i Spring Boot/Framework, JEP-y, zmiany
+      w ekosystemie i bibliotekach, migracje wersji;
+      (4) ARCHITEKTURA — wzorce i antywzorce, kompromisy projektowe, skalowanie,
+      rozbijanie monolitów, kolejki i spójność danych.
+      Konkret dla praktyka: co dokładnie się zmieniło, w jakiej wersji i co z tego
+      wynika przy klawiaturze. Wpis z bloga bez nowości (kolejny tutorial „jak
+      zrobić X”) to NIE news.
+      NIE PISZ o: modelach i laboratoriach AI w ogólności (kategoria AI), sprzęcie
+      i elektronice użytkowej (Technologia), kursach spółek technologicznych
+      (Inwestowanie)."
+    wykres: opcjonalny
+    okno_min_h: 72
   - nazwa: Nauka
     liczba: 2
     zakres: "twarde doniesienia naukowe: opublikowane badania i odkrycia (medycyna,
@@ -111,6 +137,19 @@ zrodla_pierwotne:
   - spidersweb.pl      # polski serwis tech
   # AI:
   - the-decoder.com    # serwis wyłącznie o AI: modele, laboratoria, wdrożenia
+  # Software Development AI (dodane 30.07.2026 wraz z kategorią; robots.txt
+  # każdej domeny sprawdzony — żadna nie blokuje bota):
+  - infoq.com          # główny koń roboczy kategorii: kilka newsów dziennie,
+                       # osobne działy Java, architektura i praktyki zespołowe
+  - github.blog        # changelog GitHuba i Copilota — codziennie, konkretne wersje
+  - anthropic.com      # oficjalne wydania i funkcje Claude (news + engineering)
+  - devblogs.microsoft.com  # Visual Studio, Copilot SDK, .NET — codzienny wolumen
+  - spring.io          # oficjalny blog Springa: wydania + „This Week in Spring”
+  - inside.java        # OpenJDK/JDK z pierwszej ręki: JEP-y, rampdown, wydania
+  - martinfowler.com   # architektura i praktyki inżynierskie, kilka wpisów w tygodniu
+  # ODRZUCONE przy doborze źródeł do tej kategorii:
+  # thenewstack.io — robots.txt blokuje ClaudeBot, Claude-Web i anthropic-ai;
+  # baeldung.com   — zwraca 403 przy pobraniu treści (bot odbija się od WAF-a).
   # Nauka + Ciekawostka na dziś:
   - sciencedaily.com
   - phys.org
