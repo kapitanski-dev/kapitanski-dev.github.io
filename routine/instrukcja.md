@@ -97,6 +97,20 @@ przy dwóch wydaniach dziennie wychodzi ~12 h, przy jednym ~24 h. Weekend + kate
   inside.java, infoq.com. Architektura i praktyki: martinfowler.com, infoq.com.
   Trzymaj obszary w rotacji między wydaniami — dwa artykuły dziennie z tego samego
   obszaru przez tydzień to nie jest przegląd branży.
+- **Tego dnia** nie ma okna świeżości (pomiń `zrodlo.opublikowano` — to rocznica, nie
+  news) i nie idzie przez WebSearch, tylko przez dwie strony Wikipedii dla dzisiejszej
+  daty: `https://pl.wikipedia.org/wiki/D_miesiąc` (np. `3_sierpnia`) i
+  `https://en.wikipedia.org/wiki/Month_D` (np. `August_3`) — obie mają sekcję
+  „Wydarzenia”/„Events” z listą rocznic. Otwórz obie (WebFetch), **zweryfikuj datę
+  w treści strony, nie pisz z pamięci** (poeci są z pamięci, historia — nie: fakty
+  i daty łatwo pomylić). Kolejność wyboru z `config.yaml`: najpierw wydarzenie
+  światowe o realnym znaczeniu, potem — gdy światowego brak — wydarzenie polskie
+  przed innymi krajami. `zrodlo.url` to strona dnia, na której znalazłeś wydarzenie
+  (polski wątek → pl.wikipedia.org, światowy → en.wikipedia.org); `zrodlo.nazwa`:
+  `"Wikipedia"`. Dwa artykuły w kategorii nie mogą opisywać tego samego wydarzenia
+  ani wracać do tego, co już było w tej kategorii w poprzednich wydaniach (zwykła
+  deduplikacja wyżej — data w roku się powtarza, więc pilnuj tego świadomie przy
+  dwóch wydaniach tego samego dnia).
 - Skrypt raportuje wiek źródeł **zbiorczo**; nie loguj tego ręcznie.
 
 ### Przegląd nocy i polski trop (OBOWIĄZKOWY, przed kategoriami)
@@ -428,6 +442,14 @@ problem jest w Twoim doborze, nie w zasobie.
    Katullus, Szekspir, Blake, Dickinson, Heine, Baudelaire, Verlaine, Rilke †1926, Bashō) —
    ale ich **przekład** też musi być w domenie publicznej: albo klasyczny stary przekład,
    albo podaj oryginał i własne, dosłowne tłumaczenie w omówieniu.
+
+   **ŻELAZNA zasada nr 2: wiersz obcojęzyczny (angielski i każdy inny) MUSI mieć polskie
+   tłumaczenie.** Jeśli `tresc` zostaje w oryginale (bo nie znasz klasycznego przekładu),
+   `omowienie` MA zawierać tłumaczenie tekstu na polski — czytelnik nie może dostać
+   wersu, którego nie rozumie, bez żadnego wyjaśnienia po polsku obok. Sam „komentarz
+   o utworze” bez samego tłumaczenia to za mało. Skrypt to sprawdza (heurystyka: brak
+   polskich znaków diakrytycznych w `tresc` + brak śladu tłumaczenia w `omowienie` =
+   `warning`), ale nie polegaj na tym — dopilnuj tego przy składaniu rubryki.
 4. **Angielski na dziś** — jedno przydatne `slowo` (z `wymowa` w IPA, `znaczenie` po polsku,
    `przyklad` w formacie `"zdanie EN — tłumaczenie PL"`) oraz jeden idiomatyczny `zwrot`
    (`zwrot_znaczenie`, `zwrot_przyklad` w tym samym formacie). Poziom średnio-zaawansowany,

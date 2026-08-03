@@ -109,11 +109,27 @@ kategorie:
     okno_min_h: 72
   - nazwa: Ciekawostka na dziś
     liczba: 2
-    zakres: "lekka ciekawostka na koniec — natura, historia, niezwykłe zjawiska,
-      miejsca i rekordy. NIE poważne doniesienia badawcze (od nich jest kategoria
-      Nauka) i NIE technologia."
+    zakres: "lekka ciekawostka na koniec — natura, niezwykłe zjawiska, miejsca i rekordy.
+      NIE historia (od tego jest kategoria Tego dnia) i NIE poważne doniesienia badawcze
+      (od nich jest kategoria Nauka) i NIE technologia."
     wykres: nie
     okno_min_h: 72
+  # `Tego dnia` — jedyna kategoria bez okna świeżości: to nie news, tylko rocznica.
+  # Artykuły pomijają `zrodlo.opublikowano` (dozwolone — skrypt wtedy nie liczy wieku).
+  # Źródło: dzienna strona Wikipedii (pl.wikipedia.org/wiki/D_miesiąc dla wątku polskiego,
+  # en.wikipedia.org/wiki/Month_D dla światowego) — szczegóły w instrukcja.md KROK 1.
+  - nazwa: Tego dnia
+    liczba: 2
+    zakres: "wydarzenie historyczne, które miało miejsce dokładnie w tym dniu kalendarzowym
+      (rocznica — dzień i miesiąc muszą się zgadzać, rok dowolny z przeszłości). Kolejność
+      wyboru: (1) NAJPIERW przełomowe wydarzenie ŚWIATOWE — zmieniło bieg historii,
+      rozpoznawalne globalnie (wojny, odkrycia, przełomy naukowe/technologiczne, upadki
+      i powstania państw); (2) jeśli takiego nie ma, wydarzenie z POLSKI ma pierwszeństwo
+      przed innymi krajami; (3) dopiero gdy i w historii Polski tego dnia nie ma nic
+      istotnego, sięgnij po wydarzenie z innego kraju. Weryfikuj datę w źródle — NIE
+      pisz z pamięci. NIE: gołe rocznice urodzin/śmierci bez samego wydarzenia, fakty
+      niepewne co do daty, wydarzenie już opisane w tej kategorii w poprzednich wydaniach."
+    wykres: nie
 
 # ------------------------------------------------------------
 # ŹRÓDŁA PIERWOTNE — zamknięta lista. Każdy artykuł MUSI
@@ -170,6 +186,9 @@ zrodla_pierwotne:
   - interia.pl         # polskie newsy z konkretnymi URL-ami (Polityka)
   - newatlas.com       # nowinki techniczne i przełomy inżynieryjne (Technologia)
   - space.com          # przemysł kosmiczny — luka wykryta przy pominiętym Starship Flight 13
+  # Tego dnia (dodane 03.08.2026 wraz z kategorią; robots.txt sprawdzony, bota nie blokuje):
+  - pl.wikipedia.org    # dzienna strona „D miesiąc” — wątek polski i weryfikacja daty
+  - en.wikipedia.org    # dzienna strona „Month D” — wątek światowy, szerszy zestaw wydarzeń
 
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — tryb WYJĄTKOWY, nie rutynowy. Poza listę

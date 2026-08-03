@@ -339,6 +339,10 @@ def kontrola_literatury(literatura: dict, cfg: dict, artykuly: list, log) -> Non
         log("warning", f"Literatura wraca do newsów — {problem}. Omówienie mówi o samym "
                        f"tekście (sens, obraz, kontekst powstania), nie o wydarzeniach wydania.")
 
+    problem = wiersz_bez_tlumaczenia(literatura)
+    if problem:
+        log("warning", f"{problem} Wiersz obcojęzyczny musi mieć polskie tłumaczenie — "
+                       f"albo klasyczny przekład w `tresc`, albo własne tłumaczenie w `omowienie`.")
 
 # Zwroty, którymi omówienie przykleja się do wydania zamiast mówić o tekście.
 DOKLEJENIA = ('dzisiejsz', 'w tym wydaniu', 'w dzisiejszym', 'jak w artyku',
@@ -383,6 +387,29 @@ def nawiazania_do_newsow(literatura: dict, artykuly: list) -> list:
         if trafienia:
             problemy.append(f"omówienie „{pole}” zawiera „{trafienia[0]}”")
     return problemy
+
+
+# Ślady tłumaczenia w omówieniu — jeśli żadnego nie ma, obcojęzyczny wiersz zostaje
+# dla czytelnika czarną skrzynką (instrukcja KROK 2.7, punkt 3, „ŻELAZNA zasada nr 2").
+SLADY_TLUMACZENIA = ('tłumacz', 'przekład', 'w wolnym przekładzie', 'znaczy', 'brzmi to',
+                     'po polsku', 'dosłownie')
+POLSKIE_ZNAKI = 'ąćęłńóśźżĄĆĘŁŃÓŚŹŻ'
+
+
+def wiersz_bez_tlumaczenia(literatura: dict) -> str:
+    """Heurystyka: `tresc` bez ani jednego polskiego znaku diakrytycznego wygląda na
+    oryginał obcy (angielski, łaciński…), a `omowienie` bez śladu słowa „tłumaczenie” /
+    „przekład” sugeruje, że nikt go nie przetłumaczył. Fałszywe alarmy są możliwe
+    (krótki polski wers bez diakrytyków) — stąd `warning`, nie `error`."""
+    wiersz = literatura.get('wiersz') or {}
+    tresc = wiersz.get('tresc') or ''
+    if not tresc or any(z in tresc for z in POLSKIE_ZNAKI):
+        return ''
+    omowienie = (wiersz.get('omowienie') or '').lower()
+    if any(s in omowienie for s in SLADY_TLUMACZENIA):
+        return ''
+    return (f"Wiersz „{wiersz.get('tytul')}” ({wiersz.get('autor')}) wygląda na oryginał "
+           f"obcojęzyczny (brak polskich znaków w `tresc`), a omówienie nie wspomina o tłumaczeniu.")
 
 
 # --------------------------------------------------------------- metryki -----
