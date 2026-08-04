@@ -189,6 +189,43 @@ zrodla_pierwotne:
   # Tego dnia (dodane 03.08.2026 wraz z kategorią; robots.txt sprawdzony, bota nie blokuje):
   - pl.wikipedia.org    # dzienna strona „D miesiąc” — wątek polski i weryfikacja daty
   - en.wikipedia.org    # dzienna strona „Month D” — wątek światowy, szerszy zestaw wydarzeń
+  # ---- WOJNA i geopolityka (dodane 04.08.2026 — audyt monokultury źródeł) ----
+  # Powód: Al Jazeera dawała 77% artykułów w kategorii Wojna (40 z 52) i 75% okładek.
+  # Nie była to wina doboru, tylko luka w tej liście: po usunięciu reuters.com kategoria
+  # miała trzy źródła, z czego amwaj.media i middleeasteye.net dały po JEDNYM artykule
+  # w całym archiwum. Jedno źródło musiało udźwignąć 3 artykuły dziennie.
+  # Każda domena niżej: robots.txt przepuszcza Claude-User ORAZ realnie pobrano artykuł
+  # (samo robots.txt nie wystarcza — baeldung.com przechodził robots i dawał 403).
+  # Ukraina i Rosja:
+  - kyivindependent.com  # anglojęzyczny, publikuje 24/7; ~990 artykułów w sitemapie
+  - ukrinform.net        # ukraińska agencja państwowa — komunikaty z pierwszej ręki
+  # Obronność i wojskowość (sprzęt, decyzje zbrojeniowe, przemysł):
+  - defensenews.com
+  - militarytimes.com
+  - breakingdefense.com
+  # Analiza kampanii — think tanki. UWAGA: to KOMENTARZ i ocena, nie doniesienie o faktach.
+  # Nadają się na kontekst i tło, nie jako jedyne źródło newsa dnia:
+  - understandingwar.org # ISW — codzienne oceny kampanii (Ukraina, Bliski Wschód)
+  - warontherocks.com
+  - csis.org
+  - atlanticcouncil.org
+  # Polski trop — gazetę czyta Polak, a kategoria nie miała ANI JEDNEGO polskiego źródła:
+  - defence24.pl         # polski portal obronny: wojsko, przemysł zbrojeniowy, NATO
+  - konflikty.pl         # polski serwis o konfliktach i wojskowości
+  - notesfrompoland.com  # polskie sprawy po angielsku — dobre na wątek Polski w świecie
+  # Generaliści światowi (Wojna, Okładka, Polityka) — rozbijają monokulturę okładki:
+  - bbc.com
+  - dw.com               # Deutsche Welle — perspektywa europejska
+  - euronews.com
+  - npr.org
+  # ODRZUCONE przy tym audycie (twarde dowody, nie domysły):
+  # theguardian.com, france24.com, haaretz.com — robots.txt jawnie blokuje Claude-User
+  #   (france24.com dodatkowo zwraca 403);
+  # newarab.com, arabnews.com — HTTP 403 przy pobraniu (WAF odbija bota);
+  # polskieradio.pl — robots.txt niedostępny, więc brak zgody na piśmie.
+  # Uwaga o botach: liczy się WYŁĄCZNIE Claude-User (tym pobiera WebFetch). Blokada
+  # ClaudeBota (crawler treningowy) NIE dyskwalifikuje źródła — aljazeera.com
+  # i theregister.com blokują ClaudeBota, a dostarczyły 77 i 16 artykułów.
 
 # ------------------------------------------------------------
 # RESEARCH WTÓRNY — tryb WYJĄTKOWY, nie rutynowy. Poza listę

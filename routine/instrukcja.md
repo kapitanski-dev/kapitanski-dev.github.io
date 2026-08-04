@@ -113,6 +113,43 @@ przy dwóch wydaniach dziennie wychodzi ~12 h, przy jednym ~24 h. Weekend + kate
   dwóch wydaniach tego samego dnia).
 - Skrypt raportuje wiek źródeł **zbiorczo**; nie loguj tego ręcznie.
 
+### Jedno źródło nie niesie kategorii (OBOWIĄZKOWE)
+
+Audyt 04.08.2026 pokazał monokulturę: **Al Jazeera dała 77% kategorii Wojna** (40 z 52
+artykułów) i **75% okładek**, a sciencedaily.com — 87% Nauki. Czytelnik dostawał wtedy
+jedną redakcję i jedną perspektywę, podpisaną jako przegląd świata.
+
+**Zasada: żadna kategoria nie może w całości pochodzić z jednego serwisu.** Przy
+`liczba: 3` weź materiał z co najmniej dwóch różnych domen; przy `liczba: 2` staraj się
+o dwie, ale jedna jest dopuszczalna, gdy temat naprawdę jest tylko tam. Skrypt liczy to
+sam i loguje `warning` przy 3/3 z jednej domeny oraz gdy jedna domena przekroczy 40%
+całego wydania (mediana archiwum to 29%).
+
+Praktycznie — **Wojna** ma teraz źródła w czterech grupach, nie w jednej. Jedno
+zapytanie ich nie obsłuży, więc rozłóż sloty:
+
+- **Ukraina i Rosja:** kyivindependent.com (publikuje 24/7, dobre na nocny ostrzał),
+  ukrinform.net;
+- **Bliski Wschód:** aljazeera.com, amwaj.media, middleeasteye.net — to nadal mocna
+  grupa, ale ma być JEDNĄ z czterech, nie całą kategorią;
+- **Obronność i wojskowość:** defensenews.com, militarytimes.com, breakingdefense.com —
+  sprzęt, kontrakty, decyzje zbrojeniowe;
+- **Polski trop:** defence24.pl i konflikty.pl (po polsku), notesfrompoland.com (po
+  angielsku). Gazetę czyta Polak, a kategoria do 04.08.2026 nie miała ANI JEDNEGO
+  polskiego źródła — sprawdzaj tu wątek polski, zwłaszcza NATO i granicę.
+
+Generaliści (bbc.com, dw.com, euronews.com, npr.org) nadają się i do Wojny, i do
+Okładki, i do Polityki — sięgaj po nich, gdy okładka robi się co dzień z tego samego
+serwisu. Think tanki (understandingwar.org, warontherocks.com, csis.org,
+atlanticcouncil.org) to **analiza i komentarz, nie doniesienie**: dobre na tło
+i kontekst, ale news dnia ma stać na źródle faktograficznym.
+
+Ta sama zasada dotyczy kategorii, które wyglądają niewinnie: **Nauka** ma sześć źródeł
+(eurekalert.org, sciencedaily.com, phys.org, sciencenews.org, sciencealert.com,
+naukawpolsce.pl), a wychodziła prawie w całości z jednego. Jeśli oba artykuły Nauki
+biorą się z tego samego serwisu w kolejnych wydaniach, research kończy się na pierwszym
+trafieniu — zejdź niżej na liście.
+
 ### Przegląd nocy i polski trop (OBOWIĄZKOWY, przed kategoriami)
 
 Wydanie poranne powstaje po 8:00 rano (rutyna startuje o 6:00 UTC — przesunięta z 3:00

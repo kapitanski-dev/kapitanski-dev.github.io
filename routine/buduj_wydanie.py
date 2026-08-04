@@ -270,6 +270,67 @@ def kontrola_zrodel(artykuly: list, cfg: dict, log) -> None:
                        f"{'/'.join(PAYWALL)} — czytelnik ich nie otworzy.")
 
 
+def kontrola_roznorodnosci_zrodel(artykuly: list, cfg: dict, log) -> None:
+    """Czy wydania nie niesie jedno źródło — RAPORT ZBIORCZY (jak kontrola świeżości).
+
+    Audyt 04.08.2026: Al Jazeera dawała 77% kategorii Wojna (40 z 52 artykułów) i 75%
+    okładek, a sciencedaily.com 87% Nauki. Powód bywa dwojaki: albo w `zrodla_pierwotne`
+    naprawdę nie ma alternatywy (Wojna po usunięciu reuters.com), albo research kończy
+    się na pierwszym trafionym serwisie i nie przechodzi listy do końca (Nauka, która
+    ma sześć źródeł). Pierwszy powód naprawia config, drugi — ta kontrola.
+
+    Progi skalibrowane na 23 wydaniach archiwum (mediana udziału najczęstszej domeny
+    to 29%, więc 40% to realny ogon, a nie norma):
+      * kategoria z >=3 artykułami w całości z jednej domeny  -> warning (twardy sygnał),
+      * kategoria z 2 artykułami z jednej domeny              -> info (nudge, bywa OK),
+      * jedna domena >=40% wydania (przy >=10 artykułach)     -> warning.
+    Małe wydania pomijamy w progu udziału: przy 5 artykułach 2 z jednej domeny to 40%
+    bez żadnej patologii.
+    """
+    if not artykuly:
+        return
+    host = lambda a: urllib.parse.urlparse(((a.get("zrodlo") or {}).get("url") or "")).netloc \
+                                     .lower().removeprefix('www.')
+    from collections import Counter, defaultdict
+
+    per_kat = defaultdict(Counter)
+    for a in artykuly:
+        h = host(a)
+        if h:
+            per_kat[a.get("kategoria")][h] += 1
+
+    twarde, miekkie = [], []
+    for kat, c in per_kat.items():
+        n = sum(c.values())
+        dom, ile = c.most_common(1)[0]
+        if ile == n and n >= 3:
+            twarde.append(f"{kat}: {n}/{n} z {dom}")
+        elif ile == n and n == 2:
+            miekkie.append(f"{kat} ({dom})")
+
+    if twarde:
+        log("warning", f"Monokultura źródeł — {'; '.join(twarde)}. Cała kategoria z jednego "
+                       f"serwisu to nie przegląd, tylko przedruk. Przejdź listę `zrodla_pierwotne` "
+                       f"do końca i weź drugi front/temat z innego źródła.")
+    if miekkie:
+        log("info", f"Po 2 artykuły z jednej domeny: {', '.join(miekkie)} — dopuszczalne, "
+                    f"ale jeśli powtarza się co wydanie, research nie schodzi poniżej "
+                    f"pierwszego trafionego serwisu.")
+
+    wszystkie = Counter(h for h in (host(a) for a in artykuly) if h)
+    if len(artykuly) >= 10 and wszystkie:
+        dom, ile = wszystkie.most_common(1)[0]
+        udzial = ile / len(artykuly)
+        if udzial >= 0.40:
+            log("warning", f"Jedno źródło niesie wydanie: {dom} to {ile} z {len(artykuly)} "
+                           f"artykułów ({udzial:.0%}). Mediana archiwum to ~29% — rozłóż "
+                           f"tematy na więcej serwisów z listy.")
+    if wszystkie:
+        dom, ile = wszystkie.most_common(1)[0]
+        print(f"Różnorodność źródeł: {len(wszystkie)} domen na {len(artykuly)} art. | "
+              f"najczęstsza: {dom} ({ile} = {ile / len(artykuly):.0%})")
+
+
 def kontrola_redakcji(artykuly: list, cfg: dict, log) -> None:
     """Kategorie, obraz okładki, liczba akapitów i liczba artykułów wg config.yaml."""
     poprawne = {k['nazwa'] for k in cfg['kategorie']}
@@ -525,6 +586,7 @@ def main() -> None:
 
     kontrola_redakcji(dane["artykuly"], cfg, log)
     kontrola_zrodel(dane["artykuly"], cfg, log)
+    kontrola_roznorodnosci_zrodel(dane["artykuly"], cfg, log)
     kontrola_swiezosci(dane["artykuly"], cfg, now, log)
     kontrola_watkow(dane["watki"], log)
     kontrola_literatury(dane["literatura"], cfg, dane["artykuly"], log)
