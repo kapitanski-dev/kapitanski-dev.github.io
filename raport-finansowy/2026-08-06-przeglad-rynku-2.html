@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przegląd rynku – 6 sierpnia 2026 (wydanie wieczorne)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta i faktura papieru — te same zmienne co template.html (gazeta). */
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --up: #1d6b45;
+    --down: #a3271f;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --up: #5fbd8b;
+    --down: #e8776b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.7;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  /* Węższa kolumna niż gazeta — raport to jeden ciąg tekstu do czytania. */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead { text-align: center; padding: 40px 0 0; }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(2.4em, 7vw, 4em);
+    margin: 10px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Spis treści (budowany z H2 przez JS) ===== */
+  #spis {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    padding: 18px 22px; margin: 32px 0 8px; border-radius: 2px;
+  }
+  #spis:empty { display: none; }
+  #spis .spis-tytul {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: .7em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #spis ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  #spis li { position: relative; padding-left: 26px; margin: 5px 0; line-height: 1.45; }
+  #spis li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    position: absolute; left: 0; top: .15em;
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700; color: var(--accent);
+  }
+  #spis a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #spis a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ===== Treść raportu ===== */
+  .raport { padding-bottom: 8px; }
+  .raport > h1 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.8em; line-height: 1.2; margin: 40px 0 12px;
+  }
+  .raport h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.5em; line-height: 1.25;
+    margin: 48px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 20px;
+  }
+  .raport h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.15em; margin: 32px 0 10px; scroll-margin-top: 20px;
+  }
+  .raport h4 {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: .82em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin: 26px 0 8px;
+  }
+  .raport p { margin: 0 0 16px; }
+  .raport strong { font-weight: 700; }
+  .raport a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .raport a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .raport code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  .raport ul, .raport ol { margin: 0 0 18px; padding-left: 0; list-style: none; }
+  .raport li { position: relative; padding-left: 24px; margin: 7px 0; }
+  .raport ul > li::before {
+    content: "▪"; position: absolute; left: 4px; top: -.05em;
+    color: var(--accent); font-size: .85em;
+  }
+  .raport ol { counter-reset: li; }
+  .raport ol > li::before {
+    counter-increment: li; content: counter(li) ".";
+    position: absolute; left: 0; top: 0;
+    font-family: 'Inter', sans-serif; font-size: .8em; font-weight: 700; color: var(--accent);
+  }
+
+  .raport blockquote {
+    margin: 22px 0; padding: 16px 22px;
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    border-radius: 2px;
+  }
+  .raport blockquote p:last-child { margin-bottom: 0; }
+
+  .raport hr {
+    border: none; border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  /* Tabele — sedno raportu, więc nigdy nie chowamy ich w poziomym scrollu.
+     Szeroki ekran: tabela wychodzi poza kolumnę tekstu na całą dostępną
+     szerokość. Wąski (poniżej .tabela-karty): każdy wiersz staje się kartą
+     z podpisami z `data-etykieta`. `overflow-x` zostaje tylko jako zabezpieczenie
+     na patologiczną zawartość (długi URL bez spacji). */
+  .tabela {
+    margin: 26px 0;
+    width: min(1180px, calc(100vw - 48px));
+    margin-left: 50%; transform: translateX(-50%);
+    overflow-x: auto;
+    border: 1px solid var(--rule); border-radius: 2px;
+  }
+  .raport table {
+    border-collapse: collapse; width: 100%;
+    table-layout: auto;
+    font-family: 'Inter', sans-serif; font-size: .82em; line-height: 1.5;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .raport th, .raport td {
+    padding: 10px 14px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .raport th {
+    font-weight: 700; font-size: .92em; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+  }
+  .raport tbody tr:last-child td { border-bottom: none; }
+  .raport tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .raport td strong { font-weight: 600; }
+
+  /* Wąski ekran: tabela → karty. Zero przewijania w bok. */
+  @media (max-width: 900px) {
+    .tabela {
+      width: auto; margin-left: 0; transform: none;
+      overflow-x: visible; border: none; border-radius: 0;
+    }
+    .raport table { background: none; font-size: .86em; }
+    .raport thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .raport tbody tr {
+      display: block; margin-bottom: 12px; padding: 4px 0;
+      border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 2px;
+      background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    }
+    .raport tbody tr:hover { background: color-mix(in srgb, var(--card) 40%, var(--paper)); }
+    .raport tbody td {
+      display: grid; grid-template-columns: minmax(72px, 30%) 1fr; gap: 14px;
+      padding: 7px 14px; border-bottom: none;
+    }
+    .raport tbody td + td { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
+    .raport tbody td::before {
+      content: attr(data-etykieta);
+      font-size: .82em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--ink-soft); line-height: 1.4; padding-top: .15em;
+    }
+    .raport tbody td:not([data-etykieta]) { display: block; }
+    /* Pierwsza komórka wiersza to zwykle nazwa pozycji — niech będzie nagłówkiem karty. */
+    .raport tbody td:first-child {
+      display: block; font-size: 1.05em; font-weight: 700; padding-top: 10px;
+    }
+    .raport tbody td:first-child::before { display: none; }
+  }
+
+  /* ===== Nawigacja między raportami ===== */
+  .nav-raporty {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 46px; padding: 16px 0 4px;
+  }
+  .nav-raporty:empty { display: none; }
+  .nav-raporty a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-raporty a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-raporty .nav-spacer { flex: 1; }
+
+  footer {
+    margin: 40px 0 40px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+  footer a { color: inherit; }
+
+  /* ===== DRUK ===== */
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -1px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+    #spis { padding: 14px 16px; }
+    .raport h2 { font-size: 1.3em; margin-top: 36px; }
+    .nav-raporty { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav-raporty .nav-spacer { display: none; }
+  }
+
+  /* ===== DRUK — na końcu, żeby wygrać z układem kart (szerokość kartki < 900px) ===== */
+  @media print {
+    #progress, #theme-toggle, .nav-raporty, #spis { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .raport h2, .raport table, .tabela { break-inside: avoid; }
+    .tabela { width: auto; margin-left: 0; transform: none; overflow-x: visible;
+              border: 1px solid #999; }
+    .raport thead { position: static; width: auto; height: auto; clip-path: none; }
+    .raport tbody tr { display: table-row; border: none; background: none; margin: 0; }
+    .raport tbody td, .raport tbody td:first-child {
+      display: table-cell; font-size: inherit; font-weight: inherit;
+      padding: 6px 8px; border-bottom: 1px solid #ccc;
+    }
+    .raport tbody td::before { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker">Raport finansowy &middot; wydanie wieczorne</div>
+      <h1><span id="tytul">Przegląd rynku</span></h1>
+      <div class="date-bar">
+        <span id="data-raportu" data-iso="2026-08-06T12:00:00Z">czwartek, 6 sierpnia 2026</span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+
+    <nav id="spis" aria-label="Spis treści"></nav>
+
+    <article class="raport" id="tresc">
+<blockquote><p><strong>Kontekst:</strong> Drugie wydanie dzisiejszego dnia — po porannym przeglądzie sesja w USA dokończyła się umiarkowanym spadkiem, a Korea Południowa po raz drugi z rzędu uruchomiła mechanizm stabilizujący giełdę (sidecar) przez dalszy spadek spółek pamięciowych. Dobra wiadomość: rekordowe wygaśnięcie blokady akcji SpaceX (ok. 116 mld USD) minęło bez paniki, a Rocket Lab i AST SpaceMobile zyskały. Żaden twardy sygnał redukcji portfela wciąż się nie zapalił.</p></blockquote>
+<p><em>Kurs USD/PLN: ok. 3,72 zł (kurs średni NBP z 6.08.2026). Kurs EUR/PLN: ok. 4,30 zł.</em></p>
+<hr>
+<h2>Co nowego od porannego wydania (6 sierpnia)</h2>
+<ul><li><strong>Zamknięcie sesji w USA (czwartek 6.08):</strong> Dow Jones spadł ok. 0,85% do ok. <strong>53 885 pkt</strong> — koniec serii rekordowych zamknięć z ostatnich dni. S&amp;P 500 stracił ok. 0,2% do ok. <strong>7 708 pkt</strong>, Nasdaq Composite ok. 0,1% do ok. <strong>26 337 pkt</strong>. Powód: rosnące rentowności obligacji skarbowych USA i ostrożność przed piątkowym raportem o zatrudnieniu — spadki umiarkowane, nie paniczne.</li><li><strong>Dane z rynku pracy USA przed jutrzejszym NFP wypadły korzystnie.</strong> Cotygodniowe wnioski o zasiłek dla bezrobotnych spadły do 199 tys. (poniżej oczekiwanych 204 tys.), a raport firmy Challenger, Gray &amp; Christmas pokazał najniższą liczbę lipcowych zwolnień od dwóch lat. Rynek czeka teraz na sam odczyt payrolls w piątek 7.08 (konsensus wg Reutersa: ok. 83 tys. nowych miejsc pracy, stopa bezrobocia 4,3%).</li><li><strong>Wyprzedaż w Korei Południowej eskalowała w ciągu dnia.</strong> Giełda KRX aktywowała sell-side sidecar (5-minutowe zawieszenie zleceń programowych kupna) po spadku kontraktów KOSPI 200 o ponad 5% — to drugi dzień z rzędu uruchomienia mechanizmu stabilizującego (w środę zadziałał analogiczny mechanizm po stronie kupna). Inwestorzy zagraniczni sprzedali netto ok. 1,9 mld wonów (~1,3 mld USD, ~4,8 mld zł) akcji z KOSPI, głównie Samsunga i SK Hynix. To nadal segment pamięci/dysków, a nie bezpośrednio kart graficznych (GPU) — rozróżnienie z porannego wydania się utrzymuje.</li><li><strong>Wygasł jeden z największych lockupów w historii rynku — bez paniki.</strong> Ok. 911,5 mln akcji SpaceX (~116 mld USD) stało się dostępnych do sprzedaży 6.08. Kurs SpaceX dołował wcześnie rano, po czym odbił w ciągu dnia. Rocket Lab i AST SpaceMobile — obie z portfela docelowego — zyskały w tym dniu po ok. 5%, mimo że lockup dotyczył innej spółki kosmicznej. To pozytywny sygnał sentymentu dla całego sektora kosmicznego, a nie tylko dla samego SpaceX.</li><li><strong>Potwierdzony termin wyników AST SpaceMobile: 10 sierpnia po zamknięciu sesji — ten sam dzień co Rocket Lab.</strong> Konsensus: przychód ok. 34,1 mln USD, strata 0,28 USD/akcję. Dwa raporty kwartalne z portfela docelowego tego samego dnia.</li><li><strong>Trzecia z rzędu pozytywna ocena Wall Street w sprawie Kimi K3.</strong> Morgan Stanley, JPMorgan i UBS nazywają tegotygodniową wyprzedaż chipów pamięci „złotą okazją do kupna", argumentując, że niedobór pamięci HBM/DRAM/NAND w centrach danych się pogłębia, a nie słabnie. Odpowiedź na stałe pytanie tła portfela pozostaje niezmiennie pozytywna.</li><li><strong>JEDI (kosmos) doczekał się świeżo potwierdzonego NAV z 4.08: 86,60 USD</strong> — wzrost z 78,55 USD (31.07, ostatni pewny odczyt w poprzednich raportach), czyli ok. +10% w niecały tydzień. Potwierdza pozytywny sentyment sektora kosmicznego widoczny też w RKLB i ASTS.</li><li><strong>Amazon: potwierdzone zamknięcie 6.08 na poziomie 272,85 USD (+0,07%)</strong> — praktycznie bez zmian, ruch bez związku z tezą.</li><li>Dla pozostałych spółek portfela (TSMC, NVIDIA, Microsoft, Tesla, Google, ASML) <strong>nie udało się dziś potwierdzić jednoznacznych, świeżych kursów zamknięcia z 6.08</strong> — dostępne źródła się rozjeżdżają albo pokazują dane sprzed kilku dni. Podtrzymujemy oceny z porannego wydania i nie zgadujemy nowych liczb.</li></ul>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p><strong>Jedno zdanie:</strong> Sesja w USA zakończyła się umiarkowanym, nie panicznym spadkiem przed jutrzejszym raportem o zatrudnieniu, Korea Południowa po raz drugi z rzędu musiała ratować się mechanizmem stabilizującym giełdę przez dalszą przecenę pamięci, ale ogromne wygaśnięcie blokady akcji SpaceX minęło bez paniki i wzmocniło sentyment wokół Rocket Lab i AST SpaceMobile — żaden z pięciu twardych sygnałów redukcji portfela się nie zapalił.</p>
+<h3>Dwa wątki popołudnia:</h3>
+<p><strong>1. Korea: druga sidecar z rzędu, ale to wciąż pamięć, nie GPU</strong></p>
+<p>Mechanizm stabilizujący giełdę w Seulu zadziałał drugi dzień pod rząd — najpierw po stronie kupna (środa), potem po stronie sprzedaży (czwartek). To realna, mierzalna presja na segment pamięci i dysków (Samsung, SK Hynix), ale wciąż inny fragment łańcucha dostaw AI niż karty graficzne, więc twardy sygnał (b) portfela się nie zapala.</p>
+<p><strong>2. Kosmos: lockup SpaceX bez paniki, JEDI +10% w tydzień</strong></p>
+<p>Jedno z największych w historii wygaśnięć blokady akcji (ok. 116 mld USD) nie wywołało wyprzedaży — a Rocket Lab i AST SpaceMobile zyskały mimo braku bezpośredniego związku z lockupem. W połączeniu ze wzrostem NAV funduszu JEDI o ok. 10% w niecały tydzień to konkretne wzmocnienie tezy kosmicznej portfela.</p>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (kupowane za 5 000 zł/mies. w fazie rozruchu)</h3>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Kurs (przybliż.)</th><th>Zmiana od porannego wydania</th><th>Co się dzieje</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="ETF"><strong>IWDA</strong> (MSCI World)</td><td data-etykieta="Kurs (przybliż.)">Bez nowych, pewnych danych z 6.08</td><td data-etykieta="Zmiana od porannego wydania">—</td><td data-etykieta="Co się dzieje">Indeksy USA zamknęły dzień umiarkowanym spadkiem (S&amp;P -0,2%, Nasdaq -0,1%), Dow przerwał serię rekordów (-0,85%)</td><td data-etykieta="Teza">⚠️ Kierunek nadal niejednoznaczny, bez pewnych świeżych liczb dla samego ETF-u</td></tr><tr><td data-etykieta="ETF"><strong>SMH</strong> (producenci chipów)</td><td data-etykieta="Kurs (przybliż.)">Bez potwierdzonego świeżego kursu</td><td data-etykieta="Zmiana od porannego wydania">—</td><td data-etykieta="Co się dzieje">Presja w Korei eskaluje (druga sidecar z rzędu), ale to segment pamięci, nie GPU; trzecia z rzędu pozytywna ocena Wall Street ws. Kimi K3 łagodzi obraz</td><td data-etykieta="Teza">⚠️ Presja krótkoterminowa w regionie, teza długoterminowa bez zmian</td></tr><tr><td data-etykieta="ETF"><strong>RBOT</strong> (robotyka)</td><td data-etykieta="Kurs (przybliż.)">Ostatni pewny odczyt: ok. <strong>21,4 USD</strong> (4.08)</td><td data-etykieta="Zmiana od porannego wydania">Bez istotnej zmiany</td><td data-etykieta="Co się dzieje">Bez nowych wydarzeń sektorowych</td><td data-etykieta="Teza">✅ Bez zmian w ocenie</td></tr><tr><td data-etykieta="ETF"><strong>NUKL</strong> (energia jądrowa)</td><td data-etykieta="Kurs (przybliż.)">Ostatni pewny odczyt: ok. <strong>53 USD</strong> (klasa USD, 5.08) — nadal rozbieżność między notowaniami w różnych walutach/na różnych giełdach, nie da się jednoznacznie porównać z wcześniejszymi odczytami w EUR</td><td data-etykieta="Zmiana od porannego wydania">—</td><td data-etykieta="Co się dzieje">Fundament sektora mocny, bez nowych wydarzeń dziś</td><td data-etykieta="Teza">✅ Teza długoterminowa bez zmian</td></tr><tr><td data-etykieta="ETF"><strong>JEDI</strong> (kosmos)</td><td data-etykieta="Kurs (przybliż.)">Świeżo potwierdzony NAV: <strong>86,60 USD</strong> (4.08)</td><td data-etykieta="Zmiana od porannego wydania"><strong>+10% wobec 78,55 USD z 31.07</strong></td><td data-etykieta="Co się dzieje">Wzrost potwierdza poprawę sentymentu sektora kosmicznego (start ASTS, kontrakt Rocket Lab, spokojny lockup SpaceX)</td><td data-etykieta="Teza">✅ Wydarzenia sektorowe i kurs razem potwierdzają tezę</td></tr><tr><td data-etykieta="ETF"><strong>EIMI</strong> (rynki wschodzące)</td><td data-etykieta="Kurs (przybliż.)">Bez nowego, pewnego odczytu z 6.08</td><td data-etykieta="Zmiana od porannego wydania">—</td><td data-etykieta="Co się dzieje">Presja w Korei i Azji (druga sidecar z rzędu) może ważyć w dół na indeksie EM w kolejnych dniach</td><td data-etykieta="Teza">⚠️ Do potwierdzenia w kolejnym raporcie</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze NIEKUPIONE — monitorowane)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga doc.</th><th>Zmiana od porannego wydania</th><th>Co nowego</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="Spółka"><strong>TSMC</strong></td><td data-etykieta="Waga doc.">6%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu z 6.08</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych dziś</td><td data-etykieta="Teza">✅ Teza intaktna, bez zmian od rana</td></tr><tr><td data-etykieta="Spółka"><strong>NVIDIA</strong></td><td data-etykieta="Waga doc.">5%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu z 6.08</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych dziś; wyniki 26 sierpnia bez zmian</td><td data-etykieta="Teza">✅ Bez zmian od rana</td></tr><tr><td data-etykieta="Spółka"><strong>Google (GOOGL)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu zamknięcia</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych ponad to, co w porannym wydaniu</td><td data-etykieta="Teza">🟡 Bez zmian od rana</td></tr><tr><td data-etykieta="Spółka"><strong>Microsoft (MSFT)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu z 6.08</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych dziś</td><td data-etykieta="Teza">✅ Teza intaktna</td></tr><tr><td data-etykieta="Spółka"><strong>Amazon (AMZN)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Zmiana od porannego wydania"><strong>Potwierdzone zamknięcie 6.08: 272,85 USD (+0,07%)</strong></td><td data-etykieta="Co nowego">Praktycznie bez zmian, dzień neutralny</td><td data-etykieta="Teza">✅ Ruch bez związku z tezą, teza intaktna</td></tr><tr><td data-etykieta="Spółka"><strong>Tesla (TSLA)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu z 6.08</td><td data-etykieta="Co nowego">Brak nowych informacji o harmonogramie Optimusa ponad to, co w porannym wydaniu</td><td data-etykieta="Teza">🔴 Bez zmian od rana — presja fundamentalna na sygnał (c) nadal rośnie</td></tr><tr><td data-etykieta="Spółka"><strong>ASML</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Zmiana od porannego wydania">Bez potwierdzonego świeżego kursu z 6.08</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych dziś</td><td data-etykieta="Teza">⚠️ Bez zmian od rana</td></tr><tr><td data-etykieta="Spółka"><strong>Rocket Lab (RKLB)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Zmiana od porannego wydania"><strong>Wzrost ok. +5%</strong> (obok AST SpaceMobile, po spokojnym przejściu lockupu SpaceX)</td><td data-etykieta="Co nowego">Potwierdzono, że wyniki Q2 wciąż 10 sierpnia po zamknięciu</td><td data-etykieta="Teza">✅ Sentyment sektorowy dalej pozytywny</td></tr><tr><td data-etykieta="Spółka"><strong>AST SpaceMobile (ASTS)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Zmiana od porannego wydania"><strong>Wzrost ok. +5%</strong></td><td data-etykieta="Co nowego"><strong>Potwierdzony termin wyników Q2: 10 sierpnia po zamknięciu</strong> (konsensus: przychód ok. 34,1 mln USD, strata 0,28 USD/akcję) — ten sam dzień co Rocket Lab</td><td data-etykieta="Teza">✅ Sentyment sektorowy dalej pozytywny, kolejny konkretny termin do obserwacji</td></tr></tbody></table></div>
+<hr>
+<h2>3. Stan twardych sygnałów redukcji</h2>
+<div class="tabela"><table><thead><tr><th>Sygnał</th><th>Status</th><th>Co wiemy dziś wieczorem</th></tr></thead><tbody><tr><td data-etykieta="Sygnał"><strong>(a) Dwa kwartały cięcia capexu gigantów</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dziś wieczorem">Bez zmian od porannego wydania. Dodatkowo: trzecia z rzędu ocena Wall Street (Morgan Stanley, JPMorgan, UBS) nazywa tegotygodniową wyprzedaż chipów „złotą okazją do kupna" z powodu pogłębiającego się niedoboru pamięci — argument przeciwko tezie o słabnącym popycie na infrastrukturę AI</td></tr><tr><td data-etykieta="Sygnał"><strong>(b) Spadek GPU / odpisy data centers</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dziś wieczorem">Druga z rzędu aktywacja mechanizmu stabilizującego (sidecar) na giełdzie w Seulu — presja realna, ale nadal ograniczona do segmentu pamięci/dysków (Samsung, SK Hynix), nie do kart graficznych. Rozróżnienie z rana się utrzymuje</td></tr><tr><td data-etykieta="Sygnał"><strong>(c) Zero Optimusa przez 18–24 mies.</strong></td><td data-etykieta="Status">🟡 Bez zmian od rana</td><td data-etykieta="Co wiemy dziś wieczorem">Brak nowych informacji o harmonogramie. Decyduje Q3 (październik 2026)</td></tr><tr><td data-etykieta="Sygnał"><strong>(d) Poślizg Neutrona</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dziś wieczorem">Bez zmian od rana. Wyniki Rocket Lab 10 sierpnia mogą przynieść aktualizację harmonogramu</td></tr><tr><td data-etykieta="Sygnał"><strong>(e) ASTS bez usługi + duże rozmycie</strong></td><td data-etykieta="Status">🟢 Wzmocniony pozytywnie</td><td data-etykieta="Co wiemy dziś wieczorem">Wygaśnięcie ogromnego lockupu SpaceX (ok. 116 mld USD) minęło bez paniki, a ASTS zyskał ok. 5% — sentyment sektora kosmicznego dalej się poprawia, co pośrednio zmniejsza ryzyko wyceny również dla ASTS</td></tr></tbody></table></div>
+<h3>Ryzyko poza formalną listą — bez istotnych zmian od rana</h3>
+<p>Kołowe finansowanie NVIDIA–OpenAI–SK Group i konflikt Iran–Izrael pozostają bez nowych informacji od porannego wydania. Nowym elementem popołudnia jest potwierdzenie, że presja na spółki pamięciowe w Korei nasila się (druga sidecar z rzędu), a jednocześnie rynek w USA reaguje na to spokojniej niż na wcześniejsze, bardziej techniczne wyprzedaże — co można czytać jako oznakę, że inwestorzy coraz wyraźniej odróżniają problem pamięci/dysków od problemu GPU.</p>
+<hr>
+<h2>4. Werdykt + co dalej obserwować</h2>
+<h3>Werdykt: <strong>OKAZJA — bez zmian od porannego wydania, z dodatkowym potwierdzeniem tezy kosmicznej</strong></h3>
+<p><em>(kierunek długoterminowy bez zmian: żaden twardy sygnał się nie zapalił; popołudniowe wydarzenia — spokojne przejście lockupu SpaceX, wzrost NAV JEDI o 10% w tydzień, wzrosty RKLB i ASTS — wzmacniają tezę kosmiczną, a druga z rzędu sidecar w Korei to realna, ale wciąż ograniczona do segmentu pamięci presja)</em></p>
+<hr>
+<h4>Dowody ZA (teza portfela trzyma):</h4>
+<ol><li><strong>Żaden z pięciu twardych sygnałów redukcji się nie zapalił</strong> — bez zmian od rana.</li><li><strong>Lockup SpaceX (ok. 116 mld USD) minął bez paniki</strong>, a Rocket Lab i AST SpaceMobile zyskały po ok. 5% — konkretne potwierdzenie odporności sentymentu sektora kosmicznego.</li><li><strong>NAV funduszu JEDI wzrósł o ok. 10% w niecały tydzień</strong> (78,55 → 86,60 USD) — mierzalne potwierdzenie poprawy tezy kosmicznej, nie tylko pojedynczych newsów.</li><li><strong>Trzecia z rzędu pozytywna ocena Wall Street ws. Kimi K3</strong> — banki inwestycyjne podtrzymują, że tańsze modele zwiększają, nie zmniejszają popyt na pamięć i moc obliczeniową.</li><li><strong>Dane z rynku pracy USA przed jutrzejszym NFP wypadły korzystnie</strong> (niższe wnioski o zasiłek, najniższe lipcowe zwolnienia od dwóch lat) — łagodzi ryzyko negatywnej niespodzianki w piątkowym raporcie.</li></ol>
+<hr>
+<h4>Dowody PRZECIW (ryzyka, które wciąż są na stole):</h4>
+<ol><li><strong>Druga z rzędu aktywacja mechanizmu stabilizującego giełdę w Korei</strong> — presja na Samsunga i SK Hynix realnie się nasila, choć wciąż dotyczy segmentu pamięci, nie GPU.</li><li><strong>Dow Jones przerwał serię rekordowych zamknięć</strong> (-0,85%), a S&amp;P 500 i Nasdaq też zakończyły dzień na minusie — trzeci dzień z rzędu z ujemnym zamknięciem dla przynajmniej jednego z głównych indeksów.</li><li><strong>Dla większości spółek portfela (TSMC, NVIDIA, Microsoft, Tesla, Google, ASML) nie udało się dziś potwierdzić świeżych kursów zamknięcia</strong> — obraz portfela na wieczór 6.08 jest więc częściowo niepełny, mimo prób weryfikacji z kilku źródeł.</li><li><strong>Piątkowy raport o zatrudnieniu w USA wciąż jest niewiadomą</strong> — mimo korzystnych danych pobocznych (Challenger, wnioski o zasiłek), sam odczyt payrolls może zaskoczyć w obie strony i poruszyć rentowności obligacji.</li><li><strong>Tesla: harmonogram Optimusa pozostaje bez nowych informacji</strong> — presja na sygnał (c) się nie zmniejszyła.</li></ol>
+<hr>
+<h3>Co obserwować (priorytety najbliższych tygodni)</h3>
+<div class="tabela"><table><thead><tr><th>Termin</th><th>Co czekamy</th><th>Dlaczego ważne</th></tr></thead><tbody><tr><td data-etykieta="Termin"><strong>7 sierpnia 2026</strong></td><td data-etykieta="Co czekamy">Raport o zatrudnieniu w USA za lipiec (NFP)</td><td data-etykieta="Dlaczego ważne">Konsensus wg Reutersa: ok. 83 tys. nowych miejsc pracy, stopa bezrobocia 4,3%. Dane wpłyną na oczekiwania wobec posiedzenia Fedu 15–16 września, a przez to na rentowności obligacji i wyceny spółek wzrostowych w portfelu</td></tr><tr><td data-etykieta="Termin"><strong>10 sierpnia 2026</strong></td><td data-etykieta="Co czekamy">Wyniki Rocket Lab i AST SpaceMobile za Q2 (obie tego samego dnia, po zamknięciu sesji)</td><td data-etykieta="Dlaczego ważne">RKLB: oczekiwany przychód ok. 231,6 mln USD (+60% r/r); ASTS: oczekiwany przychód ok. 34,1 mln USD. Kluczowa będzie aktualizacja harmonogramu Neutrona (RKLB) oraz tempa budowy konstelacji (ASTS)</td></tr><tr><td data-etykieta="Termin"><strong>sierpień 2026 (bez konkretnej daty)</strong></td><td data-etykieta="Co czekamy">Czy presja na segment pamięci w Korei (druga sidecar z rzędu) rozleje się na szerszy sentyment wobec capexu AI, w tym na GPU</td><td data-etykieta="Dlaczego ważne">To wciąż fundamentalny, nie tylko techniczny powód wyprzedaży w Azji — eskalacja z dziś (druga sidecar) zwiększa wagę tego pytania na kolejny raport</td></tr><tr><td data-etykieta="Termin"><strong>26 sierpnia 2026</strong></td><td data-etykieta="Co czekamy">Wyniki NVIDIA (Q2 roku fiskalnego 2027)</td><td data-etykieta="Dlaczego ważne">Oczekiwany przychód ok. 91 mld USD. Kluczowe pytania: czy dostawy Blackwell nadążają za popytem oraz czy pakiet umów z SK Group i OpenAI (do 750 mld USD) przybierze do tego czasu podpisany kształt</td></tr><tr><td data-etykieta="Termin"><strong>15–16 września 2026</strong></td><td data-etykieta="Co czekamy">Posiedzenie Fedu</td><td data-etykieta="Dlaczego ważne">Rynek patrzy na wrześniowe posiedzenie jako test, czy presja na obniżki stóp zyska przewagę — ma to bezpośrednie przełożenie na rentowności obligacji i wyceny spółek wzrostowych</td></tr><tr><td data-etykieta="Termin"><strong>Październik 2026</strong></td><td data-etykieta="Co czekamy">Wyniki Tesla Q3</td><td data-etykieta="Dlaczego ważne">Pierwsze dane o rzeczywistej produkcji Optimusa po miesiącach coraz mniej precyzyjnych zapowiedzi „później w tym roku"</td></tr></tbody></table></div>
+<hr>
+<h3>Działania w portfelu</h3>
+<p><strong>Faza rozruchu: NIC NIE ZMIENIAMY.</strong></p>
+<p>Sierpień pozostaje drugim miesiącem fazy rozruchu — nadal 5 000 zł/mies. wyłącznie w ETF-y zgodnie z planem v4.8. Żaden z pięciu twardych sygnałów nie zapalił się na czerwono; popołudniowe wydarzenia (spokojny lockup SpaceX, wzrost NAV JEDI, zyski RKLB i ASTS) wzmacniają tezę kosmiczną, a presja w Korei pozostaje ograniczona do segmentu pamięci. Decyzja o przejściu na pełne 10 000 zł/mies. zapada na przełomie września i października.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-aug-6-2026" rel="noopener">Stock Market Today (Aug. 6, 2026): S&amp;P 500 declines as investors weigh jobs data, earnings ahead — TheStreet</a></li><li><a href="https://finance.yahoo.com/markets/live/stock-market-today-thursday-august-6-dow-sp-nasdaq-091620000.html" rel="noopener">Stock market today: Dow slips from record, S&amp;P 500 and Nasdaq drop as oil gains, Treasury yields rise — Yahoo Finance</a></li><li><a href="https://www.barchart.com/story/news/35967875/stocks-slide-on-signs-of-a-cooling-labor-market" rel="noopener">Stocks slide on signs of a cooling labor market — Barchart</a></li><li><a href="https://www.koreajoongangdaily.com/business/krx-activates-sellside-sidecar-for-kospi-on-sharp-decline/12811272" rel="noopener">Kospi drops over 4% as KRX triggers sell-side sidecar amid Samsung, SK hynix losses — Korea JoongAng Daily</a></li><li><a href="https://en.sedaily.com/finance/2026/08/06/breaking-news-kospi-triggers-sell-side-sidecar" rel="noopener">Breaking News: KOSPI Triggers Sell-Side Sidecar — Seoul Economic Daily</a></li><li><a href="https://www.cnbc.com/2026/08/06/asia-tech-selloff-wall-street-samsung-sk-hynix.html" rel="noopener">Asian tech stocks drop with SK Hynix plunging 10% after Wall Street AI names fall — CNBC</a></li><li><a href="https://www.fool.com/investing/2026/08/05/spacexs-lockup-expires-on-aug-6-heres-why-9115-mil/" rel="noopener">SpaceX's Lockup Expires on Aug. 6. Here's Why 911.5 Million Insider Shares Could Hit the Market — The Motley Fool</a></li><li><a href="https://finance.yahoo.com/markets/stocks/article/spacex-lockup-expires-today-with-stock-bucking-higher-100000039.html" rel="noopener">SpaceX lockup expires today, with stock bucking higher — Yahoo Finance</a></li><li><a href="https://247wallst.com/investing/2026/08/06/spacex-climbs-3-as-lockup-expiration-fails-to-trigger-a-selloff-ast-spacemobile-and-rocket-lab-rise-5/" rel="noopener">SpaceX Climbs 3% as Lockup Expiration Fails to Trigger a Selloff; AST SpaceMobile and Rocket Lab Rise 5% — 24/7 Wall St.</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/ast-spacemobile-stock-smart-buy-172100803.html" rel="noopener">Is AST Spacemobile Stock a Smart Buy Before Q2 Earnings Release? — Yahoo Finance</a></li><li><a href="https://www.stocktitan.net/news/RKLB/rocket-lab-announces-date-of-second-quarter-2026-financial-rmgj339cu2wx.html" rel="noopener">Rocket Lab Q2 2026 Financial Results Aug. 10 — StockTitan</a></li><li><a href="https://finance.biggo.com/news/25d0e0c6-f5db-4793-89a6-ebe4b51a1776" rel="noopener">Wall Street Calls Chip Stock Rout a 'Golden Buying Opportunity,' Sees Kimi K3 as Catalyst for Memory Demand — BigGo Finance</a></li><li><a href="https://finance.yahoo.com/quote/JEDI.L/" rel="noopener">VanEck Space Innovators UCITS ETF (JEDI) — Yahoo Finance</a></li><li><a href="https://finance.yahoo.com/quote/RBOT.L/" rel="noopener">iShares Automation &amp; Robotics UCITS ETF (RBOT.L) — Yahoo Finance</a></li><li><a href="https://finance.yahoo.com/quote/NUKL.DE/" rel="noopener">VanEck Uranium and Nuclear Technologies UCITS ETF (NUKL.DE) — Yahoo Finance</a></li><li><a href="https://www.cnbc.com/quotes/AMZN" rel="noopener">Amazon.com, Inc. (AMZN) — CNBC</a></li><li><a href="https://biznes.wprost.pl/finanse-i-inwestycje/12408123/kursy-walut-6-sierpnia-2026-r-dobra-passa-zlotego-trwa.html" rel="noopener">Kursy walut 6 sierpnia 2026 r. Dobra passa złotego trwa — Biznes Wprost</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 6 sierpnia 2026 r. (wydanie wieczorne). Dane cenowe pochodzą z zamknięcia sesji 6.08 tam, gdzie udało się je potwierdzić, lub z ostatnich pewnych wcześniejszych notowań — zaznaczono to przy każdej pozycji. Nie stanowi porady inwestycyjnej.</em></p>
+    </article>
+
+    <nav class="nav-raporty"><a href="/raport-finansowy/2026-08-06-przeglad-rynku.html">&larr; Poprzedni raport</a><span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span><span></span></nav>
+    <footer><a href="/">Grzyb Times</a> &mdash; raport redagowany przez AI. Nie stanowi porady inwestycyjnej.</footer>
+  </div>
+
+<script>
+  /* ---- motyw (wspólny klucz z gazetą — jeden wybór na cały serwis) ---- */
+  const root = document.documentElement;
+  if (localStorage.getItem('gazeta-theme') === 'dark' ||
+      (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+  document.getElementById('theme-toggle').onclick = () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+  };
+
+  /* ---- podgląd DEMO: szablon otwarty bez podstawionej treści ---- */
+  const tresc = document.getElementById('tresc');
+  if (tresc.textContent.trim() === '__' + 'TRESC' + '__') {
+    document.title = 'Raport finansowy — podgląd szablonu';
+    document.getElementById('tytul').textContent = 'Przegląd rynku';
+    document.querySelector('.kicker').textContent = 'Raport finansowy · PODGLĄD SZABLONU';
+    const dt = document.getElementById('data-raportu');
+    dt.removeAttribute('data-iso');
+    dt.textContent = 'Poniedziałek, 1 stycznia 2026';
+    document.querySelector('.nav-raporty').innerHTML =
+      '<span></span><span class="nav-spacer"></span><a href="/">Archiwum</a>' +
+      '<span class="nav-spacer"></span><span></span>';
+    tresc.innerHTML = `
+      <p>To jest <strong>podgląd szablonu</strong> — plik otwarty bez podstawionej treści.
+      Rutyna zastępuje <em>__TRESC__</em> raportem wyrenderowanym z markdownu
+      (<code>routine/buduj_raporty.py</code>).</p>
+      <h2>Sekcja raportu</h2>
+      <p>Akapit z <strong>pogrubieniem</strong>, <em>kursywą</em> i
+      <a href="#">odnośnikiem do źródła</a>. Lorem ipsum dolor sit amet, consectetur
+      adipiscing elit, sed do eiusmod tempor incididunt ut labore.</p>
+      <blockquote><p><strong>Kontekst:</strong> cytat blokowy — używany w raportach na wstęp i wnioski.</p></blockquote>
+      <ul><li>Punkt pierwszy listy</li><li>Punkt drugi listy</li></ul>
+      <div class="tabela"><table>
+        <thead><tr><th>ETF</th><th>Waga</th><th>Zmiana</th><th>Teza</th></tr></thead>
+        <tbody>
+          <tr><td data-etykieta="ETF"><strong>Przykład A</strong></td><td data-etykieta="Waga">40%</td><td data-etykieta="Zmiana">+1,2%</td><td data-etykieta="Teza">bez zmian</td></tr>
+          <tr><td data-etykieta="ETF"><strong>Przykład B</strong></td><td data-etykieta="Waga">35%</td><td data-etykieta="Zmiana">−0,8%</td><td data-etykieta="Teza">obserwujemy</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Druga sekcja</h2>
+      <p>Spis treści powyżej buduje się automatycznie z nagłówków drugiego poziomu.</p>`;
+  }
+
+  /* ---- spis treści z H2 ---- */
+  const naglowki = [...tresc.querySelectorAll('h2')];
+  if (naglowki.length > 2) {
+    const ol = document.createElement('ol');
+    naglowki.forEach((h, i) => {
+      if (!h.id) h.id = 'sekcja-' + (i + 1);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+    });
+    const spis = document.getElementById('spis');
+    spis.innerHTML = '<div class="spis-tytul">W tym raporcie</div>';
+    spis.appendChild(ol);
+  }
+
+  /* ---- data raportu: ISO (UTC) → czas polski; fallback na tekst w HTML ---- */
+  const elData = document.getElementById('data-raportu');
+  const iso = elData.getAttribute('data-iso');
+  if (iso && !isNaN(new Date(iso).getTime())) {
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(new Date(iso)).reduce((o, x) => (o[x.type] = x.value, o), {});
+      const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+        Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+      const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+        'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      elData.textContent = `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}`;
+    } catch (e) {}
+  }
+
+  /* ---- pasek postępu czytania ---- */
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('progress').style.width =
+      (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+</script>
+</body>
+</html>
