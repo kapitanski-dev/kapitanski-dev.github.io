@@ -167,13 +167,17 @@ grep -q '__TRESC__' "$FN.html" && { echo "STOP: szablon niepodstawiony."; exit 1
 grep -q "$(basename "$FN").html" index.html || { echo "STOP: index.html nie linkuje raportu."; exit 1; }
 
 # 3) Do repo pushują też rutyny gazety — najpierw pull, potem push.
+#    WAŻNE: TYLKO main, NIGDY nie twórz brancha ani PR.
 git config user.email "grzyb-times@auto.bot"
 git config user.name "Grzyb Times Bot"
-git add raport-finansowy index.html
-git status --short                  # nic poza raport-finansowy/ i index.html nie powinno zostać
+git add raport-finansowy index.html dane
+git status --short                  # nic poza raport-finansowy/, dane/ i index.html nie powinno zostać
 git commit -m "Raport rynkowy RRRR-MM-DD — <jednozdaniowy werdykt>"
-git pull --rebase origin main
-git push origin main
+for i in 1 2 3; do
+  git pull --rebase origin main && git push origin main && break
+  echo "Push nieudany (próba $i) — ponawiam za 5 s."
+  sleep 5
+done
 ```
 
 Commitujesz **oba** pliki raportu: `.md` (źródło) i `.html` (strona) oraz

@@ -549,6 +549,11 @@ i **Literaturę wracającą do newsów** (przepisz omówienie tak, by mówiło o
 
 ## KROK 4 — Publikacja
 
+**WAŻNE:** publikuj WYŁĄCZNIE na branch `main`. **Nigdy** nie twórz nowego brancha,
+nie otwieraj Pull Requesta i nie używaj `gh pr create`. Jeśli push nie przejdzie za
+pierwszym razem — ponów (pętla niżej), nie przełączaj się na branch. Do `main` pushują
+równolegle workflow grafik i inne rutyny, więc wyścig jest normalny i retry go rozwiązuje.
+
 ```bash
 cd "$REPO"
 git config user.email "grzyb-times@auto.bot"
@@ -565,11 +570,14 @@ python3 routine/buduj_index.py
 # 3) BEZPIECZNIK: nie publikuj, jeśli archiwum nie linkuje nowego wydania.
 grep -q "$FN" index.html || { echo "STOP: index.html nie linkuje $FN — przerywam publikację."; exit 1; }
 
-# 4) Commit + push (wydania/ obejmuje też pobrane obrazy wydania/img/…).
-git add wydania index.html
+# 4) Commit + push z retry (do main pushują też inne rutyny — wyścig jest normalny).
+git add wydania index.html dane
 git commit -m "Grzyb Times — ${FN%.html}"
-git pull --rebase origin main   # do repo pushują też inne rutyny
-git push origin main
+for i in 1 2 3; do
+  git pull --rebase origin main && git push origin main && break
+  echo "Push nieudany (próba $i) — ponawiam za 5 s."
+  sleep 5
+done
 echo "Opublikowano: https://kapitanski-dev.github.io/wydania/$FN"
 ```
 
