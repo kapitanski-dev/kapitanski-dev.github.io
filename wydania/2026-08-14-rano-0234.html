@@ -1,0 +1,1726 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gazeta Codzienna</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --chart-line: #8a1c1c;
+    --chart-grid: #e4ddcd;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --chart-line: #e0655a;
+    --chart-grid: #2c2a23;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+  /* Nic (np. ukryte tooltipy) nie może rozpychać strony w poziomie */
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.65;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  /* Faktura papieru — ziarno nad całością (czysty CSS, zero requestów) */
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  /* ===== Pasek postępu czytania ===== */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead {
+    text-align: center;
+    padding: 40px 0 0;
+  }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(3em, 9vw, 5.5em);
+    margin: 8px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  /* Winieta jest linkiem do archiwum — jak logo w serwisie. */
+  .masthead h1 a { color: inherit; text-decoration: none; transition: color .2s; }
+  .masthead h1 a:hover { color: var(--accent); }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+  #pogoda:empty { display: none; }
+  #pogoda a { color: inherit; text-decoration: none; }
+  #pogoda a:hover { color: var(--accent); }
+
+  /* ===== Nawigacja między wydaniami ===== */
+  .nav-wydania {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 36px; padding: 16px 0 4px;
+  }
+  .nav-wydania:empty { display: none; }
+  .nav-wydania a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-wydania a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-wydania .nav-spacer { flex: 1; }
+
+  /* ===== Badge kontynuacji tematu ===== */
+  .badge-update {
+    display: inline-block; margin-left: 10px; padding: 2px 8px; border-radius: 2px;
+    background: var(--accent); color: #fff; font-size: .78em; font-weight: 700;
+    letter-spacing: 1px; vertical-align: middle;
+  }
+
+  /* ===== „W skrócie” ===== */
+  .w-skrocie {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 2px; padding: 14px 20px 10px; margin: 26px 0 4px;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .ws-head {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .w-skrocie ul { margin: 0; padding: 0; list-style: none; column-count: 2; column-gap: 40px; }
+  .w-skrocie li {
+    margin: 0 0 7px; font-size: .92em; line-height: 1.45;
+    break-inside: avoid; padding-left: 15px; position: relative;
+  }
+  .w-skrocie li::before { content: "▪"; position: absolute; left: 0; color: var(--accent); font-size: .8em; top: .15em; }
+  .w-skrocie a { color: var(--ink); text-decoration: none; }
+  .w-skrocie a:hover { color: var(--accent); }
+  .w-skrocie.hidden { display: none !important; }
+
+  /* ===== Widok okładki: „W skrócie” pływa po prawej (1:1) =====
+     (JS dodaje .widok-okladka na #gazeta, gdy aktywny filtr = kategoria okładki.
+     Skrót to float — treść hero zaczyna się obok, w lewej połowie, a tam, gdzie
+     skrót się kończy, akapity wpadają na pełną szerokość: siatka jak w gazecie.
+     figure/wykres dostają flow-root (BFC), żeby stały OBOK floatu, nie pod nim.) */
+  #gazeta.widok-okladka .w-skrocie { float: right; width: calc(50% - 22px); margin: 40px 0 22px 44px; }
+  #gazeta.widok-okladka .w-skrocie ul { column-count: 1; }
+  #gazeta.widok-okladka .hero figure,
+  #gazeta.widok-okladka .hero .chart-box { display: flow-root; }
+  #gazeta.widok-okladka .hero .cols { column-count: auto; }
+  #gazeta.widok-okladka .hero img { height: clamp(260px, 34vh, 400px); }
+  #gazeta.widok-okladka .divider { display: none; }
+  #gazeta.widok-okladka::after { content: ""; display: block; clear: both; }
+
+  /* ===== Artykuł hero ===== */
+  .hero { margin: 40px 0 10px; }
+  .hero .cat-label { margin-bottom: 14px; font-size: .78em; letter-spacing: 4px; }
+  .hero .cat-label::before { width: 34px; }
+  .hero figure {
+    margin: 0 0 22px; position: relative; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 5px; background: var(--card);
+  }
+  .hero img {
+    width: 100%; height: clamp(340px, 46vh, 540px); object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.92) contrast(1.02);
+  }
+  .hero h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: clamp(1.8em, 4.5vw, 2.9em);
+    line-height: 1.12; margin: 0 0 10px; letter-spacing: -.5px;
+  }
+  .hero h2 a, .article h3 a { color: var(--ink); text-decoration: none; }
+  .hero h2 a:hover, .article h3 a:hover { color: var(--accent); }
+  .hero .cols { column-count: 2; column-gap: 40px; column-rule: 1px solid var(--rule); }
+  /* hero mobile — pełna wersja poniżej */
+
+  /* ===== Etykieta kategorii ===== */
+  .cat-label {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+  }
+  .cat-label::before { content: ""; width: 26px; height: 2px; background: var(--accent); }
+
+  /* ===== Filtry kategorii ===== */
+  .filtry {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 8px;
+  }
+  .filtr {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; padding: 6px 16px;
+    border: 1px solid var(--rule); border-radius: 2px;
+    background: transparent; color: var(--ink-soft); cursor: pointer;
+    transition: all .2s;
+  }
+  .filtr:hover { border-color: var(--accent); color: var(--accent); }
+  .filtr.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  article.hidden { display: none !important; }
+  .divider.hidden { display: none !important; }
+  .filtr--logs { margin-left: auto; }
+  .filtr--logs.active { background: var(--ink-soft); border-color: var(--ink-soft); }
+
+  /* ===== Panel logów rutyny ===== */
+  #logi-panel { padding: 24px 0 8px; }
+  #logi-panel.hidden { display: none !important; }
+  #gazeta.hidden { display: none !important; }
+  .logi-head {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    margin-bottom: 4px;
+  }
+  .logi-sub { font-size: .82em; color: var(--ink-soft); margin-bottom: 18px; line-height: 1.5; }
+  .log-list { display: flex; flex-direction: column; gap: 8px; }
+  .log-entry {
+    display: flex; gap: 12px; align-items: flex-start;
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+    font-size: .82em; line-height: 1.5;
+    padding: 10px 14px; border: 1px solid var(--rule); border-radius: 2px;
+    border-left-width: 4px; background: color-mix(in srgb, var(--ink-soft) 5%, transparent);
+    word-break: break-word;
+  }
+  .log-entry .lvl {
+    flex-shrink: 0; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; font-size: .82em; padding-top: 1px;
+  }
+  .log-entry .msg { white-space: pre-wrap; }
+  .log-entry .msg a { color: inherit; }
+  .log-entry--error   { border-left-color: var(--accent); }
+  .log-entry--error   .lvl { color: var(--accent); }
+  .log-entry--warning { border-left-color: #b8860b; }
+  .log-entry--warning .lvl { color: #b8860b; }
+  .log-entry--info    { border-left-color: var(--ink-soft); }
+  .log-entry--info    .lvl { color: var(--ink-soft); }
+  .logi-empty { font-size: .9em; color: var(--ink-soft); font-style: italic; }
+
+  /* ===== Sekcja „Literatura” ===== */
+  .filtr--lit.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  #literatura-panel { padding: 24px 0 8px; }
+  #literatura-panel.hidden { display: none !important; }
+  .lit-head {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 1.6em;
+    letter-spacing: -.4px; margin: 0 0 4px;
+  }
+  .lit-sub { font-size: .84em; color: var(--ink-soft); margin-bottom: 24px; line-height: 1.55; max-width: 640px; }
+  .lit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+  .lit-card {
+    border: 1px solid var(--rule); border-top: 3px solid var(--accent); border-radius: 2px;
+    padding: 22px 26px 24px; background: color-mix(in srgb, var(--card) 45%, var(--paper));
+  }
+  .lit-card--wide { grid-column: 1 / -1; }   /* wiersz dnia — pełna szerokość na cały utwór */
+  .lit-label {
+    font-family: 'Inter', sans-serif; font-size: .66em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2.5px; color: var(--accent);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-quote {
+    font-family: 'Fraunces', serif; font-size: 1.28em; line-height: 1.42;
+    font-style: italic; margin: 0 0 10px;
+  }
+  .lit-poem {
+    font-family: 'Fraunces', serif; font-size: 1.08em; line-height: 1.55;
+    white-space: pre-line; margin: 2px 0 12px;
+  }
+  .lit-src {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+    display: block; margin-bottom: 14px;
+  }
+  .lit-src a { color: var(--ink-soft); }
+  .lit-omowienie { font-size: .93em; line-height: 1.62; margin: 0; text-align: justify; hyphens: auto; }
+  .lit-odp { margin-top: 15px; padding-top: 13px; border-top: 1px solid var(--rule); }
+  .lit-odp-h {
+    font-family: 'Inter', sans-serif; font-size: .64em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--ink-soft);
+    display: block; margin-bottom: 8px;
+  }
+  .lit-odp ul { margin: 0; padding: 0; list-style: none; }
+  .lit-odp li { font-size: .9em; line-height: 1.5; margin-bottom: 5px; }
+  .lit-odp-j {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--accent);
+    margin-right: 6px;
+  }
+  .lit-odp-t { color: var(--ink-soft); }
+  .lit-en { margin: 0 0 16px; line-height: 1.5; }
+  .lit-en:last-child { margin-bottom: 0; }
+  .lit-en b { font-family: 'Fraunces', serif; font-size: 1.2em; font-weight: 700; }
+  .lit-ipa { font-family: 'Inter', sans-serif; font-size: .82em; color: var(--ink-soft); }
+  .lit-ex {
+    margin-top: 5px; font-size: .9em; color: var(--ink-soft);
+    border-left: 2px solid var(--rule); padding-left: 12px;
+  }
+  .lit-ex i { font-style: italic; color: var(--ink); }
+
+  /* ===== Pozostałe artykuły ===== */
+  .divider {
+    border: none; border-top: 3px double var(--ink);
+    margin: 48px 0 0;
+  }
+  .article {
+    display: grid; grid-template-columns: 340px 1fr; gap: 36px;
+    padding: 40px 0; border-bottom: 1px solid var(--rule);
+    align-items: start;
+  }
+  .article:nth-child(even) { grid-template-columns: 1fr 340px; }
+  .article:nth-child(even) figure { order: 2; }
+  .article figure {
+    margin: 0; overflow: hidden; border-radius: 2px;
+    border: 1px solid var(--rule); padding: 4px; background: var(--card);
+  }
+  .article img {
+    width: 100%; height: 230px; object-fit: cover; display: block;
+    filter: sepia(.06) saturate(.9) contrast(1.02);
+  }
+  .article h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.7em; line-height: 1.15; margin: 10px 0 8px; letter-spacing: -.3px;
+  }
+  .meta {
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 600;
+    color: var(--ink-soft); text-transform: uppercase; letter-spacing: 1.5px;
+    display: block; margin-bottom: 14px;
+  }
+  .meta a { color: var(--ink-soft); }
+  .article p, .hero p {
+    margin: 0 0 14px; text-align: justify; hyphens: auto;
+    font-variant-numeric: oldstyle-nums proportional-nums;
+  }
+  /* Znak końca artykułu (tombstone) — klasyka druku */
+  .article p:last-of-type::after, .hero .cols p:last-of-type::after {
+    content: "◼"; font-size: .55em; color: var(--accent);
+    margin-left: 7px; vertical-align: .12em;
+  }
+
+  /* ===== Trudne terminy — podkreślenie + tooltip ===== */
+  .term {
+    text-decoration: underline dotted var(--accent) 1.5px;
+    text-underline-offset: 3px; cursor: help; position: relative;
+  }
+  .term::after {
+    content: attr(data-tip);
+    position: absolute; left: 50%; bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .78em; font-weight: 400;
+    line-height: 1.45; text-align: left; text-transform: none;
+    letter-spacing: 0; white-space: normal; hyphens: none;
+    width: max-content; max-width: min(260px, 72vw);
+    padding: 8px 11px; border-radius: 3px;
+    opacity: 0; visibility: hidden; transition: opacity .15s;
+    pointer-events: none; z-index: 40;
+  }
+  .term:hover::after, .term:focus::after, .term.open::after {
+    opacity: 1; visibility: visible;
+  }
+  .lede::first-letter {
+    float: left; font-family: 'Fraunces', serif; font-weight: 900;
+    font-size: 3.3em; line-height: .82; padding: 4px 8px 0 0; color: var(--accent);
+  }
+
+  /* ===== Kluczowe liczby ===== */
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin: 4px 0 16px; }
+  .stat .num {
+    font-family: 'Fraunces', serif; font-weight: 800; font-size: 1.9em;
+    line-height: 1; color: var(--accent); display: block;
+  }
+  .stat .lbl {
+    font-family: 'Inter', sans-serif; font-size: .68em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--ink-soft);
+  }
+
+  /* ===== Wykresy ===== */
+  .chart-box {
+    background: color-mix(in srgb, var(--card) 45%, var(--paper)); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 16px 18px 10px; margin: 6px 0 16px; position: relative;
+  }
+  .chart-box svg { cursor: crosshair; }
+  .chart-box circle.pt { fill: var(--chart-line); opacity: 0; transition: opacity .4s ease; }
+  .in-view .chart-box circle.pt { opacity: .85; }
+  .chart-box circle.hl { fill: var(--card); stroke: var(--chart-line); stroke-width: 2.5; opacity: 0; pointer-events: none; }
+  .chart-box line.guide { stroke: var(--chart-line); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; pointer-events: none; }
+  .chart-box rect.hit { fill: transparent; }
+  .chart-box .val-lbl { font-family: 'Inter', sans-serif; font-size: 9px; fill: var(--ink-soft); }
+  .chart-box .chart-tip {
+    position: absolute; pointer-events: none; opacity: 0; z-index: 5;
+    transform: translate(-50%, -140%); background: var(--ink); color: var(--paper);
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    padding: 4px 9px; border-radius: 5px; white-space: nowrap; transition: opacity .15s ease;
+  }
+  .chart-box .chart-tip b { font-weight: 800; }
+  .chart-box .chart-title {
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1.5px; color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+  .chart-box svg { width: 100%; height: auto; display: block; }
+  .chart-box .axis-lbl { font-family: 'Inter', sans-serif; font-size: 10px; fill: var(--ink-soft); }
+  .chart-box path.line {
+    fill: none; stroke: var(--chart-line); stroke-width: 2.5;
+    stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 2000; stroke-dashoffset: 2000;
+  }
+  .in-view .chart-box path.line { animation: draw 1.6s ease forwards; }
+  @keyframes draw { to { stroke-dashoffset: 0; } }
+  .chart-box path.area { fill: var(--chart-line); opacity: .08; }
+  .chart-box rect.bar { fill: var(--chart-line); transform-origin: bottom; transform: scaleY(0); }
+  .in-view .chart-box rect.bar { animation: grow .8s ease forwards; }
+  @keyframes grow { to { transform: scaleY(1); } }
+  .chart-box line.grid { stroke: var(--chart-grid); stroke-width: 1; }
+
+  /* ===== Animacja wejścia ===== */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in-view { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* ===== Stopka ===== */
+  footer {
+    margin: 60px 0 40px; padding-top: 18px; border-top: 3px double var(--ink);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+
+  /* ===== TABLET (769–1024) ===== */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .article, .article:nth-child(even) { gap: 28px; }
+    .article { grid-template-columns: 270px 1fr; }
+    .article:nth-child(even) { grid-template-columns: 1fr 270px; }
+    .article img { height: 200px; }
+    .hero img { height: clamp(300px, 38vh, 420px); }
+    .hero .cols { column-gap: 32px; }
+  }
+
+  /* ===== DRUK — gazeta na papierze naprawdę ===== */
+  @media print {
+    #progress, .filtry, #theme-toggle, .nav-wydania, #logi-panel, #literatura-panel { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    article { break-inside: avoid; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+
+  /* ===== MOBILE (tablet + telefon) ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -2px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+
+    /* Filtry — poziomy scroll zamiast zawijania */
+    .filtry { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch;
+               padding: 14px 16px; margin: 0 -16px; scrollbar-width: none; border-bottom: none; }
+    .filtry::-webkit-scrollbar { display: none; }
+    .filtr { flex-shrink: 0; }
+
+    /* Tooltip terminu jako dolna karta — nie wystaje poza ekran, czytelny po tapnięciu */
+    .term::after {
+      position: fixed; left: 14px; right: 14px; bottom: 14px; top: auto;
+      width: auto; max-width: none; transform: none;
+      padding: 12px 14px; font-size: .85em;
+      box-shadow: 0 4px 18px rgba(0,0,0,.25);
+    }
+
+    /* W skrócie — jedna kolumna */
+    .w-skrocie ul { column-count: 1; }
+    .w-skrocie { padding: 12px 14px 8px; margin: 18px 0 4px; }
+
+    /* Literatura — karty w jednej kolumnie */
+    .lit-grid { grid-template-columns: 1fr; gap: 16px; }
+    .lit-card { padding: 18px 18px 20px; }
+
+    /* Widok okładki — układ 1:1 zwija się do kolumny: hero nad skrótem */
+    #gazeta.widok-okladka { display: flex; flex-direction: column; }
+    #gazeta.widok-okladka .hero { order: 1; }
+    #gazeta.widok-okladka .w-skrocie { float: none; width: auto; margin: 18px 0 4px; order: 2; }
+
+    /* Hero */
+    .hero { margin: 28px 0 8px; }
+    .hero figure { margin: 0 0 16px; border-radius: 2px; padding: 4px; }
+    .hero img { height: 220px; }
+    .hero h2 { font-size: 1.6em; }
+    .hero .cols { column-count: 1; }
+
+    /* Separator */
+    .divider { margin: 28px 0 0; }
+
+    /* Pozostałe artykuły */
+    .article, .article:nth-child(even) { grid-template-columns: 1fr; gap: 0; padding: 24px 0; }
+    .article:nth-child(even) figure { order: 0; }
+    .article figure { margin: 0 0 14px; border-radius: 2px; padding: 3px; }
+    .article img { height: 180px; }
+    .article h3 { font-size: 1.35em; margin: 6px 0; }
+    .lede::first-letter { font-size: 2.6em; }
+
+    /* Statystyki */
+    .stats { gap: 14px; margin: 2px 0 12px; }
+    .stat .num { font-size: 1.5em; }
+
+    /* Wykresy */
+    .chart-box { padding: 12px 12px 8px; }
+  }
+
+  /* ===== TELEFON (small) ===== */
+  @media (max-width: 480px) {
+    .masthead h1 { font-size: 2.8em; }
+    .hero img { height: 190px; }
+    .hero h2 { font-size: 1.4em; }
+    .article img { height: 160px; }
+    .article h3 { font-size: 1.2em; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker" id="kicker-label">Wydanie · Redagowane przez AI</div>
+      <h1><a id="tytul-gazety" href="/" title="Wróć do archiwum wydań">Gazeta Codzienna</a></h1>
+      <div class="date-bar">
+        <span id="numer-wydania"></span>
+        <span id="pogoda" title="Kliknij, aby otworzyć pełną prognozę"></span>
+        <span id="data-wydania"></span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+    <main id="gazeta"></main>
+    <nav id="nav-wydania" class="nav-wydania"></nav>
+    <footer id="stopka"></footer>
+  </div>
+
+  <!-- ================================================================
+       DANE WYDANIA — jedyne miejsce edytowane przy generowaniu gazety.
+       ================================================================ -->
+  <script id="dane-gazety" type="application/json">
+{
+  "tytul": "Grzyb Times",
+  "kicker": "Wydanie poranne · Redagowane przez AI",
+  "data_iso": "2026-08-14T02:34:41Z",
+  "data_wydania": "piątek, 14 sierpnia 2026, 02:34",
+  "numer": "Wydanie poranne",
+  "artykuly": [
+    {
+      "kategoria": "Okładka",
+      "tytul": "Ukraina uderzyła w rosyjską Flotę Czarnomorską w Noworosyjsku, Rosja odpowiedziała atakiem na port zbożowy w Izmaile",
+      "skrot": "W \"unikalnej operacji\" Ukraina uszkodziła cztery rosyjskie okręty i terminale zbożowe w Noworosyjsku, Rosja odpowiedziała atakiem na ukraiński port Izmaił.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/8/13/russian-strike-sparks-fire-at-ukraine-port-zelenskyy-seeks-interceptors",
+        "opublikowano": "13.08.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Kyiv Independent",
+          "url": "https://kyivindependent.com/drone-attacks-hit-russias-novorossiysk-occupied-crimea/"
+        },
+        {
+          "nazwa": "Kyiv Independent",
+          "url": "https://kyivindependent.com/ukraine-war-latest-4-russian-warships-damaged-in-strike-on-black-sea-fleet-port-in-novorossiysk/"
+        }
+      ],
+      "obraz": {
+        "query": "Novorossiysk port fire",
+        "alt": "Pożar w porcie w Noworosyjsku po ataku dronów",
+        "kategoria": "Wojna"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "kilkaset dronów",
+          "opis": "skala wcześniejszego ukraińskiego ataku na Kraj Krasnodarski"
+        },
+        {
+          "wartosc": "4 okręty",
+          "opis": "uszkodzone rosyjskie jednostki Floty Czarnomorskiej w Noworosyjsku"
+        }
+      ],
+      "akapity": [
+        "Rosyjski ostrzał wywołał pożar w ukraińskim porcie Izmaił w obwodzie odeskim nad Dunajem — jednym z głównych punktów eksportu zboża po zablokowaniu portów czarnomorskich. Prezydent Wołodymyr Zełenski ponowił apel do sojuszników o przyspieszenie dostaw pocisków przechwytujących dla systemów obrony powietrznej.",
+        "Atak na Izmaił był odpowiedzią na rozległą ukraińską operację sprzed doby, w której siły Ukrainy uderzyły dronami i pociskami w bazę morską i terminale zbożowe rosyjskiej Floty Czarnomorskiej w Noworosyjsku oraz cele w Anapie, Gelendżyku i rejonie temriukskim. Gubernator Kraju Krasnodarskiego Wieniamin Kondratjew mówił o ataku \"kilkuset dronów\", a Zełenski określił operację jako \"unikalną\" — użyto w niej odrzutowych dronów Pałanycia, pocisków manewrujących Neptun oraz dronów morskich, a uszkodzeniu uległy cztery rosyjskie okręty.",
+        "Według lokalnych władz w ataku na Noworosyjsk zginęły trzy osoby, a eksplozje słychać było także w pobliżu Elektrowni Cieplnej Bałaklawa pod Sewastopolem oraz przy Moście Krymskim łączącym półwysep z Krasnodarskim Krajem.",
+        "Wymiana ciosów w porty zbożowe obu stron pogłębia obawy o bezpieczeństwo żywnościowe krajów zależnych od importu zboża z regionu Morza Czarnego, które i tak balansują na granicy kryzysu."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "S&P 500 pobił rekord na fali chłodniejszej inflacji w USA",
+      "skrot": "S&P 500 wspiął się do 7804 pkt, a szanse na wrześniową podwyżkę stóp Fedu spadły poniżej 35 proc. po słabszych od prognoz danych o inflacji.",
+      "zrodlo": {
+        "nazwa": "Yahoo Finance",
+        "url": "https://finance.yahoo.com/markets/live/stock-market-today-thursday-august-13-sp-500-record-high-nasdaq-dow-inflation-100145282.html",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "New York Stock Exchange",
+        "alt": "Nowojorska giełda papierów wartościowych"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "7804 pkt",
+          "opis": "nowy rekord zamknięcia S&P 500"
+        },
+        {
+          "wartosc": "<35 proc.",
+          "opis": "szacowane prawdopodobieństwo wrześniowej podwyżki stóp Fed"
+        }
+      ],
+      "akapity": [
+        "S&P 500 zamknął czwartkową sesję na rekordowym poziomie 7804 pkt (+0,71 proc.), po raz pierwszy w historii przebijając w trakcie dnia poziom 7800 pkt. Nasdaq Composite zyskał 0,81 proc. do 26 803 pkt, a Dow Jones wzrósł o 0,13 proc. do 53 840 pkt.",
+        "Impulsem do wzrostów były dane o inflacji hurtowej w USA, słabsze od prognoz analityków, co obniżyło presję na Rezerwę Federalną. Według narzędzia CME FedWatch prawdopodobieństwo podwyżki stóp procentowych spadło z 55 proc. tydzień wcześniej do poniżej 35 proc., a rynki pieniężne wyceniają obecnie mniej niż 40-procentową szansę na wrześniową podwyżkę.",
+        "Rekordowe notowania to kontynuacja letniej hossy na Wall Street napędzanej oczekiwaniami na łagodniejszą politykę monetarną i mocnymi wynikami spółek technologicznych."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "PKO BP zarobił 15,3 mld zł w I półroczu, prezes liczy na najlepszy rok w historii banku",
+      "skrot": "Grupa PKO BP wypracowała w I półroczu 2026 r. 15,29 mld zł zysku netto, o 3,1 proc. więcej rok do roku, przy ROE na poziomie 18,4 proc.",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/PKO-BP-notuje-szybkie-tempo-rozwoju-sa-podstawy-by-26-byl-najsilniejszy-w-historii-banku-Midera-wywiad-9181573.html",
+        "opublikowano": "13.08.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Bankier.pl",
+          "url": "https://www.bankier.pl/wiadomosc/Zysk-netto-grupy-PKO-BP-w-II-kw-26-wyniosl-2-77-mld-zl-zgodny-z-oczekiwaniami-9181521.html"
+        }
+      ],
+      "obraz": {
+        "query": "PKO Bank Polski building",
+        "alt": "Oddział banku PKO BP"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "15,29 mld zł",
+          "opis": "zysk netto grupy PKO BP w I półroczu 2026"
+        },
+        {
+          "wartosc": "18,4 proc.",
+          "opis": "zwrot z kapitału (ROE) w I półroczu"
+        }
+      ],
+      "akapity": [
+        "Grupa PKO BP wypracowała w pierwszym półroczu 2026 r. 15,29 mld zł zysku netto, o 3,1 proc. więcej niż rok wcześniej. Sam drugi kwartał przyniósł 2,77 mld zł zysku, zgodnie z oczekiwaniami analityków, wobec 2,66 mld zł rok wcześniej. Zgłoszony {{ROE|wskaźnik rentowności kapitału własnego banku}} za I półrocze wyniósł 18,4 proc.",
+        "Prezes banku Szymon Midera ocenił w wywiadzie, że pierwsze półrocze daje podstawy, by cały 2026 r. był najsilniejszym w historii instytucji. Bank notuje dwucyfrową dynamikę wzrostu w kluczowych segmentach klientów, a w finansowaniu potrzeb klientów indywidualnych w połowie realizacji strategii przekroczył zakładany 25-procentowy udział rynkowy.",
+        "Silny wynik i pozycja kapitałowa pozwalają bankowi planować wypłatę do 75 proc. zysku za 2025 r. w formie dywidendy."
+      ]
+    },
+    {
+      "kategoria": "Inwestowanie",
+      "tytul": "Ceny ropy spadają, inwestorzy czekają na przełom w sprawie otwarcia Cieśniny Ormuz",
+      "skrot": "Baryłka WTI potaniała do 83 USD (ok. 310 zł), a Brent do 88,8 USD (ok. 332 zł), bo rynek liczy na postęp w rozmowach o otwarciu Cieśniny Ormuz.",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/Ropa-naftowa-tanieje-Inwestorzy-czekaja-na-sygnaly-o-postepie-ws-otwarcia-Ormuzu-9181560.html",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "oil tanker Strait Hormuz",
+        "alt": "Tankowiec na wodach Cieśniny Ormuz"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "83,01 USD (ok. 310 zł)",
+          "opis": "cena baryłki ropy WTI"
+        },
+        {
+          "wartosc": "88,84 USD (ok. 332 zł)",
+          "opis": "cena baryłki ropy Brent"
+        }
+      ],
+      "akapity": [
+        "Ceny ropy naftowej spadają na światowych rynkach — baryłka WTI kosztuje 83,01 USD (ok. 310 zł), a Brent 88,84 USD (ok. 332 zł). Inwestorzy czekają na konkretne sygnały postępu w sprawie otwarcia Cieśniny Ormuz, przez którą przed wojną przepływała jedna piąta światowego handlu ropą i LNG.",
+        "Spadek odzwierciedla topnienie tzw. premii za ryzyko, która narosła w notowaniach po zablokowaniu cieśniny przez Iran na początku wojny z USA i Izraelem pod koniec lutego. Ruch żeglugowy przez Ormuz jest obecnie najwyższy od wybuchu konfliktu, choć wciąż daleki od poziomów sprzed wojny.",
+        "Rynek pozostaje jednak nerwowy: jak donosi w osobnym materiale Al Jazeera, irańskie dowództwo wojskowe zastrzega, że żaden statek nie przepłynie cieśniną bez zgody Teheranu, co podważa amerykańskie zapowiedzi rychłego i pełnego otwarcia szlaku."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Rząd obniża VAT na paliwo do 8 proc., wraca program CPN",
+      "skrot": "Od 17 do 31 sierpnia VAT na paliwa spadnie z 23 do 8 proc., co ma obniżyć ceny na stacjach nawet o złotówkę za litr.",
+      "zrodlo": {
+        "nazwa": "PAP",
+        "url": "https://www.pap.pl/aktualnosci/tusk-przywracamy-istotna-czesc-programu-cpn-na-czas-powrotow-z-wakacji",
+        "opublikowano": "13.08.2026"
+      },
+      "zrodla_dodatkowe": [
+        {
+          "nazwa": "Bankier.pl",
+          "url": "https://www.bankier.pl/wiadomosc/Rzad-wraca-do-programu-CPN-VAT-na-paliwa-obnizony-do-8-proc-9181894.html"
+        },
+        {
+          "nazwa": "PAP",
+          "url": "https://www.pap.pl/aktualnosci/tusk-prezydent-zablokowal-ustawe-dzieki-ktorej-mozna-bylo-sfinansowac-tansze-paliwa"
+        }
+      ],
+      "obraz": {
+        "query": "Poland gas station fuel",
+        "alt": "Stacja paliw w Polsce"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "23 proc. → 8 proc.",
+          "opis": "obniżka VAT na paliwo od 17 do 31 sierpnia"
+        },
+        {
+          "wartosc": "495 mln zł",
+          "opis": "koszt obniżki dla budżetu państwa"
+        }
+      ],
+      "akapity": [
+        "Premier Donald Tusk ogłosił przywrócenie części programu \"Ceny Paliw Niżej\" (CPN): od poniedziałku 17 do 31 sierpnia VAT na paliwa spadnie z 23 do 8 proc. Rząd chce w ten sposób złagodzić skutki drogich paliw w czasie masowych powrotów z wakacji. Resort finansów i energii wraca też do publikowania maksymalnych cen paliw na stacjach.",
+        "Obniżka ma przełożyć się na spadek cen o ok. 90 groszy do ponad złotówki na litrze, w zależności od rodzaju paliwa, względem poziomu bez interwencji. Dwutygodniowe wznowienie programu ma kosztować budżet 495 mln zł.",
+        "Decyzja zapadła kilka dni po tym, jak prezydent Karol Nawrocki skierował do Trybunału Konstytucyjnego ustawę o podatku od nadzwyczajnych zysków firm paliwowych, która miała finansować tańsze paliwa z ok. 4 mld zł wpływów — Tusk zarzucił prezydentowi zablokowanie tych środków. Zamiast podatku od nadzwyczajnych zysków rząd sięgnął więc po doraźną obniżkę VAT."
+      ]
+    },
+    {
+      "kategoria": "Polityka",
+      "tytul": "Rząd uruchamia fundusz transformacji ciepłownictwa z 700 mln euro z UE",
+      "skrot": "NFOŚiGW uruchomi program o budżecie co najmniej 700 mln euro (ok. 3,01 mld zł) na dekarbonizację polskiego ciepłownictwa, w miejsce wycofanego podatku od aut spalinowych.",
+      "zrodlo": {
+        "nazwa": "Bankier.pl",
+        "url": "https://www.bankier.pl/wiadomosc/Rzad-zmienia-zasady-700-milionow-euro-z-Unii-trafi-na-polskie-cieplownictwo-9180627.html",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "district heating plant Poland",
+        "alt": "Ciepłownia w Polsce"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "700 mln euro (ok. 3,01 mld zł)",
+          "opis": "budżet Funduszu Transformacji Ciepłownictwa"
+        }
+      ],
+      "akapity": [
+        "Rada Ministrów przyjęła uchwałę uruchamiającą priorytetowy program Fundusz Transformacji Ciepłownictwa, prowadzony przez Narodowy Fundusz Ochrony Środowiska i Gospodarki Wodnej. Budżet programu ma wynieść co najmniej 700 mln euro (ok. 3,01 mld zł) i sfinansuje inwestycje w dekarbonizację sektora ciepłowniczego.",
+        "Program zastępuje dotychczasowe \"kamienie milowe\" Krajowego Planu Odbudowy powiązane z opłatami od samochodów spalinowych, z których rząd się wycofał. Środki mają zapewnić stabilne finansowanie reform ciepłownictwa zgodnie z zobowiązaniami wobec Komisji Europejskiej w ramach KPO.",
+        "Uruchomienie programu planowane jest jeszcze przed końcem sierpnia."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Iran twierdzi, że kontroluje Cieśninę Ormuz, odrzuca twierdzenia Trumpa",
+      "skrot": "Irańskie dowództwo wojskowe oświadczyło, że żaden statek nie przepłynie Cieśniną Ormuz bez zgody Teheranu, odrzucając amerykańskie twierdzenia o przejęciu kontroli nad szlakiem.",
+      "zrodlo": {
+        "nazwa": "Al Jazeera",
+        "url": "https://www.aljazeera.com/news/2026/8/13/iran-says-strait-of-hormuz-under-its-control-rejects-trump-claims",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "Strait of Hormuz tanker",
+        "alt": "Tankowiec przepływający przez Cieśninę Ormuz"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "8 statków",
+          "opis": "liczba jednostek, które przepłynęły cieśniną we wtorek, wobec 130-140 przed wojną"
+        }
+      ],
+      "kontynuacja": true,
+      "akapity": [
+        "Połączone dowództwo wojskowe Iranu oświadczyło, że żaden statek nie może przepłynąć Cieśniną Ormuz bez zgody Teheranu, a szlak pozostaje \"pod zarządem i kontrolą Islamskiej Republiki\". Wypowiedź jest bezpośrednią odpowiedzią na powtarzane przez Donalda Trumpa twierdzenia, że to Stany Zjednoczone przejęły kontrolę nad cieśniną.",
+        "Od wybuchu wojny USA i Izraela z Iranem pod koniec lutego Teheran faktycznie zablokował szlak, którym wcześniej płynęła jedna piąta światowego handlu ropą i LNG. We wtorek przez cieśninę przepłynęło zaledwie osiem statków, wobec 130–140 dziennie przed wojną i średnio ok. 12 w ostatnich dziesięciu dniach.",
+        "Iran deklaruje, że nie zamierza w pełni otworzyć cieśniny, dopóki Waszyngton nie zniesie sankcji, nie zwolni zamrożonych irańskich aktywów i nie wypłaci odszkodowań za ataki. Strona amerykańska domaga się z kolei pełnej swobody żeglugi handlowej bez irańskich opłat czy konieczności uzyskiwania zgody Teheranu na przepłynięcie — sprzeczne stanowiska oddalają szanse na szybkie domknięcie negocjowanego z Omanem porozumienia tranzytowego."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Rosja zaatakowała obwód chersoński setkami dronów, zginęły trzy osoby",
+      "skrot": "Nocny nalot dronów Shahed na obwód chersoński objął 28 miejscowości, w tym miasto Chersoń — zginęły trzy osoby, a 20 zostało rannych.",
+      "zrodlo": {
+        "nazwa": "Ukrinform",
+        "url": "https://www.ukrinform.net/rubric-ato/4153599-russian-attacks-on-kherson-region-leave-three-killed-20-injured-since-morning.html",
+        "opublikowano": "14.08.2026"
+      },
+      "obraz": {
+        "query": "Kherson Ukraine damage",
+        "alt": "Zniszczenia po ataku dronowym w obwodzie chersońskim"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "28 miejscowości",
+          "opis": "liczba miejscowości obwodu chersońskiego objętych atakiem"
+        },
+        {
+          "wartosc": "3 zabitych, 20 rannych",
+          "opis": "bilans nocnego ataku"
+        }
+      ],
+      "akapity": [
+        "Rosyjskie siły zaatakowały w nocy obwód chersoński dronami uderzeniowymi typu Shahed, obejmując ogniem 28 miejscowości, w tym stolicę regionu Chersoń. Według władz obwodowych w ataku zginęły trzy osoby, a 20 zostało rannych.",
+        "Atak wpisuje się w serię niemal codziennych nocnych nalotów na miasta linii frontu i obszary przygraniczne w południowo-wschodniej Ukrainie, gdzie rosyjskie drony i pociski uderzają regularnie w infrastrukturę cywilną i energetyczną.",
+        "Chersoń, wyzwolony przez wojska ukraińskie w listopadzie 2022 r., pozostaje pod stałym ostrzałem ze względu na bliskość linii frontu po drugiej stronie Dniepru."
+      ]
+    },
+    {
+      "kategoria": "Wojna",
+      "tytul": "Marynarka USA testuje śmigłowce z AI do polowania na okręty podwodne",
+      "skrot": "Podczas manewrów RIMPAC 2026 na Hawajach US Navy i Lockheed Martin przetestowały system sonarowy AI SensorMAX na dwóch śmigłowcach Seahawk.",
+      "zrodlo": {
+        "nazwa": "New Atlas",
+        "url": "https://newatlas.com/military/us-navy-and-lockheed-martin-test-ai-sonar-system-at-rimpac-2026",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "MH-60R Seahawk helicopter",
+        "alt": "Śmigłowiec MH-60R Seahawk nad oceanem"
+      },
+      "akapity": [
+        "Podczas ćwiczeń morskich RIMPAC 2026 u wybrzeży Hawajów Marynarka Wojenna USA i Lockheed Martin przetestowały nowy system sonarowy oparty na sztucznej inteligencji, zamontowany na dwóch zmodyfikowanych śmigłowcach MH-60R Seahawk polujących na okręty podwodne.",
+        "System o nazwie SensorMAX działa jak przenośny \"ekspert akustyczny\" — nieprzerwanie analizuje profile energii widmowej i dane z ośmiu {{sonobuoi|pływających czujników akustycznych zrzucanych do wykrywania okrętów podwodnych}} jednocześnie, dwukrotnie więcej niż starsze systemy. Oprogramowanie samodzielnie oznacza potencjalne zagrożenia, a wszystko, czego nie potrafi sklasyfikować, przekazuje operatorom na ziemi do dalszej analizy.",
+        "Model można przetrenować na podstawie takiej analizy w mniej niż pięć minut, a zaktualizowane wersje są przesyłane do śmigłowca szyfrowanym łączem jeszcze w trakcie lotu — bez konieczności lądowania."
+      ]
+    },
+    {
+      "kategoria": "Technologia",
+      "tytul": "Insta360 X6 nagrywa 360 stopni w 8K przy 50 klatkach na sekundę",
+      "skrot": "Nowy flagowiec Insta360 X6 podwaja moc obliczeniową względem poprzednika i nagrywa sferyczne wideo 8K50 dzięki podwójnym sensorom Sony.",
+      "zrodlo": {
+        "nazwa": "New Atlas",
+        "url": "https://newatlas.com/consumer-tech/insta360-x6-8k-360-degree-actioncam/",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "Insta360 360 camera",
+        "alt": "Kamera sferyczna Insta360 X6"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "8K50",
+          "opis": "maksymalna rozdzielczość i płynność nagrań sferycznych"
+        },
+        {
+          "wartosc": "140 minut",
+          "opis": "czas nagrywania w 8K30 na jednym ładowaniu"
+        }
+      ],
+      "akapity": [
+        "Insta360 zaprezentowało model X6 — następcę X5, który firma nazywa największym skokiem jakościowym w historii serii X. Kamera nagrywa pełne sferyczne wideo 360 stopni w rozdzielczości 8K przy 50 klatkach na sekundę, wobec 8K30 w poprzedniku, co pozwala kadrować ujęcie dopiero na etapie montażu.",
+        "Sprzęt zyskał podwójne, niestandardowe sensory Sony 1/1.1 cala o 33 proc. większej powierzchni i około czterokrotnie większej czułości na światło niż w X5. Potrójny układ chipów daje 500 proc. więcej mocy obliczeniowej, a funkcja AdaptiveTone 2.0 mierzy naświetlenie każdego obiektywu osobno, rejestrując dwie ekspozycje na klatkę.",
+        "Producent pozycjonuje X6 jako narzędzie hybrydowe — oprócz trybu sferycznego kamera działa też jako aparat do płaskich klipów na social media lub klasyczna kamera akcji z jednym obiektywem. Bateria 2600 mAh starcza na 140 minut nagrywania w 8K30, a ładowanie do 80 proc. zajmuje 24 minuty."
+      ]
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Google pokazał Gemini 3.7 Flash, ale flagowy model 3.5 Pro wciąż czeka",
+      "skrot": "Nowy Gemini 3.7 Flash jest o 50 proc. tańszy od poprzednika sprzed trzech tygodni i lepiej radzi sobie w zadaniach programistycznych.",
+      "zrodlo": {
+        "nazwa": "The Decoder",
+        "url": "https://the-decoder.com/gemini-3-7-flash-lands-with-coding-gains-and-undercuts-its-three-week-old-predecessors-price-by-50/",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "Google Gemini logo",
+        "alt": "Logo modelu Gemini od Google"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "0,75 USD (ok. 2,80 zł)",
+          "opis": "cena za milion tokenów wejściowych"
+        },
+        {
+          "wartosc": "3,75 USD (ok. 14 zł)",
+          "opis": "cena za milion tokenów wyjściowych"
+        }
+      ],
+      "akapity": [
+        "Google udostępniło Gemini 3.7 Flash — kolejną, wydaną zaledwie trzy tygodnie po poprzedniku (3.6 Flash), wersję swojego \"roboczego konia\" wśród modeli do kodowania i agentów AI. Firma deklaruje wyraźną poprawę w zadaniach programistycznych, takich jak debugowanie i generowanie gotowego do wdrożenia kodu za pierwszym razem.",
+        "Model jest o 50 proc. tańszy od poprzednika przy starcie: 0,75 USD (ok. 2,80 zł) za milion tokenów wejściowych i 3,75 USD (ok. 14 zł) za milion tokenów wyjściowych. Jest dostępny przez API, w AI Studio oraz w Antigravity, a od czwartku napędza też firmowego agenta produktywności Gemini Spark.",
+        "Google wciąż nie podało jednak terminu premiery swojego najpotężniejszego modelu, Gemini 3.5 Pro, którego wydanie opóźnia się od tygodni — flagowiec pozostaje \"zagubiony\" w procesie treningu."
+      ]
+    },
+    {
+      "kategoria": "AI",
+      "tytul": "Przychody OpenAI przekroczyły 40 mld USD w skali roku przed planowanym IPO",
+      "skrot": "Roczna stopa przychodów OpenAI sięgnęła 40 mld USD (ok. 149,5 mld zł), niemal dwukrotnie więcej niż na koniec 2025 r., w tle planów debiutu giełdowego.",
+      "zrodlo": {
+        "nazwa": "Bloomberg",
+        "url": "https://www.bloomberg.com/news/articles/2026-08-13/openai-s-revenue-run-rate-tops-40-billion-ahead-of-ipo",
+        "opublikowano": "13.08.2026"
+      },
+      "obraz": {
+        "query": "OpenAI logo",
+        "alt": "Logo firmy OpenAI"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "40 mld USD (ok. 149,5 mld zł)",
+          "opis": "roczna stopa przychodów OpenAI"
+        }
+      ],
+      "akapity": [
+        "OpenAI zmierza do rocznej stopy przychodów przekraczającej 40 mld USD (ok. 149,5 mld zł) — wynika to z aktualnych wyników spółki i oznacza niemal podwojenie tempa względem końca 2025 r. Wzrost napędza w dużej mierze rosnąca sprzedaż oprogramowania do programowania wspieranego AI.",
+        "Przyspieszenie przychodów wzmacnia plany firmy dotyczące debiutu na Wall Street. Równolegle OpenAI ogłosiło zatrudnienie Daliego Rajicia, dotychczasowego prezesa i dyrektora operacyjnego należącego do Alphabetu Wiz, na stanowisko dyrektora ds. przychodów — to już druga taka zmiana w firmie w niespełna rok.",
+        "Rosnąca skala biznesu OpenAI wpisuje się w szerszy trend na rynku: banki inwestycyjne odnotowują w tym roku rekordową falę emisji długu i akcji finansujących ekspansję firm AI."
+      ]
+    },
+    {
+      "kategoria": "Software Development AI",
+      "tytul": "Spring AI AgentCore 2.1.0 ułatwia wdrażanie agentów AI w chmurze",
+      "skrot": "Zespół Springa wydał wersję 2.1.0 platformy Spring AI AgentCore do wdrażania agentów AI, gdy Broadcom dołączył do Open Secure AI Alliance.",
+      "zrodlo": {
+        "nazwa": "Spring.io",
+        "url": "https://spring.io/blog/2026/08/11/this-week-in-spring-august-11-2026/",
+        "opublikowano": "11.08.2026"
+      },
+      "obraz": {
+        "query": "Java programming code",
+        "alt": "Kod źródłowy w języku Java"
+      },
+      "akapity": [
+        "Zespół Springa wydał wersję 2.1.0 Spring AI AgentCore — platformy ułatwiającej wdrażanie agentów zbudowanych na Spring AI w środowiskach chmurowych. Aktualizacja pojawiła się tydzień po tym, jak Broadcom, firma-matka zespołu Springa, dołączyła do Open Secure AI Alliance, koalicji skupionej na bezpieczeństwie systemów AI.",
+        "W cotygodniowym przeglądzie \"This Week in Spring\" Josh Long omówił też m.in. wdrażanie agentów Spring AI właśnie na AgentCore oraz dyskusję o wprowadzeniu wątków wirtualnych Javy 24 do istniejącego projektu.",
+        "Dla zespołów budujących agentowe funkcje w oparciu o Spring AI nowa wersja AgentCore oznacza jeden mniej element infrastruktury do samodzielnego składania przy przenoszeniu prototypu agenta do produkcji."
+      ]
+    },
+    {
+      "kategoria": "Software Development AI",
+      "tytul": "GitHub, Microsoft, AWS i OpenAI uzgodniły wspólny standard wtyczek dla agentów kodujących",
+      "skrot": "Standard Agent Plugins 1.0 pozwala zbudować jedną wtyczkę i uruchomić ją w Copilocie, Cursorze i innych zgodnych klientach agentowych.",
+      "zrodlo": {
+        "nazwa": "GitHub Blog",
+        "url": "https://github.blog/changelog/2026-08-12-agent-plugins-1-0-in-vs-code-copilot-cli-and-the-copilot-app/",
+        "opublikowano": "12.08.2026"
+      },
+      "obraz": {
+        "query": "laptop code editor",
+        "alt": "Edytor kodu na ekranie laptopa"
+      },
+      "akapity": [
+        "GitHub udostępnił wersję 1.0 standardu Agent Plugins w VS Code, Copilot CLI i aplikacji Copilot. Standard, opublikowany 6 sierpnia przy współpracy AWS, Anysphere (twórcy Cursora), Microsoftu, OpenAI i Vercela, pozwala napisać jedną wtyczkę i uruchomić ją bez zmian we wszystkich zgodnych klientach agentowych.",
+        "Dotąd producenci narzędzi programistycznych budowali integracje osobno pod każdego agenta kodującego, co mnożyło pracę deweloperów rozszerzeń i utrudniało utrzymanie kilku wersji tego samego dodatku.",
+        "Wspólny standard ma ułatwić ekosystemowi wtyczek rozwój niezależny od tego, którego agenta AI wybierze zespół programistyczny — podobny efekt ujednolicenia, jaki w swoim czasie przyniósł protokół Language Server Protocol dla edytorów kodu."
+      ]
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Pojedyncza ludzka komórka mózgu może liczyć znacznie więcej, niż sądzono",
+      "skrot": "Badanie w PNAS wykazało, że ludzkie neurony korowe wykonują dużo bardziej złożone obliczenia niż neurony innych ssaków.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/08/260812015216.htm",
+        "opublikowano": "12.08.2026"
+      },
+      "obraz": {
+        "query": "human brain neuron",
+        "alt": "Ilustracja ludzkiego neuronu"
+      },
+      "akapity": [
+        "Badanie opublikowane w czasopiśmie PNAS sugeruje, że pojedyncze ludzkie neurony potrafią wykonywać znacznie bardziej złożone obliczenia niż neurony innych ssaków. Autorzy porównali aktywność elektryczną neuronów korowych człowieka z komórkami innych gatunków i znaleźli różnice w sposobie przetwarzania sygnałów na poziomie pojedynczej komórki, nie tylko całych sieci neuronowych.",
+        "Odkrycie może częściowo tłumaczyć, dlaczego ludzki mózg wspiera zdolności takie jak złożony język, wyobraźnia czy matematyka, mimo że liczba neuronów w korze mózgowej człowieka nie odbiega drastycznie od innych naczelnych.",
+        "Zespół podkreśla, że to dopiero jeden z elementów układanki — obliczeniowa moc mózgu wynika zarówno z możliwości pojedynczych komórek, jak i ze sposobu, w jaki są one ze sobą połączone w sieci."
+      ]
+    },
+    {
+      "kategoria": "Nauka",
+      "tytul": "Nowa \"superstal\" może o 40 razy obniżyć koszty produkcji zielonego wodoru z wody morskiej",
+      "skrot": "Naukowcy z Uniwersytetu Hongkońskiego opracowali stal odporną na korozję w produkcji wodoru z wody morskiej, mogącą zastąpić drogi tytan.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/08/260811052717.htm",
+        "opublikowano": "11.08.2026"
+      },
+      "obraz": {
+        "query": "stainless steel corrosion laboratory",
+        "alt": "Próbka stali w laboratorium materiałowym"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "ok. 40 razy",
+          "opis": "szacowana redukcja kosztów materiałów konstrukcyjnych względem tytanu"
+        }
+      ],
+      "akapity": [
+        "Zespół z Wydziału Inżynierii Mechanicznej Uniwersytetu Hongkońskiego, kierowany przez prof. Mingxina Huanga, opracował nową stal nierdzewną SS-H2, zaprojektowaną do pracy w warunkach silnej korozji towarzyszącej produkcji \"zielonego\" wodoru z wody morskiej. Wyniki opisano w czasopiśmie Materials Today.",
+        "Materiał wykorzystuje nieoczekiwany mechanizm podwójnej pasywacji — dwuetapowego tworzenia się warstwy ochronnej na powierzchni metalu — dzięki czemu opiera się korozji znacznie skuteczniej niż zwykła stal nierdzewna. Naukowcy przyznają, że część tego zjawiska trudno w pełni wyjaśnić dotychczasową teorią materiałową.",
+        "Nowa stal mogłaby zastąpić kosztowny tytan używany dziś w elektrolizerach do rozkładu wody morskiej, obniżając koszty materiałów konstrukcyjnych nawet około 40-krotnie i czyniąc produkcję wodoru z wody morskiej znacznie bardziej opłacalną ekonomicznie."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Samce kaszalotów wydają najgłośniejszy dźwięk komunikacyjny wśród zwierząt",
+      "skrot": "Rytmiczne \"szczęki\" samców kaszalotów mogą być słyszalne przez inne wieloryby nawet z odległości 70 km, ale naukowcy wciąż nie wiedzą, po co je wydają.",
+      "zrodlo": {
+        "nazwa": "Live Science",
+        "url": "https://www.livescience.com/animals/whales/like-a-jail-door-slamming-male-sperm-whales-mysterious-rhythmic-clanging-is-the-loudest-communication-sound-of-any-animal",
+        "opublikowano": "12.08.2026"
+      },
+      "obraz": {
+        "query": "sperm whale ocean",
+        "alt": "Kaszalot pływający w oceanie"
+      },
+      "kluczowe_liczby": [
+        {
+          "wartosc": "70 km",
+          "opis": "szacowany zasięg, na jaki mogą być słyszalne dźwięki"
+        }
+      ],
+      "akapity": [
+        "Nowe badanie wykazało, że niskoczęstotliwościowe, metaliczne dźwięki wydawane przez samce kaszalotów — nazywane \"szczękami\" (clangs), bo brzmią jak \"trzaskające drzwi więziennej celi\" — są głośniejsze niż jakikolwiek inny znany sygnał komunikacyjny wielorybów i mogą być teoretycznie słyszalne przez inne osobniki nawet z odległości 70 km.",
+        "Do wytworzenia dźwięku samce wykorzystują tzw. wargi fonacyjne — struktury w przewodach nosowych, które gwałtownie się zderzają. Naukowcy wciąż nie są jednak pewni, jaką dokładnie funkcję pełnią te sygnały w życiu społecznym kaszalotów.",
+        "Odkrycie potwierdza, że kaszaloty produkują najgłośniejszy udokumentowany dźwięk komunikacyjny w świecie zwierząt, wyprzedzając pod tym względem między innymi płetwale błękitne."
+      ]
+    },
+    {
+      "kategoria": "Ciekawostka na dziś",
+      "tytul": "Teleskop Webba pokazał \"kosmicznego lwa\" wyrzeźbionego przez umierającą gwiazdę",
+      "skrot": "Nowe zdjęcie w podczerwieni ujawniło szczegóły mgławicy planetarnej NGC 2392, przypominającej lwią głowę otoczoną \"grzywą\" pyłu.",
+      "zrodlo": {
+        "nazwa": "ScienceDaily",
+        "url": "https://www.sciencedaily.com/releases/2026/08/260812015206.htm",
+        "opublikowano": "12.08.2026"
+      },
+      "obraz": {
+        "query": "Lion Nebula James Webb",
+        "alt": "Mgławica Lwia Głowa sfotografowana przez teleskop Webba"
+      },
+      "akapity": [
+        "Kosmiczny Teleskop Jamesa Webba wykonał nowe, szczegółowe zdjęcie w podczerwieni mgławicy NGC 2392, znanej jako Mgławica Lwia Głowa, ukazujące dramatyczne skutki śmierci gwiazdy podobnej do Słońca. Obserwacje wykonano jednocześnie kamerami NIRCam i MIRI.",
+        "W centrum mgławicy znajduje się rozgrzany {{biały karzeł|gęsta, gorąca pozostałość po śmierci gwiazdy podobnej do Słońca}}, który bombarduje promieniowaniem otaczający gaz i pył, wyrzeźbiając charakterystyczny \"lwi pysk\" i rozświetlając rozległą \"grzywę\" ocalałych, gęstych obłoków pyłu.",
+        "Tego typu mgławice planetarne to jeden z ostatnich etapów życia gwiazd o masie zbliżonej do Słońca — dają zarazem wgląd w to, jak może wyglądać odległa przyszłość naszego własnego układu planetarnego."
+      ]
+    },
+    {
+      "kategoria": "Tego dnia",
+      "tytul": "1945: Japonia ogłosiła bezwarunkową kapitulację, kończąc II wojnę światową",
+      "skrot": "14 sierpnia 1945 r. cesarz Hirohito ogłosił bezwarunkową kapitulację Japonii wobec aliantów, kończąc II wojnę światową.",
+      "zrodlo": {
+        "nazwa": "Wikipedia",
+        "url": "https://en.wikipedia.org/wiki/August_14"
+      },
+      "obraz": {
+        "query": "Japan surrender 1945",
+        "alt": "Ogłoszenie kapitulacji Japonii w 1945 roku"
+      },
+      "akapity": [
+        "14 sierpnia 1945 r. cesarz Hirohito ogłosił publicznie bezwarunkową kapitulację Japonii wobec sił alianckich, po zrzuceniu bomb atomowych na Hiroszimę i Nagasaki oraz wypowiedzeniu wojny przez ZSRR. Dzień ten przeszedł do historii jako V-J Day (Victory over Japan Day) i oznaczał faktyczny koniec II wojny światowej — formalny akt kapitulacji podpisano na pokładzie pancernika USS Missouri 2 września 1945 r.",
+        "Decyzja cesarza, przekazana narodowi w bezprecedensowym przemówieniu radiowym, zakończyła najkrwawszy konflikt w historii ludzkości i otworzyła erę powojennej odbudowy oraz nowego układu sił na świecie, zdominowanego odtąd przez rywalizację Stanów Zjednoczonych i Związku Radzieckiego."
+      ]
+    },
+    {
+      "kategoria": "Tego dnia",
+      "tytul": "1980: strajk w Stoczni Gdańskiej dał początek fali protestów, które doprowadziły do powstania Solidarności",
+      "skrot": "14 sierpnia 1980 r. wybuchł strajk w Stoczni Gdańskiej, który zapoczątkował falę protestów zakończoną narodzinami \"Solidarności\".",
+      "zrodlo": {
+        "nazwa": "Wikipedia",
+        "url": "https://pl.wikipedia.org/wiki/14_sierpnia"
+      },
+      "obraz": {
+        "query": "Gdansk Shipyard 1980",
+        "alt": "Strajk w Stoczni Gdańskiej w 1980 roku"
+      },
+      "akapity": [
+        "14 sierpnia 1980 r. w Stoczni Gdańskiej im. Lenina wybuchł strajk, którego bezpośrednim powodem było zwolnienie z pracy Anny Walentynowicz. Robotnicy zażądali jej przywrócenia do pracy, podwyżek płac oraz budowy pomnika ofiar Grudnia 1970. Na czele komitetu strajkowego stanął elektryk Lech Wałęsa.",
+        "Strajk szybko rozlał się na inne zakłady Wybrzeża, prowadząc do powstania Międzyzakładowego Komitetu Strajkowego i podpisania Porozumień Sierpniowych. Wydarzenia tamtego sierpnia doprowadziły do powstania Niezależnego Samorządnego Związku Zawodowego \"Solidarność\" — pierwszej niezależnej od władz komunistycznych masowej organizacji w bloku wschodnim, która w kolejnej dekadzie odegrała kluczową rolę w upadku komunizmu w Polsce i Europie Środkowo-Wschodniej."
+      ]
+    }
+  ],
+  "literatura": {
+    "cytat": {
+      "tresc": "Piękno zbawi świat.",
+      "autor": "Fiodor Dostojewski",
+      "zrodlo": "Idiota",
+      "omowienie": "Zdanie wypowiada w powieści młody, śmiertelnie chory książę Myszkin, a mimo to stało się jednym z najczęściej cytowanych fragmentów literatury rosyjskiej — samodzielnym hasłem, które żyje dziś poza kontekstem opowieści. Jego siła bierze się właśnie z niejednoznaczności: nie wiadomo, czy to naiwna wiara, ironia autora, czy głęboka intuicja o tym, że estetyczne doświadczenie potrafi poruszyć człowieka tam, gdzie zawodzą argumenty. Dostojewski nie precyzuje, jakie piękno ma na myśli — fizyczne, moralne czy duchowe — i to pozostawione czytelnikowi pole domysłu sprawia, że zdanie wraca w filozofii, teologii i sztuce jako pytanie, nie odpowiedź."
+    },
+    "przyslowie": {
+      "tresc": "Uderz w stół, a nożyce się odezwą.",
+      "pochodzenie": "przysłowie polskie",
+      "odpowiedniki": [
+        {
+          "jezyk": "ang.",
+          "tresc": "A guilty conscience needs no accuser.",
+          "tlum": "Winne sumienie nie potrzebuje oskarżyciela."
+        },
+        {
+          "jezyk": "łac.",
+          "tresc": "Conscientia mille testes.",
+          "tlum": "Sumienie [warte jest] tysiąc świadków."
+        }
+      ],
+      "omowienie": "Obraz przywołany w przysłowiu jest niemal komiczny: ktoś uderza pięścią w stół z oburzenia, a schowane pod nim, zapomniane nożyce nagle brzęczą, jakby to one poczuły się oskarżone. Sens jest jednak dosadny — kto reaguje przesadnie żywo na ogólną uwagę, sam się demaskuje jako winny. To przysłowie o mechanizmie psychologicznym, który działa niezależnie od epoki: nadgorliwe zaprzeczanie czemuś, o co nikt wprost nie oskarżał, budzi podejrzenia skuteczniej niż milczenie."
+    },
+    "wiersz": {
+      "tytul": "Sonnet 18 (Shall I compare thee to a summer's day?)",
+      "autor": "William Shakespeare",
+      "tresc": "Shall I compare thee to a summer's day?\nThou art more lovely and more temperate:\nRough winds do shake the darling buds of May,\nAnd summer's lease hath all too short a date;\nSometime too hot the eye of heaven shines,\nAnd often is his gold complexion dimm'd;\nAnd every fair from fair sometime declines,\nBy chance, or nature's changing course, untrimm'd;\nBut thy eternal summer shall not fade,\nNor lose possession of that fair thou ow'st,\nNor shall death brag thou wander'st in his shade,\nWhen in eternal lines to time thou grow'st,\nSo long as men can breathe, or eyes can see,\nSo long lives this, and this gives life to thee.",
+      "omowienie": "Sonet zaczyna się od pozornie prostego porównania, które autor sam natychmiast obala: letni dzień jest zbyt niestały, zbyt krótki i zbyt łatwo przyćmiewa go pogoda, by dorównać adresatowi wiersza. Po polsku ten zwrot brzmiałby mniej więcej: \"Czy mam cię porównać do letniego dnia? Ty jesteś piękniejszy i łagodniejszy — gwałtowne wiatry strząsają majowe pąki, a lato ma zbyt krótki najem\". W ostatnich dwóch wersach — \"dopóki ludzie oddychają lub oczy widzą, dopóty żyje to, a to daje życie tobie\" — wiersz odsłania swój prawdziwy temat: to nie uroda adresata ma trwać wiecznie, lecz sam tekst, który ją utrwalił. Czternaście wersów pisanych regularnym pentametrem jambicznym, zamkniętych w trzech czterowierszach i kończącym dwuwierszu, to podręcznikowy przykład angielskiego sonetu — formy, którą Szekspir uczynił swoją."
+    },
+    "angielski": {
+      "slowo": "nuance",
+      "wymowa": "/ˈnjuːɑːns/",
+      "znaczenie": "niuans, subtelna różnica lub odcień znaczenia",
+      "przyklad": "The negotiator picked up on every nuance in the room. — Negocjator wychwycił każdy niuans w tym pomieszczeniu.",
+      "zwrot": "to get the ball rolling",
+      "zwrot_znaczenie": "zainicjować działanie, ruszyć z czymś do przodu",
+      "zwrot_przyklad": "Let's get the ball rolling on the new project. — Zacznijmy działać przy nowym projekcie."
+    }
+  },
+  "logi": [
+    {
+      "poziom": "info",
+      "wiadomosc": "Model rutyny: claude-sonnet-5"
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kurs USD/PLN: 3,7372, EUR/PLN: 4,3058 (NBP via money.pl, 13.08.2026) — użyty konsekwentnie do przeliczeń w całym wydaniu."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "WebFetch do pl.wikipedia.org i en.wikipedia.org zwrócił błąd EGRESS_BLOCKED (blokada proxy sieciowego w środowisku rutyny) — daty i fakty dla kategorii \"Tego dnia\" zweryfikowano przez WebSearch krzyżowo w kilku niezależnych źródłach (m.in. History.com, Britannica, polskie serwisy historyczne) zamiast bezpośredniego odczytu stron dziennych Wikipedii."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kategoria Polityka: znaleziono tylko 2 z 3 tematów spełniających okno świeżości. Odrzucone kandydatury (poza oknem lub już opisane wcześniej): budżet 2026 (uchwalony wcześniej), 7,9 mld euro z KPO (decyzja KE z 7 lipca), ustawa łańcuchowa o psach (podpisana pod koniec lipca), skierowanie ustawy o windfall tax do TK (opisane już we wczorajszym wydaniu jako kontekst zapowiedzi nowego projektu)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kategoria Wojna, wątek polski: sprawdzono defence24.pl, konflikty.pl i notesfrompoland.com — najświeższe konkretne wydarzenie (powołanie Komponentu Obrony Pogranicza) miało nominacje z 15 lipca, poza oknem świeżości, więc pominięto dedykowany artykuł o wątku polskim w tym wydaniu."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Zgłoszenia z GitHub Issues: brak otwartych zgłoszeń [Uwaga]. Jedno zgłoszenie [Auto] dotyczyło martwego linku nato.int w wydaniu z 11.08 — domena nie jest na liście zrodla_pierwotne, więc nie wymaga działania."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kategoria Technologia: złożono 1 z 2 art. — jedyny znaleziony drugi kandydat w oknie 26 h (luka Spectre w RISC-V, theregister.com) miał źródło z 12.08, poza oknem; nie znaleziono w porę świeższej alternatywy z theregister.com/spidersweb.pl/newatlas.com/space.com, więc pole zostawiono niewypełnione zamiast dopychać starym tematem."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Brak wyjścia HTTP w świat (URLError) — stan znany i stały dla tego środowiska; obrazy = zdjęcia kategorii, pogoda = Open-Meteo w przeglądarce."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kategoria „Polityka”: złożono 2 art. z 3 w configu — mniej przy chudym materiale, bez dopychania wodą."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Kategoria „Technologia”: złożono 1 art. z 2 w configu — mniej przy chudym materiale, bez dopychania wodą."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Po 2 artykuły z jednej domeny: Nauka (sciencedaily.com) — dopuszczalne, ale jeśli powtarza się co wydanie, research nie schodzi poniżej pierwszego trafionego serwisu."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "18 art. ma datę źródła bez godziny — okna 26 h nie da się potwierdzić. Podawaj `opublikowano` z GG:MM."
+    },
+    {
+      "poziom": "warning",
+      "wiadomosc": "Tylko 1 z 20 art. ma datę źródła z dnia wydania (14.08.2026) — noc/poranek wygląda na nieodrobiony. Sprawdź, co wydarzyło się od poprzedniego wydania (zwłaszcza w Wojnie) i czy któryś wątek nie dotyczy Polski."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Czas wykonania rutyny: 24 min 33 s (od startu KROK 0 do wygenerowania wydania)."
+    },
+    {
+      "poziom": "info",
+      "wiadomosc": "Zużyte tokeny (≈): wyjście 353 359, wejście 42 624, kontekst z cache 35 662 560."
+    }
+  ],
+  "watki": [
+    {
+      "data": null,
+      "temat": "Rozbrojenie Hamasu i wycofanie Izraela z Gazy — Netanjahu odrzucił plan pokojowy Trumpa",
+      "sprawdzic": "czy Izrael i Hamas znajdą kompromis wokół planu \"Board of Peace\" mimo odrzucenia go przez Netanjahu"
+    },
+    {
+      "data": null,
+      "temat": "Ustawa Grahama o sankcjach na Rosję — głosowanie w Izbie Reprezentantów",
+      "sprawdzic": "czy Izba Reprezentantów przegłosuje ustawę przyjętą wcześniej przez Senat 86:11; termin przesunął się z końca sierpnia na jesień 2026"
+    },
+    {
+      "data": null,
+      "temat": "Nowy projekt windfall tax dla firm paliwowych po zablokowaniu poprzedniego przez prezydenta",
+      "sprawdzic": "jaki kształt przyjmie nowa wersja podatku zapowiadana na jesień i czy obejmie też dostawców gazu"
+    },
+    {
+      "data": null,
+      "temat": "Spór Iran-USA o kontrolę nad Cieśniną Ormuz",
+      "sprawdzic": "czy dojdzie do podpisania finalnego porozumienia tranzytowego Iran-Oman i faktycznego wznowienia pełnej żeglugi"
+    },
+    {
+      "data": "2026-09-01",
+      "temat": "Start bonu senioralnego do 2150 zł miesięcznie",
+      "sprawdzic": "czy świadczenie faktycznie ruszy zgodnie z zapowiedzią we wszystkich uprawnionych gminach"
+    },
+    {
+      "data": "2026-08-31",
+      "temat": "Koniec obniżki VAT na paliwo (do 8 proc.) i pytanie o dalsze wsparcie kierowców",
+      "sprawdzic": "czy rząd przedłuży niższy VAT na paliwo po 31 sierpnia lub zastąpi go inną formą wsparcia"
+    }
+  ],
+  "pogoda": {
+    "miasto": "Nowy Dwór Mazowiecki",
+    "lat": 52.4306,
+    "lon": 20.7158,
+    "prognoza_url": "https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541"
+  }
+}
+  </script>
+
+  <script>
+  (function () {
+    /* dane produkcyjne */
+    const _raw = document.getElementById('dane-gazety').textContent.trim();
+    const D = (_raw === '__' + 'DANE' + '__' && typeof DEMO !== 'undefined' && DEMO)
+      ? DEMO : JSON.parse(_raw);
+
+    /* Data wydania: rutyna zapisuje znacznik UTC (data_iso); przeglądarka
+       formatuje go w czasie polskim (Europe/Warsaw, z DST). Fallback na gotowy
+       string data_wydania (starsze wydania / demo / brak Intl). */
+    function formatDataWydania(iso, fallback) {
+      if (!iso) return fallback || '';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return fallback || '';
+      try {
+        const p = new Intl.DateTimeFormat('en-GB', {
+          timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric',
+          month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+        }).formatToParts(d).reduce((o, x) => (o[x.type] = x.value, o), {});
+        const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+          Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+        const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+          'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+        return `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}, ${p.hour}:${p.minute}`;
+      } catch (e) {
+        return fallback || '';
+      }
+    }
+    D.data_wydania = formatDataWydania(D.data_iso, D.data_wydania);
+
+    /* ---- motyw ---- */
+    const root = document.documentElement;
+    if (localStorage.getItem('gazeta-theme') === 'dark' ||
+        (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+      root.classList.add('dark');
+    }
+    document.getElementById('theme-toggle').onclick = () => {
+      root.classList.toggle('dark');
+      localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+    };
+
+    /* ---- nagłówek ---- */
+    const tytul = D.tytul || 'Gazeta Codzienna';
+    document.title = tytul + ' — ' + D.data_wydania;
+    document.getElementById('tytul-gazety').textContent = tytul;
+    document.getElementById('data-wydania').textContent = D.data_wydania;
+    document.getElementById('numer-wydania').textContent = D.numer || '';
+    if (D.kicker) document.getElementById('kicker-label').textContent = D.kicker;
+
+    /* ---- artykuły ---- */
+    const main = document.getElementById('gazeta');
+    const FALLBACK_IMG = 'data:image/svg+xml;utf8,' + encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="100%" height="100%" fill="#d8d2c2"/><text x="50%" y="50%" font-family="serif" font-size="40" fill="#55503f" text-anchor="middle">Grzyb Times</text></svg>');
+
+    // Zdjęcie bazowe per kategoria — hostowane w repo (ten sam origin => ZAWSZE się ładuje,
+    // bez limitów i tokenów). Ścieżki root-relative, więc działają i z /wydania/.
+    /* Kilka zdjęć bazowych na kategorię — artykuły tej samej kategorii rotują
+       po liście, żeby przy nieudanych podmianach z Wikimedii nie było duplikatów. */
+    const KAT_OBRAZ = {
+      'Okładka': ['/assets/kategorie/okladka.jpg'],
+      'Inwestowanie': ['/assets/kategorie/inwestowanie.jpg', '/assets/kategorie/inwestowanie-2.jpg', '/assets/kategorie/inwestowanie-3.jpg'],
+      'Polityka': ['/assets/kategorie/polityka.jpg', '/assets/kategorie/polityka-2.jpg', '/assets/kategorie/polityka-3.jpg'],
+      'Wojna': ['/assets/kategorie/wojna.jpg', '/assets/kategorie/wojna-2.jpg'],
+      'Technologia': ['/assets/kategorie/technologia.jpg', '/assets/kategorie/technologia-2.jpg'],
+      'AI': ['/assets/kategorie/ai.jpg', '/assets/kategorie/ai-2.jpg'],
+      'Software Development AI': ['/assets/kategorie/software.jpg', '/assets/kategorie/software-2.jpg'],
+      'Nauka': ['/assets/kategorie/nauka.jpg', '/assets/kategorie/nauka-2.jpg'],
+      'Ciekawostka na dziś': ['/assets/kategorie/ciekawostka.jpg', '/assets/kategorie/ciekawostka-2.jpg'],
+      'Tego dnia': ['/assets/kategorie/tego-dnia.jpg', '/assets/kategorie/tego-dnia-2.jpg']
+    };
+    const _katUzycia = {};
+    const katObraz = k => {
+      const lista = KAT_OBRAZ[k] || KAT_OBRAZ['Okładka'];
+      const n = _katUzycia[k] = (_katUzycia[k] ?? -1) + 1;
+      return lista[n % lista.length];
+    };
+
+    const UWAGI_REPO = 'https://github.com/kapitanski-dev/kapitanski-dev.github.io/issues/new';
+    D.artykuly.forEach((a, i) => {
+      const el = document.createElement('article');
+      el.className = (i === 0 ? 'hero' : 'article') + ' reveal';
+      el.id = 'art-' + i;
+      el.dataset.kategoria = a.kategoria;
+      const uwagaUrl = UWAGI_REPO + '?title=' + encodeURIComponent('[Uwaga] ' + a.tytul)
+        + '&body=' + encodeURIComponent('Wydanie: ' + location.pathname + '\nArtykuł: ' + a.tytul + '\n\n(opisz swoją uwagę)');
+      /* Baza obrazu: og:image ze źródła (obraz.plik, w repo) > zdjęcie kategorii.
+         Fallback w onerror: plik -> kategoria -> SVG. Podmiana Wikimedia (data-query)
+         tylko, gdy nie ma plika — plik jest trafniejszy niż cokolwiek z Commons. */
+      const plik = a.obraz && a.obraz.plik ? a.obraz.plik : '';
+      /* obraz.kategoria: tematyczna kategoria zdjęcia bazowego — używa jej okładka,
+         żeby news np. wojenny dostał zdjęcie Wojny, a nie neutralny glob „Okładki” */
+      const kat = katObraz((a.obraz && a.obraz.kategoria) || a.kategoria);
+      const query = !plik && a.obraz && a.obraz.query ? a.obraz.query : '';
+      const img = `<figure><a href="${esc(a.zrodlo.url)}"><img src="${esc(plik || kat)}"`
+        + ` alt="${esc(a.obraz && a.obraz.alt || a.kategoria)}"`
+        + (plik ? ` data-kat="${esc(kat)}"` : '')
+        + (query ? ` data-query="${esc(query)}"` : '')
+        + ` loading="lazy" onerror="if(this.dataset.kat){this.src=this.dataset.kat;delete this.dataset.kat}else{this.onerror=null;this.src='${FALLBACK_IMG}'}"></a></figure>`;
+      const stats = (a.kluczowe_liczby || []).map(s =>
+        `<span class="stat"><span class="num">${esc(s.wartosc)}</span><span class="lbl">${esc(s.opis)}</span></span>`).join('');
+      const paras = a.akapity.map((p, j) =>
+        `<p class="${j === 0 ? 'lede' : ''}">${terminy(esc(p))}</p>`).join('');
+      const body =
+        `<span class="cat-label">${esc(a.kategoria)}${a.kontynuacja ? '<span class="badge-update">Aktualizacja</span>' : ''}</span>` +
+        `<h${i === 0 ? 2 : 3}><a href="${esc(a.zrodlo.url)}">${esc(a.tytul)}</a></h${i === 0 ? 2 : 3}>` +
+        `<span class="meta">Źródło: <a href="${esc(a.zrodlo.url)}">${esc(a.zrodlo.nazwa)}</a>${a.zrodlo.opublikowano ? ` · <span title="Czas publikacji u źródła">opubl. ${esc(a.zrodlo.opublikowano)}</span>` : (a.zrodlo.godzina ? ' · ' + esc(a.zrodlo.godzina) : '')}${(a.zrodla_dodatkowe || []).length ? ' · także: ' + a.zrodla_dodatkowe.map(z => `<a href="${esc(z.url)}">${esc(z.nazwa)}</a>`).join(', ') : ''} · <a href="${uwagaUrl}" target="_blank" rel="noopener" title="Otwiera zgłoszenie na GitHubie">Zgłoś uwagę</a></span>` +
+        (stats ? `<div class="stats">${stats}</div>` : '') +
+        (a.wykres ? chart(a.wykres, i) : '') +
+        (i === 0 ? `<div class="cols">${paras}</div>` : paras);
+
+      el.innerHTML = i === 0 ? img + body : img + `<div class="article-content">${body}</div>`;
+      main.appendChild(el);
+      if (i === 0) main.appendChild(Object.assign(document.createElement('hr'), { className: 'divider' }));
+    });
+
+    /* ---- „W skrócie” — jednozdaniowe streszczenia z kotwicami ---- */
+    const skroty = D.artykuly.map((a, i) => ({ s: a.skrot, i })).filter(x => x.s);
+    if (skroty.length) {
+      const box = document.createElement('section');
+      box.className = 'w-skrocie';
+      box.innerHTML = '<div class="ws-head">W skrócie</div><ul>' +
+        skroty.map(x => `<li><a href="#art-${x.i}" data-idx="${x.i}">${esc(x.s)}</a></li>`).join('') +
+        '</ul>';
+      main.prepend(box);
+      box.addEventListener('click', e => {
+        const lnk = e.target.closest('a[data-idx]');
+        if (!lnk) return;
+        e.preventDefault();
+        ustawFiltr('Wszystkie');   // artykuł może być schowany za filtrem kategorii
+        document.getElementById('art-' + lnk.dataset.idx)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+
+    /* ---- Obrazy ----
+       Baza = zdjęcie kategorii z repo (już ustawione jako src). Ten sam origin, więc
+       ZAWSZE się ładuje — bez limitów Wikimedii i bez tokenów rutyny. Best-effort:
+       spróbuj podmienić na konkretniejsze zdjęcie tematu z Wikimedia Commons (query,
+       IP czytelnika). Podmieniamy DOPIERO po udanym preloadzie (new Image()), więc
+       czytelnik nigdy nie widzi zepsutego ani ładującego się obrazka — najwyżej
+       zostaje przy zdjęciu kategorii. Nieudany upgrade (np. 429) jest niewidoczny. */
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+    async function wikiResolve(query) {
+      const p = new URLSearchParams({
+        action: 'query', generator: 'search', gsrsearch: query, gsrnamespace: '6',
+        gsrlimit: '8', prop: 'imageinfo', iiprop: 'url|mime', iiurlwidth: '1000',
+        format: 'json', origin: '*'
+      });
+      try {
+        const r = await fetch('https://commons.wikimedia.org/w/api.php?' + p.toString());
+        if (!r.ok) return '';
+        const d = await r.json();
+        const pages = Object.values((d.query && d.query.pages) || {})
+          .sort((x, y) => (x.index || 99) - (y.index || 99));
+        for (const pg of pages) {
+          const ii = (pg.imageinfo || [{}])[0];
+          if (['image/jpeg', 'image/png', 'image/webp'].includes(ii.mime))
+            return ii.thumburl || ii.url || '';
+        }
+      } catch (e) { /* brak sieci / 429 → zostaje zdjęcie kategorii */ }
+      return '';
+    }
+    const preload = src => new Promise(res => {
+      const im = new Image();
+      im.onload = () => res(true); im.onerror = () => res(false); im.src = src;
+    });
+
+    [...main.querySelectorAll('figure img[data-query]')].forEach((img, idx) => {
+      sleep(idx * 300)                               // stagger — łagodnie dla Wikimedii
+        .then(async () => {
+          /* Commons szuka słów w trybie AND — im dłuższa fraza, tym częściej 0 wyników.
+             Przy braku trafień zdejmuj ostatnie słowo (max 3 zapytania, min 2 słowa,
+             pauza między próbami — rate-limit Commons potrafi uciąć całą serię). */
+          const slowa = img.dataset.query.split(/\s+/);
+          let url = '';
+          for (let n = slowa.length, prob = 0; !url && prob < 3 && n >= Math.min(2, slowa.length); n--, prob++) {
+            if (prob) await sleep(500);
+            url = await wikiResolve(slowa.slice(0, n).join(' '));
+          }
+          if (url && await preload(url)) img.src = url;
+        });
+    });
+
+    /* ---- sekcja „Literatura” (cytat / przysłowie / wiersz + angielski) ---- */
+    const lit = (D.literatura && typeof D.literatura === 'object') ? D.literatura : null;
+    let litPanel = null;
+    if (lit) {
+      const cyt = lit.cytat || {}, prz = lit.przyslowie || {}, wrs = lit.wiersz || {}, ang = lit.angielski || {};
+      const omow = t => t ? `<p class="lit-omowienie">${terminy(esc(t))}</p>` : '';
+      const zrodloTekst = (t, url) => t ? `<span class="lit-src">${url
+        ? `<a href="${esc(url)}" target="_blank" rel="noopener">${esc(t)}</a>` : esc(t)}</span>` : '';
+      const przyklad = ex => {
+        if (!ex) return '';
+        const i = ex.indexOf('—');
+        return i === -1 ? `<div class="lit-ex"><i>${esc(ex)}</i></div>`
+          : `<div class="lit-ex"><i>${esc(ex.slice(0, i).trim())}</i> — ${esc(ex.slice(i + 1).trim())}</div>`;
+      };
+      const odpowiedniki = arr => (Array.isArray(arr) && arr.length)
+        ? '<div class="lit-odp"><span class="lit-odp-h">Odpowiedniki</span><ul>' +
+          arr.filter(o => o && o.tresc).map(o =>
+            `<li><span class="lit-odp-j">${esc(o.jezyk || '')}</span> ${esc(o.tresc)}` +
+            (o.tlum ? ` <span class="lit-odp-t">— ${esc(o.tlum)}</span>` : '') + '</li>').join('') +
+          '</ul></div>'
+        : '';
+      const cards = [];
+      if (cyt.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Cytat dnia</span>' +
+        `<p class="lit-quote">„${esc(cyt.tresc)}”</p>` +
+        zrodloTekst([cyt.autor, cyt.zrodlo].filter(Boolean).join(' · ')) +
+        omow(cyt.omowienie) + '</div>');
+      if (prz.tresc) cards.push(
+        '<div class="lit-card"><span class="lit-label">Przysłowie dnia</span>' +
+        `<p class="lit-quote">„${esc(prz.tresc)}”</p>` +
+        zrodloTekst(prz.pochodzenie) +
+        omow(prz.omowienie) + odpowiedniki(prz.odpowiedniki) + '</div>');
+      if (wrs.tresc) cards.push(
+        '<div class="lit-card lit-card--wide"><span class="lit-label">Wiersz dnia</span>' +
+        `<div class="lit-poem">${esc(wrs.tresc)}</div>` +
+        zrodloTekst([wrs.tytul, wrs.autor].filter(Boolean).join(' · '), wrs.zrodlo_url) +
+        omow(wrs.omowienie) + '</div>');
+      if (ang.slowo || ang.zwrot) {
+        let e = '<div class="lit-card"><span class="lit-label">Angielski na dziś</span>';
+        if (ang.slowo) e += '<div class="lit-en"><b>' + esc(ang.slowo) + '</b>'
+          + (ang.wymowa ? ' <span class="lit-ipa">' + esc(ang.wymowa) + '</span>' : '')
+          + (ang.znaczenie ? ' — ' + esc(ang.znaczenie) : '') + przyklad(ang.przyklad) + '</div>';
+        if (ang.zwrot) e += '<div class="lit-en"><b>' + esc(ang.zwrot) + '</b>'
+          + (ang.zwrot_znaczenie ? ' — ' + esc(ang.zwrot_znaczenie) : '') + przyklad(ang.zwrot_przyklad) + '</div>';
+        cards.push(e + '</div>');
+      }
+      if (cards.length) {
+        litPanel = document.createElement('section');
+        litPanel.id = 'literatura-panel';
+        litPanel.className = 'hidden';
+        litPanel.innerHTML =
+          '<div class="lit-head">Literatura</div>' +
+          '<div class="lit-sub">Cytat, przysłowie i wiersz dnia — każdy z krótkim omówieniem — oraz angielskie słówko i zwrot na dziś.</div>' +
+          `<div class="lit-grid">${cards.join('')}</div>`;
+        main.after(litPanel);
+      }
+    }
+
+    /* ---- panel logów rutyny ---- */
+    const logi = Array.isArray(D.logi) ? D.logi : [];
+    function logHtml(entry) {
+      const poziom = (entry && typeof entry === 'object' ? (entry.poziom || 'info') : 'info').toLowerCase();
+      const lvl = ['error', 'warning', 'info'].includes(poziom) ? poziom : 'info';
+      const raw = typeof entry === 'string' ? entry : (entry.wiadomosc || '');
+      const msg = esc(raw).replace(/(https?:\/\/[^\s<]+)/g,
+        '<a href="$1" target="_blank" rel="noopener">$1</a>');
+      const label = { error: 'Błąd', warning: 'Ostrzeż.', info: 'Info' }[lvl];
+      return `<div class="log-entry log-entry--${lvl}"><span class="lvl">${label}</span><span class="msg">${msg}</span></div>`;
+    }
+    const logiPanel = document.createElement('section');
+    logiPanel.id = 'logi-panel';
+    logiPanel.className = 'hidden';
+    logiPanel.innerHTML =
+      '<div class="logi-head">Logi z generowania wydania</div>' +
+      '<div class="logi-sub">Ostrzeżenia, błędy i uwagi z uruchomienia rutyny — pomagają ulepszać gazetę ' +
+      '(np. źródła niedostępne dla bota, braki w kategoriach, nieudane obrazy).</div>' +
+      (logi.length
+        ? `<div class="log-list">${logi.map(logHtml).join('')}</div>`
+        : '<div class="logi-empty">Brak zdarzeń — wydanie złożone bez błędów i ostrzeżeń.</div>');
+    main.after(logiPanel);
+
+    /* ---- filtry kategorii ---- */
+    const cats = ['Wszystkie', ...new Set(D.artykuly.map(a => a.kategoria))];
+    // Domyślny widok = okładka (kategoria pierwszego, otwierającego artykułu).
+    const domyslnaKat = D.artykuly[0] ? D.artykuly[0].kategoria : 'Wszystkie';
+    const filtryEl = document.createElement('div');
+    filtryEl.className = 'filtry';
+    filtryEl.innerHTML = cats.map(c =>
+      `<button class="filtr${c === domyslnaKat ? ' active' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`
+    ).join('') +
+      (litPanel ? '<button class="filtr filtr--lit" data-cat="__literatura__">Literatura</button>' : '') +
+      `<button class="filtr filtr--logs" data-cat="__logi__">Logs${logi.length ? ' (' + logi.length + ')' : ''}</button>`;
+    main.before(filtryEl);
+    function ustawFiltr(cat) {
+      const widokLogow = cat === '__logi__';
+      const widokLit = cat === '__literatura__';
+      const widokSpecjalny = widokLogow || widokLit;
+      filtryEl.querySelectorAll('.filtr').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+      logiPanel.classList.toggle('hidden', !widokLogow);
+      if (litPanel) litPanel.classList.toggle('hidden', !widokLit);
+      main.classList.toggle('hidden', widokSpecjalny);   // ukryj siatkę gazety w trybie panelu
+      if (widokSpecjalny) return;
+      /* „W skrócie” tylko na okładce i we „Wszystkie”; na okładce układ 1:1 obok hero */
+      const naOkladce = !!D.artykuly[0] && cat === D.artykuly[0].kategoria;
+      main.classList.toggle('widok-okladka', naOkladce);
+      const ws = main.querySelector('.w-skrocie');
+      if (ws) ws.classList.toggle('hidden', !naOkladce && cat !== 'Wszystkie');
+      main.querySelectorAll('article').forEach(art =>
+        art.classList.toggle('hidden', cat !== 'Wszystkie' && art.dataset.kategoria !== cat));
+      const divider = main.querySelector('.divider');
+      if (divider) divider.classList.toggle('hidden',
+        cat !== 'Wszystkie' && D.artykuly[0] && D.artykuly[0].kategoria !== cat);
+    }
+    filtryEl.addEventListener('click', e => {
+      const btn = e.target.closest('.filtr');
+      if (btn) ustawFiltr(btn.dataset.cat);
+    });
+    ustawFiltr(domyslnaKat);          // start na okładce
+
+    /* Wejście z zewnątrz na konkretny artykuł (#art-N — tak linkuje wyszukiwarka
+       archiwum). Przeglądarka próbuje skoczyć do kotwicy, zanim JS wyrenderuje
+       artykuły, a domyślny filtr i tak trzyma widok na okładce — więc obsługujemy
+       to sami, po złożeniu wydania. */
+    function skoczDoKotwicy() {
+      const m = /^#art-(\d+)$/.exec(location.hash || '');
+      if (!m) return;
+      const cel = document.getElementById('art-' + m[1]);
+      if (!cel) return;
+      ustawFiltr('Wszystkie');        // artykuł bywa schowany za filtrem kategorii
+      cel.classList.add('in-view');   // nie czekaj z animacją na przewijanie
+      cel.scrollIntoView({ block: 'start' });
+    }
+    skoczDoKotwicy();
+    window.addEventListener('hashchange', skoczDoKotwicy);
+
+    /* ---- pogoda (client-side, Open-Meteo, bez klucza — zero tokenów rutyny) ---- */
+    /* Pogoda: rutyna parsuje aktualny stan z Interii (D.pogoda.aktualna) —
+       pokazujemy go wprost. Fallback (brak pola / stary format): Open-Meteo
+       w przeglądarce. Klik zawsze prowadzi do pełnej prognozy (Interia). */
+    const PG = D.pogoda || {};
+    const POGODA_MIASTO = {
+      nazwa: PG.miasto || 'Nowy Dwór Mazowiecki',
+      lat: PG.lat ?? 52.4306, lon: PG.lon ?? 20.7158
+    };
+    const PROGNOZA_URL = PG.prognoza_url ||
+      'https://pogoda.interia.pl/prognoza-szczegolowa-nowy-dwor-mazowiecki,cId,23541';
+    const pokazPogode = txt => document.getElementById('pogoda').innerHTML =
+      `<a href="${esc(PROGNOZA_URL)}" target="_blank" rel="noopener"${PG.opis ? ` title="${esc(PG.opis)}"` : ''}>${esc(txt)}</a>`;
+    if (PG.aktualna) pokazPogode(PG.aktualna);
+    else (async () => {
+      try {
+        const u = `https://api.open-meteo.com/v1/forecast?latitude=${POGODA_MIASTO.lat}&longitude=${POGODA_MIASTO.lon}`
+          + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max'
+          + '&timezone=auto&forecast_days=1';
+        const w = await (await fetch(u)).json();
+        const ikona = c => c === 0 ? '☀️' : c <= 2 ? '🌤️' : c === 3 ? '☁️' : c <= 48 ? '🌫️' : c <= 57 ? '🌦️'
+          : c <= 67 ? '🌧️' : c <= 77 ? '🌨️' : c <= 82 ? '🌦️' : c <= 86 ? '🌨️' : '⛈️';
+        const cur = w.current, d = w.daily;
+        pokazPogode(
+          `${POGODA_MIASTO.nazwa} ${ikona(cur.weather_code)} ${Math.round(cur.temperature_2m)}°C` +
+          ` (${Math.round(d.temperature_2m_min[0])}°/${Math.round(d.temperature_2m_max[0])}°` +
+          (d.precipitation_probability_max[0] >= 20 ? ` · ☂ ${d.precipitation_probability_max[0]}%` : '') + ')');
+      } catch (e) { /* offline → pole zostaje puste i znika (CSS :empty) */ }
+    })();
+
+    /* ---- nawigacja poprzednie/następne wydanie (z archiwum w index.html) ---- */
+    (async () => {
+      try {
+        const html = await (await fetch('/index.html', { cache: 'no-cache' })).text();
+        const wydania = [...html.matchAll(/href="(wydania\/[^"]+\.html)"/g)].map(m => m[1]); // najnowsze pierwsze
+        const tu = 'wydania/' + decodeURIComponent(location.pathname.split('/').pop());
+        const i = wydania.indexOf(tu);
+        if (i === -1) return;
+        const nowsze = i > 0 ? wydania[i - 1] : null, starsze = i < wydania.length - 1 ? wydania[i + 1] : null;
+        document.getElementById('nav-wydania').innerHTML =
+          (starsze ? `<a href="/${starsze}">← Poprzednie wydanie</a>` : '<span></span>') +
+          '<span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span>' +
+          (nowsze ? `<a href="/${nowsze}">Następne wydanie →</a>` : '<span></span>');
+      } catch (e) { /* podgląd z file:// → nav się nie pokazuje */ }
+    })();
+
+    /* ---- stopka ---- */
+    const zrodla = [...new Set(D.artykuly.flatMap(a =>
+      [a.zrodlo.nazwa, ...(a.zrodla_dodatkowe || []).map(z => z.nazwa)]))].join(' · ');
+    document.getElementById('stopka').textContent =
+      `Źródła wydania: ${zrodla} — wygenerowano ${D.data_wydania}`;
+
+    /* ---- animacje wejścia ---- */
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('in-view'); io.unobserve(e.target); }
+    }), { threshold: .15 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    /* ---- pasek postępu ---- */
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      document.getElementById('progress').style.width =
+        (h.scrollTop / (h.scrollHeight - h.clientHeight) * 100) + '%';
+    }, { passive: true });
+
+    /* ---- pomocnicze ---- */
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g,
+        c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    /* Trudne terminy: marker {{termin|wyjaśnienie}} w akapitach -> podkreślenie
+       + tooltip (hover / klik na mobile). Wywoływać NA JUŻ zescape'owanym tekście. */
+    function terminy(t) {
+      return t.replace(/\{\{([^|{}]+)\|([^{}]+)\}\}/g,
+        '<span class="term" tabindex="0" data-tip="$2">$1</span>');
+    }
+    document.addEventListener('click', e => {
+      const t = e.target.closest('.term');
+      document.querySelectorAll('.term.open').forEach(x => { if (x !== t) x.classList.remove('open'); });
+      if (t) t.classList.toggle('open');
+    });
+
+    /* ---- formatowanie liczb (PL: spacje tysięcy, przecinek dziesiętny) ---- */
+    function fmt(v) {
+      if (typeof v !== 'number' || !isFinite(v)) return String(v);
+      const neg = v < 0; v = Math.abs(v);
+      const int = Math.trunc(v);
+      let ip = int.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+      let dp = Number.isInteger(v) ? '' : (Math.round((v - int) * 100) / 100).toString().slice(2);
+      return (neg ? '−' : '') + ip + (dp ? ',' + dp : '');
+    }
+
+    /* ---- renderer wykresów (SVG, interaktywny, bez zależności) ---- */
+    function chart(w, idx) {
+      const W = 560, H = 200, P = { t: 16, r: 16, b: 30, l: 44 };
+      const vals = w.wartosci, n = (vals || []).length;
+      if (!n) return '';
+      const labels = w.etykiety || [], unit = w.jednostka || '';
+      const min = Math.min(...vals), max = Math.max(...vals), span = (max - min) || 1;
+      const x = i => P.l + i * (W - P.l - P.r) / Math.max(n - 1, 1);
+      const y = v => P.t + (1 - (v - min) / span) * (H - P.t - P.b);
+      let inner = '';
+      /* siatka + etykiety wartości na osi Y */
+      for (let g = 0; g <= 3; g++) {
+        const gy = P.t + g * (H - P.t - P.b) / 3;
+        const gv = max - (g / 3) * span;
+        inner += `<line class="grid" x1="${P.l}" y1="${gy}" x2="${W - P.r}" y2="${gy}"/>`;
+        inner += `<text class="val-lbl" x="${P.l - 6}" y="${gy + 3}" text-anchor="end">${esc(fmt(gv) + unit)}</text>`;
+      }
+      const pts = [];
+      if (w.typ === 'slupki') {
+        const bw = (W - P.l - P.r) / n * .62;
+        vals.forEach((v, i) => {
+          const bx = P.l + i * (W - P.l - P.r) / n + ((W - P.l - P.r) / n - bw) / 2;
+          inner += `<rect class="bar" x="${bx}" y="${y(v)}" width="${bw}" height="${H - P.b - y(v)}" rx="3" style="animation-delay:${i * 60}ms"/>`;
+          pts.push({ x: +(bx + bw / 2).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      } else {
+        const d = vals.map((v, i) => `${x(i)},${y(v)}`).join(' L');
+        inner += `<path class="area" d="M${x(0)},${H - P.b} L${d} L${x(n - 1)},${H - P.b} Z"/>`;
+        inner += `<path class="line" d="M${d}"/>`;
+        vals.forEach((v, i) => {
+          inner += `<circle class="pt" cx="${x(i)}" cy="${y(v)}" r="3"/>`;
+          pts.push({ x: +x(i).toFixed(1), y: +y(v).toFixed(1), v, l: labels[i] || '' });
+        });
+      }
+      /* etykiety osi X */
+      labels.forEach((lb, i) => {
+        const step = Math.ceil(n / 8);
+        if (i % step === 0 || i === n - 1) {
+          const lx = w.typ === 'slupki' ? P.l + (i + .5) * (W - P.l - P.r) / n : x(i);
+          inner += `<text class="axis-lbl" x="${lx}" y="${H - 8}" text-anchor="middle">${esc(lb)}</text>`;
+        }
+      });
+      /* warstwa interaktywna */
+      inner += `<line class="guide" x1="0" y1="${P.t}" x2="0" y2="${H - P.b}"/>`;
+      inner += `<circle class="hl" cx="0" cy="0" r="4.5"/>`;
+      inner += `<rect class="hit" x="${P.l}" y="${P.t}" width="${W - P.l - P.r}" height="${H - P.t - P.b}"/>`;
+      const pj = JSON.stringify(pts).replace(/&/g, '&amp;').replace(/'/g, '&#39;').replace(/</g, '&lt;');
+      return `<div class="chart-box"><div class="chart-title">${esc(w.tytul || '')}</div>` +
+             `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(w.tytul || 'wykres')}" ` +
+             `data-points='${pj}' data-unit="${esc(unit)}" data-w="${W}" data-h="${H}">${inner}</svg>` +
+             `<div class="chart-tip"></div></div>`;
+    }
+
+    /* ---- interaktywność wykresów (tooltip + punkt + prowadnica) ---- */
+    function wireCharts() {
+      document.querySelectorAll('.chart-box').forEach(box => {
+        const svg = box.querySelector('svg'); if (!svg) return;
+        let pts; try { pts = JSON.parse(svg.dataset.points || '[]'); } catch (e) { pts = []; }
+        if (!pts.length) return;
+        const unit = svg.dataset.unit || '', VBW = +svg.dataset.w, VBH = +svg.dataset.h;
+        const tip = box.querySelector('.chart-tip');
+        const guide = svg.querySelector('.guide'), hl = svg.querySelector('.hl');
+        const nearest = clientX => {
+          const r = svg.getBoundingClientRect();
+          const sx = (clientX - r.left) / r.width * VBW;
+          let best = pts[0], bd = Infinity;
+          for (const p of pts) { const d = Math.abs(p.x - sx); if (d < bd) { bd = d; best = p; } }
+          return best;
+        };
+        const show = p => {
+          guide.setAttribute('x1', p.x); guide.setAttribute('x2', p.x); guide.style.opacity = .5;
+          hl.setAttribute('cx', p.x); hl.setAttribute('cy', p.y); hl.style.opacity = 1;
+          const r = svg.getBoundingClientRect(), br = box.getBoundingClientRect();
+          tip.style.left = (r.left - br.left + p.x / VBW * r.width) + 'px';
+          tip.style.top = (r.top - br.top + p.y / VBH * r.height) + 'px';
+          tip.innerHTML = (p.l ? esc(p.l) + ' · ' : '') + `<b>${esc(fmt(p.v) + unit)}</b>`;
+          tip.style.opacity = 1;
+        };
+        const hide = () => { guide.style.opacity = 0; hl.style.opacity = 0; tip.style.opacity = 0; };
+        svg.addEventListener('mousemove', e => show(nearest(e.clientX)));
+        svg.addEventListener('mouseleave', hide);
+        svg.addEventListener('touchstart', e => show(nearest(e.touches[0].clientX)), { passive: true });
+        svg.addEventListener('touchmove', e => show(nearest(e.touches[0].clientX)), { passive: true });
+      });
+    }
+    wireCharts();
+  })();
+  </script>
+</body>
+</html>
