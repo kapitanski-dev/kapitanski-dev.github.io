@@ -113,6 +113,39 @@ przy dwóch wydaniach dziennie wychodzi ~12 h, przy jednym ~24 h. Weekend + kate
   dwóch wydaniach tego samego dnia).
 - Skrypt raportuje wiek źródeł **zbiorczo**; nie loguj tego ręcznie.
 
+### Wyjątek od okna: NADROBIENIE przegapionego newsa (OBOWIĄZKOWY)
+
+Okno świeżości jest twarde w jedną stronę — nie wpuszcza starych tematów jako
+„newsa dnia”. Ale samo w sobie nie odróżnia tematu nieistotnego od tematu, który
+**był ważny i któremu daliśmy się przespać**. Bez tego wyjątku pominięcie
+kasuje news na zawsze: wczoraj był poza researchem, dziś jest poza oknem.
+
+**Zasada: news, którego waga uzasadniałaby okładkę, wchodzi do wydania nawet po
+przekroczeniu okna — jeśli nie było go w ŻADNYM z naszych trzech ostatnich wydań.**
+Warunki, wszystkie naraz:
+
+- temat wygrałby dziś kryterium „realny skutek” z sekcji *Jak wybierać* (ofiary
+  śmiertelne, katastrofa, atak, decyzja o dużym skutku) — a nie jest po prostu
+  ciekawy;
+- nie ma go w żadnym z trzech ostatnich plików w `wydania/` (te sprawdzasz i tak
+  przy deduplikacji);
+- piszesz go od **aktualnego stanu sprawy**, nie od zdarzenia: bilans po dwóch
+  dniach, ustalenia śledztwa, reakcje, skutki. Nadrobienie to nie przedruk
+  wczorajszej depeszy.
+
+Ustaw wtedy `"kontynuacja": true` i **zaloguj to wprost**:
+`{"poziom": "warning", "wiadomosc": "Nadrobienie: <tytuł> (zdarzenie <data>) — pominięte w wydaniach <lista>, wchodzi mimo okna <N> h."}`
+Log jest obowiązkowy: to sygnał do audytu, że research poprzedniego wydania miał dziurę.
+
+Wpadka, której to zapobiega (16–18.08.2026): w nocy z 15 na 16.08 autokar z 59
+polskimi pielgrzymami dachował na węgierskiej autostradzie M3 — **12 zabitych,
+10 ciężko rannych, wszyscy z Podkarpacia**. Wydanie z 16.08 (4:35) powstało
+zanim news się rozszedł, ale wydanie z **17.08 nie miało o tym ani słowa**,
+mimo że temat był w sieci od doby i to w źródłach z naszej listy (Euronews,
+Al Jazeera, Interia). Wpadł dopiero na okładkę 18.08 — **dwa dni po zdarzeniu**,
+z datą źródła poza oknem. Czytelnik dostał największą polską tragedię tygodnia
+jako „news dnia” wtedy, gdy w kraju trwała już żałoba.
+
 ### Jedno źródło nie niesie kategorii (OBOWIĄZKOWE)
 
 Audyt 04.08.2026 pokazał monokulturę: **Al Jazeera dała 77% kategorii Wojna** (40 z 52
@@ -150,23 +183,40 @@ naukawpolsce.pl), a wychodziła prawie w całości z jednego. Jeśli oba artyku�
 biorą się z tego samego serwisu w kolejnych wydaniach, research kończy się na pierwszym
 trafieniu — zejdź niżej na liście.
 
-### Przegląd nocy i polski trop (OBOWIĄZKOWY, przed kategoriami)
+### Przegląd nocy, polski trop i luki (OBOWIĄZKOWY, przed kategoriami)
 
 Wydanie poranne powstaje po 8:00 rano (rutyna startuje o 6:00 UTC — przesunięta z 3:00
-UTC po wpadce opisanej niżej), więc **noc jest jego najważniejszym materiałem** — i
-jednocześnie najłatwiejszym do przespania: polskie serwisy publikują nocne wydarzenia
-dopiero od ~7:00, a WebSearch indeksuje świeże newsy z opóźnieniem. Zanim zaczniesz
-wypełniać kategorie, zadaj dwa pytania wprost:
+UTC po wpadce opisanej niżej, a realny cron rutyny doprowadzono do tej wartości dopiero
+18.08.2026: przez trzy tygodnie chodził wciąż o 2:00 UTC, czyli 4:00 rano czasu polskiego,
+i stąd „noc nieodrobiona” w logach niemal każdego wydania z sierpnia), więc **noc jest
+jego najważniejszym materiałem** — i jednocześnie najłatwiejszym do przespania: polskie
+serwisy publikują nocne wydarzenia dopiero od ~7:00, a WebSearch indeksuje świeże newsy
+z opóźnieniem. Zanim zaczniesz wypełniać kategorie, zadaj trzy pytania wprost:
 
 1. **Co wydarzyło się w nocy?** Ostrzały, ataki, incydenty, decyzje z innych strefy
    czasowych. Pytaj o dzisiejszą datę wprost („mass attack Ukraine 30 July”, „overnight
    strikes”), nie o „najnowsze wiadomości”. Nocne wydarzenie należy do wydania nawet
    jeśli szczegóły są jeszcze niepełne — wtedy pisz to, co potwierdzone, a niewiadome
    nazwij niewiadomymi.
-2. **Czy cokolwiek dotyka POLSKI?** Przestrzeń powietrzna, NATO, granica, wojsko,
-   infrastruktura, ewakuacje, decyzje rządu. Gazetę czyta Polak: incydent na terytorium
-   Polski bije wagą podobny news z drugiego końca świata i **zasługuje na okładkę**.
-   Sprawdź to osobnym zapytaniem, nie licz na to, że wypadnie z researchu kategorii.
+2. **Czy cokolwiek dotyka POLSKI albo POLAKÓW?** Gazetę czyta Polak: sprawa polska
+   bije wagą podobny news z drugiego końca świata i **zasługuje na okładkę**. Dwa
+   równorzędne tropy, obydwa sprawdź osobnym zapytaniem — nie licz na to, że wypadną
+   z researchu kategorii:
+   - **Polska jako terytorium i państwo:** przestrzeń powietrzna, NATO, granica, wojsko,
+     infrastruktura krytyczna, ewakuacje, decyzje rządu.
+   - **Polacy jako ludzie:** katastrofy i wypadki masowe z polskimi ofiarami — w kraju
+     **i za granicą** (autokary, samoloty, promy, pożary, zawalenia), zaginięcia
+     i śmierć Polaków w wypadkach zbiorowych, żałoba narodowa, akcje ratunkowe
+     i ewakuacje obywateli. Ten trop nie ma nic wspólnego z bezpieczeństwem państwa
+     i **przez to bywał pomijany** (wpadka 16–18.08.2026, opisana wyżej przy nadrabianiu):
+     12 Polaków zginęło w wypadku autokaru na Węgrzech, a gazeta milczała przez dwa dni.
+     Zapytania po polsku i po angielsku („Polacy zginęli”, „Polish tourists killed”,
+     „Polish nationals crash”) — bo pierwsze podaje to serwis kraju zdarzenia, nie polski.
+3. **Czego zabrakło w poprzednich wydaniach?** Zadaj jedno szerokie pytanie o
+   najważniejsze wydarzenia ostatnich 48 h — osobno o świat i osobno o Polskę — i zestaw
+   odpowiedź z tematami trzech ostatnich plików z `wydania/` (i tak je czytasz przy
+   deduplikacji). Duży news, którego u nas nie ma, **nie jest przeterminowany, tylko
+   przespany** — wchodzi trybem NADROBIENIA (sekcja wyżej), z logiem `warning`.
 
 **Gdy polskie serwisy jeszcze milczą, weź źródła obcojęzyczne z listy** (aljazeera.com
 działa 24/7) — to one pierwsze podają nocne wydarzenia z Europy Wschodniej, często
@@ -237,11 +287,23 @@ Pierwsza kategoria (`liczba: 1`): JEDNA, absolutnie najważniejsza wiadomość d
 z dowolnego tematu — „news numer jeden”. **Nie powielaj jej w żadnej innej kategorii**;
 jeśli najważniejszy news jest polityczny, w kategorii Polityka daj inne tematy.
 
+**Okładka ma być świeża.** Jej `zrodlo.opublikowano` nie może być starsze niż okno
+świeżości — jedyny wyjątek to NADROBIENIE (sekcja wyżej), i wtedy okładka wymaga loga
+`warning` z tej sekcji. Okładka z datą sprzed dwóch dni bez takiego loga to błąd
+redakcji, nie decyzja: czytelnik odbiera ją jako „gazeta nie wie, co się dzieje”
+(wpadka 18.08.2026 — wypadek autokaru na Węgrzech z 16.08 na okładce dwa dni później).
+
+**Trzy ostatnie okładki są listą zakazaną co do WĄTKU, nie tylko co do newsa.** Cztery
+poranki z rzędu z tego samego konfliktu to nie jest „news numer jeden”, tylko brak
+przeglądu — chyba że wątek realnie eskalował i to widać w faktach z ostatniej doby.
+
 ### Deduplikacja względem poprzedniego wydania (OBOWIĄZKOWA)
 
-Zanim zaczniesz research, przeczytaj NAJNOWSZY plik z `"$REPO/wydania/"` (sortowanie
-po nazwie) i wynotuj jego tematy — tytuły i kategorie z JSON-a w `<script id="dane-gazety">`.
-To czytanie lokalne, nie kosztuje tokenów sieci.
+Zanim zaczniesz research, przeczytaj **TRZY najnowsze pliki** z `"$REPO/wydania/"`
+(sortowanie po nazwie) i wynotuj ich tematy — tytuły i kategorie z JSON-a w
+`<script id="dane-gazety">`. To czytanie lokalne, nie kosztuje tokenów sieci.
+Najnowszy plik służy deduplikacji, a wszystkie trzy — pytaniu „czego zabrakło?”
+z przeglądu nocy: bez nich nie odróżnisz newsa już opisanego od przespanego.
 
 - **Nie powtarzaj newsa z poprzedniego wydania**, jeśli nie wydarzyło się nic nowego.
 - **Temat wolno kontynuować tylko z wartością dodaną**: nowe fakty, liczby, reakcje,

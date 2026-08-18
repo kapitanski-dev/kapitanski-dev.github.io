@@ -275,6 +275,16 @@ o 3:40 rosyjska rakieta spadła pod Tarnawą-Kolonią, a pap.pl i bankier.pl pod
 o 7:20–7:29 — dwie godziny po publikacji wydania. Przy jednym wydaniu dziennie to
 jedyne okno na nocne newsy z Polski.
 
+**Uwaga na przyszłość — ta tabela opisuje rutyny, których nie widać w repo.** Decyzję
+„8:00” podjęto 30.07.2026 i opisano tu oraz w `instrukcja.md`, ale **realny cron rutyny
+porannej został przestawiony dopiero 18.08.2026** — przez trzy tygodnie chodził wciąż
+o `0 2 * * *` (4:00 PL). Skutek widać w logach niemal każdego sierpniowego wydania
+(„0 z N art. ma datę źródła z dnia wydania — noc nieodrobiona”) i w wpadce 16–18.08:
+wypadek autokaru z polskimi pielgrzymami na Węgrzech (12 ofiar) trafił na okładkę dwa
+dni po zdarzeniu. **Zmiana harmonogramu w dokumentacji to nie zmiana harmonogramu** —
+po każdej takiej decyzji sprawdź rutynę na https://claude.ai/code/routines i zestaw
+godzinę z tabelą wyżej.
+
 Wszystkie chodzą na `claude-sonnet-5`. Model generujący wydanie jest logowany
 w sekcji **Logs** (pole `model` w danych redakcji). Do repo pushują różne rutyny
 — dlatego zawsze `git pull --rebase` przed własnym pushem.

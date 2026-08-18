@@ -178,7 +178,8 @@ def parsuj_date(s: str):
     return None, False
 
 
-def kontrola_swiezosci(artykuly: list, cfg: dict, now: datetime.datetime, log) -> None:
+def kontrola_swiezosci(artykuly: list, cfg: dict, now: datetime.datetime, log,
+                       logi_redakcji: list = ()) -> None:
     """Wiek źródeł względem okna wydania — RAPORT ZBIORCZY, nie wpis na artykuł.
 
     Wpis per artykuł zalewał sekcję Logs (audyt 23–29.07: 15–20 wpisów na wydanie,
@@ -234,6 +235,35 @@ def kontrola_swiezosci(artykuly: list, cfg: dict, now: datetime.datetime, log) -
                        f"({dzis.strftime('%d.%m.%Y')}) — noc/poranek wygląda na nieodrobiony. "
                        f"Sprawdź, co wydarzyło się od poprzedniego wydania (zwłaszcza w Wojnie) "
                        f"i czy któryś wątek nie dotyczy Polski.")
+    # OKŁADKA — osobno i ostrzej niż reszta. Czytelnik ocenia gazetę po pierwszym
+    # artykule: news numer jeden z datą sprzed dwóch dni to sygnał, że redakcja nie
+    # wie, co się dzieje. Wpadka 16–18.08.2026: 12 Polaków zginęło w wypadku autokaru
+    # na Węgrzech w nocy 15/16.08, wydanie 17.08 nie miało o tym słowa, a 18.08 dało
+    # to na okładkę ze źródłem z 16.08. Poza oknem okładka jest dopuszczalna WYŁĄCZNIE
+    # jako świadome nadrobienie — wtedy redakcja loguje to sama (instrukcja.md,
+    # „Wyjątek od okna: NADROBIENIE”), a my ten log tu tylko potwierdzamy.
+    okladka = next((a for a in artykuly if a.get("kategoria") == "Okładka"), None)
+    if okladka:
+        dt_ok, ma_czas_ok = parsuj_date((okladka.get("zrodlo") or {}).get("opublikowano", ""))
+        if dt_ok is None:
+            log("warning", "Okładka bez czytelnej daty źródła — nie da się potwierdzić, "
+                           "że news numer jeden jest z bieżącego okna.")
+        else:
+            wiek_ok = ((now - dt_ok).total_seconds() / 3600 if ma_czas_ok
+                       else (now.astimezone(TZ_PL).date() - dt_ok.date()).days * 24.0)
+            zadeklarowane = any("nadrobieni" in (l.get("wiadomosc") or "").lower()
+                                for l in (logi_redakcji or ()))
+            if wiek_ok > okno and not zadeklarowane:
+                log("error", f"Okładka „{okladka['tytul'][:60]}” ma źródło sprzed {wiek_ok:.0f} h, "
+                             f"poza oknem {okno} h, i nie jest zgłoszona jako nadrobienie. "
+                             f"Albo daj na okładkę świeższy news numer jeden, albo — jeśli to "
+                             f"świadome nadrobienie tematu przespanego w poprzednich wydaniach — "
+                             f"dopisz log `warning` zaczynający się od „Nadrobienie:” "
+                             f"(instrukcja.md, KROK 1).")
+            elif wiek_ok > okno:
+                log("warning", f"Okładka to nadrobienie sprzed {wiek_ok:.0f} h (okno {okno} h) — "
+                               f"research poprzedniego wydania miał dziurę, sprawdź to przy audycie.")
+
     szersze = ", ".join(f"{k}: {v} h" for k, v in okna_kategorii.items() if v > okno)
     print(f"Okno świeżości: {okno} h{f' (szersze — {szersze})' if szersze else ''} | "
           f"poza oknem: {len(stare)} | bez godziny: {len(bez_godziny)} | "
@@ -587,7 +617,7 @@ def main() -> None:
     kontrola_redakcji(dane["artykuly"], cfg, log)
     kontrola_zrodel(dane["artykuly"], cfg, log)
     kontrola_roznorodnosci_zrodel(dane["artykuly"], cfg, log)
-    kontrola_swiezosci(dane["artykuly"], cfg, now, log)
+    kontrola_swiezosci(dane["artykuly"], cfg, now, log, dane["logi"])
     kontrola_watkow(dane["watki"], log)
     kontrola_literatury(dane["literatura"], cfg, dane["artykuly"], log)
     metryki(log)

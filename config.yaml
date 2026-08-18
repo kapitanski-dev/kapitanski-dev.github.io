@@ -214,10 +214,16 @@ zrodla_pierwotne:
   - konflikty.pl         # polski serwis o konfliktach i wojskowości
   - notesfrompoland.com  # polskie sprawy po angielsku — dobre na wątek Polski w świecie
   # Generaliści światowi (Wojna, Okładka, Polityka) — rozbijają monokulturę okładki:
-  - bbc.com
-  - dw.com               # Deutsche Welle — perspektywa europejska
   - euronews.com
   - npr.org
+  # USUNIĘTE 18.08.2026: bbc.com i dw.com. Powód nie jest domysłem — WebSearch zwracał
+  # dla nich twarde „400 domain not accessible” w logach wydań 16.08 i 18.08, czyli
+  # dokładnie ten sam objaw, przez który wypadły reuters.com i marketwatch.com. Przez
+  # trzy tygodnie stały na liście jako martwe pozycje, więc pula generalistów dla
+  # Okładki była realnie o połowę mniejsza, niż wyglądała.
+  # Polski trop na Okładkę bierz z pap.pl, interia.pl i notesfrompoland.com (wyżej na
+  # liście) — po wpadce 16–18.08.2026 (wypadek autokaru z polskimi pielgrzymami na
+  # Węgrzech, przespany o dwa dni) to nie jest opcja, tylko obowiązkowy przystanek.
   # ODRZUCONE przy tym audycie (twarde dowody, nie domysły):
   # theguardian.com, france24.com, haaretz.com — robots.txt jawnie blokuje Claude-User
   #   (france24.com dodatkowo zwraca 403);
