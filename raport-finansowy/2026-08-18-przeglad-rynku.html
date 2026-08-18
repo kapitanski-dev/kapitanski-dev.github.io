@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przegląd rynku – 18 sierpnia 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta i faktura papieru — te same zmienne co template.html (gazeta). */
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --up: #1d6b45;
+    --down: #a3271f;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --up: #5fbd8b;
+    --down: #e8776b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.7;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  /* Węższa kolumna niż gazeta — raport to jeden ciąg tekstu do czytania. */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead { text-align: center; padding: 40px 0 0; }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(2.4em, 7vw, 4em);
+    margin: 10px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Spis treści (budowany z H2 przez JS) ===== */
+  #spis {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    padding: 18px 22px; margin: 32px 0 8px; border-radius: 2px;
+  }
+  #spis:empty { display: none; }
+  #spis .spis-tytul {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: .7em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #spis ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  #spis li { position: relative; padding-left: 26px; margin: 5px 0; line-height: 1.45; }
+  #spis li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    position: absolute; left: 0; top: .15em;
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700; color: var(--accent);
+  }
+  #spis a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #spis a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ===== Treść raportu ===== */
+  .raport { padding-bottom: 8px; }
+  .raport > h1 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.8em; line-height: 1.2; margin: 40px 0 12px;
+  }
+  .raport h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.5em; line-height: 1.25;
+    margin: 48px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 20px;
+  }
+  .raport h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.15em; margin: 32px 0 10px; scroll-margin-top: 20px;
+  }
+  .raport h4 {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: .82em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin: 26px 0 8px;
+  }
+  .raport p { margin: 0 0 16px; }
+  .raport strong { font-weight: 700; }
+  .raport a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .raport a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .raport code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  .raport ul, .raport ol { margin: 0 0 18px; padding-left: 0; list-style: none; }
+  .raport li { position: relative; padding-left: 24px; margin: 7px 0; }
+  .raport ul > li::before {
+    content: "▪"; position: absolute; left: 4px; top: -.05em;
+    color: var(--accent); font-size: .85em;
+  }
+  .raport ol { counter-reset: li; }
+  .raport ol > li::before {
+    counter-increment: li; content: counter(li) ".";
+    position: absolute; left: 0; top: 0;
+    font-family: 'Inter', sans-serif; font-size: .8em; font-weight: 700; color: var(--accent);
+  }
+
+  .raport blockquote {
+    margin: 22px 0; padding: 16px 22px;
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    border-radius: 2px;
+  }
+  .raport blockquote p:last-child { margin-bottom: 0; }
+
+  .raport hr {
+    border: none; border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  /* Tabele — sedno raportu, więc nigdy nie chowamy ich w poziomym scrollu.
+     Szeroki ekran: tabela wychodzi poza kolumnę tekstu na całą dostępną
+     szerokość. Wąski (poniżej .tabela-karty): każdy wiersz staje się kartą
+     z podpisami z `data-etykieta`. `overflow-x` zostaje tylko jako zabezpieczenie
+     na patologiczną zawartość (długi URL bez spacji). */
+  .tabela {
+    margin: 26px 0;
+    width: min(1180px, calc(100vw - 48px));
+    margin-left: 50%; transform: translateX(-50%);
+    overflow-x: auto;
+    border: 1px solid var(--rule); border-radius: 2px;
+  }
+  .raport table {
+    border-collapse: collapse; width: 100%;
+    table-layout: auto;
+    font-family: 'Inter', sans-serif; font-size: .82em; line-height: 1.5;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .raport th, .raport td {
+    padding: 10px 14px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .raport th {
+    font-weight: 700; font-size: .92em; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+  }
+  .raport tbody tr:last-child td { border-bottom: none; }
+  .raport tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .raport td strong { font-weight: 600; }
+
+  /* Wąski ekran: tabela → karty. Zero przewijania w bok. */
+  @media (max-width: 900px) {
+    .tabela {
+      width: auto; margin-left: 0; transform: none;
+      overflow-x: visible; border: none; border-radius: 0;
+    }
+    .raport table { background: none; font-size: .86em; }
+    .raport thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .raport tbody tr {
+      display: block; margin-bottom: 12px; padding: 4px 0;
+      border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 2px;
+      background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    }
+    .raport tbody tr:hover { background: color-mix(in srgb, var(--card) 40%, var(--paper)); }
+    .raport tbody td {
+      display: grid; grid-template-columns: minmax(72px, 30%) 1fr; gap: 14px;
+      padding: 7px 14px; border-bottom: none;
+    }
+    .raport tbody td + td { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
+    .raport tbody td::before {
+      content: attr(data-etykieta);
+      font-size: .82em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--ink-soft); line-height: 1.4; padding-top: .15em;
+    }
+    .raport tbody td:not([data-etykieta]) { display: block; }
+    /* Pierwsza komórka wiersza to zwykle nazwa pozycji — niech będzie nagłówkiem karty. */
+    .raport tbody td:first-child {
+      display: block; font-size: 1.05em; font-weight: 700; padding-top: 10px;
+    }
+    .raport tbody td:first-child::before { display: none; }
+  }
+
+  /* ===== Nawigacja między raportami ===== */
+  .nav-raporty {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 46px; padding: 16px 0 4px;
+  }
+  .nav-raporty:empty { display: none; }
+  .nav-raporty a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-raporty a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-raporty .nav-spacer { flex: 1; }
+
+  footer {
+    margin: 40px 0 40px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+  footer a { color: inherit; }
+
+  /* ===== DRUK ===== */
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -1px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+    #spis { padding: 14px 16px; }
+    .raport h2 { font-size: 1.3em; margin-top: 36px; }
+    .nav-raporty { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav-raporty .nav-spacer { display: none; }
+  }
+
+  /* ===== DRUK — na końcu, żeby wygrać z układem kart (szerokość kartki < 900px) ===== */
+  @media print {
+    #progress, #theme-toggle, .nav-raporty, #spis { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .raport h2, .raport table, .tabela { break-inside: avoid; }
+    .tabela { width: auto; margin-left: 0; transform: none; overflow-x: visible;
+              border: 1px solid #999; }
+    .raport thead { position: static; width: auto; height: auto; clip-path: none; }
+    .raport tbody tr { display: table-row; border: none; background: none; margin: 0; }
+    .raport tbody td, .raport tbody td:first-child {
+      display: table-cell; font-size: inherit; font-weight: inherit;
+      padding: 6px 8px; border-bottom: 1px solid #ccc;
+    }
+    .raport tbody td::before { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker">Raport finansowy</div>
+      <h1><span id="tytul">Przegląd rynku</span></h1>
+      <div class="date-bar">
+        <span id="data-raportu" data-iso="2026-08-18T12:00:00Z">wtorek, 18 sierpnia 2026</span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+
+    <nav id="spis" aria-label="Spis treści"></nav>
+
+    <article class="raport" id="tresc">
+<blockquote><p><strong>Kontekst:</strong> We wtorek 18 sierpnia rynki dostały najsilniejszy w tym cyklu raportów, jednodniowy cios w sektorze chipów — indeks półprzewodników spadł o kilka procent, a TSMC i NVIDIA straciły po kilka procent, częściowo z powodu rosnących rentowności obligacji USA (30-letnie na najwyższym poziomie od ok. 19 lat), a częściowo z powodu nowej narracji rynkowej o "kolistym finansowaniu" platformy AI NVIDII za 500 mld USD. Jednocześnie rozejm USA–Iran pozostaje bez rozwiązania (Trump grozi Omanowi), choć cena ropy dziś raczej spadła niż wzrosła. Żaden z pięciu twardych sygnałów redukcji portfela się nie zapalił, ale lista drobnych sygnałów ostrożności — poślizg Neutrona, rozwodnienie Rocket Lab przy przejęciu Iridium, chłodnący popyt na obligacje hyperscalerów — rośnie. Jutro (19.08) debiutuje na giełdzie Unitree — pierwszy twardy test wyceny robotyki humanoidalnej.</p></blockquote>
+<p><em>Kurs USD/PLN: ok. 3,73 zł (kurs średni NBP z 18.08.2026: 3,7307 zł). Kurs EUR/PLN: ok. 4,32 zł (kurs średni NBP z 18.08.2026: 4,3189 zł).</em></p>
+<hr>
+<h2>Co nowego od poprzedniego raportu (17 sierpnia 2026)</h2>
+<ul><li><strong>Najsilniejsza jednodniowa wyprzedaż sektora chipów w tym cyklu raportów.</strong> We wtorek 18.08 indeks półprzewodników Philadelphia spadł o ok. 4–5% (źródła podają od -3,7% do -5,4%), znosząc setki miliardów dolarów kapitalizacji. TSMC spadło o 3,7–4,1% do 430,97 USD, NVIDIA o 2–5% (źródła się różnią), fundusz SMH o potwierdzone 4,09%. Powód: rosnące rentowności obligacji USA (30-letnie na najwyższym poziomie od dekad) plus nowa fala krytyki wokół platformy finansowania AI NVIDII.</li><li><strong>Rynek zaczął głośno kwestionować "kolistość" finansowania AI NVIDII.</strong> Ta sama platforma na ponad 500 mld USD z Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs i KKR, opisana w poprzednim raporcie jako wzmocnienie tezy, jest teraz przedmiotem debaty: czy NVIDIA nie finansuje popytu na własne chipy, pożyczając pieniądze partnerom, którzy potem je u niej kupują (przykład: umowa z Lambda). CEO Jensen Huang odpowiada, że "popyt jest realny", a kapitał nie jest przychodem NVIDII.</li><li><strong>Rocket Lab: istotny postęp w przejęciu Iridium, ale rośnie presja na rozwodnienie.</strong> Wygasł okres antymonopolowy HSR (12.08), złożono formularz S-4 i wnioski do FCC (10.08), uruchomiono nowy program emisji akcji (ATM) na ok. 1,94 mld USD zastępujący program z maja — ma sfinansować część akwizycji Iridium i zredukować 3,6 mld USD kredytu pomostowego. Ryzyko poślizgu Neutronu na 2027 rok bezpośrednio zwiększa presję na dalsze rozwodnienie.</li><li><strong>Westinghouse (spółka joint venture Cameco i Brookfield) złożył poufny wniosek o własne IPO.</strong> To kolejny mocny fundamentalny katalizator dla tezy jądrowej (obok wcześniejszego kontraktu z rządem USA na 80 mld USD), ale kurs funduszu NUKL wciąż na to nie reaguje — rozjazd między fundamentami a wyceną, opisany w poprzednim raporcie, pogłębia się dalej.</li><li><strong>AST SpaceMobile: udany start trzech kolejnych satelitów BlueBird (5 sierpnia), prawie podwójna przepustowość pobierania danych.</strong> Realny postęp operacyjny, ale kurs spadł mocniej niż rynek (ok. -6% w tydzień) — rozjazd fundamenty-kurs, wcześniej opisywany przy Rocket Lab, pojawia się też tutaj.</li><li><strong>Rozejm USA–Iran: bez formalnego rozwiązania, ale ropa dziś tańsza niż wczoraj.</strong> Sytuacja jakościowo bez zmian względem poprzedniego raportu — Trump grozi teraz również Omanowi, jeśli ten "przeszkodzi" w uregulowaniu sytuacji w Cieśninie Ormuz, a Iran mówi o "skomplikowanych, ale trwających" rozmowach z Omanem. Mimo to ropa Brent spadła z ok. 88–90 USD/b (17.08) do ok. 85 USD/b (18.08) — rynek na razie nie wycenia pełnego zerwania dostaw.</li><li><strong>Unitree debiutuje jutro (19.08).</strong> Wycena emisyjna 150,80 CNY/akcja (ok. 61 mld CNY kapitalizacji), oferta ponad 8000-krotnie przewyższona popytem — wynik pierwszego dnia notowań poznamy dopiero w kolejnym raporcie.</li></ul>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p><strong>Jedno zdanie:</strong> Żaden z pięciu twardych sygnałów redukcji portfela się nie zapalił, ale sesja 18 sierpnia przyniosła najsilniejszą w tym cyklu raportów wyprzedaż sektora chipów, a lista drobnych sygnałów ostrożności — kolistość finansowania NVIDII, poślizg Neutronu, chłodnący popyt na obligacje hyperscalerów — zauważalnie się wydłużyła.</p>
+<h3>Trzy wątki dnia:</h3>
+<p><strong>1. Sektor chipów dostał realny cios — pierwszy taki w tym cyklu raportów</strong></p>
+<p>Wcześniejsze raporty opisywały poniedziałkowe spadki jako "risk-off" bez większego znaczenia. Wtorek 18.08 to już coś innego: indeks półprzewodników spadł o kilka procent, TSMC i NVIDIA straciły po kilka procent, a rynek zaczął głośno pytać, czy platforma finansowania AI NVIDII za 500 mld USD nie jest "kolistym" mechanizmem, w którym firma finansuje popyt na własne produkty. Fundamenty (sprzedaż TSMC, capex hyperscalerów) się nie zmieniły — zmieniło się to, jak rynek je wycenia.</p>
+<p><strong>2. Rocket Lab: dwa źródła presji na rozwodnienie akcji nakładają się na siebie</strong></p>
+<p>Przejęcie Iridium posuwa się naprzód formalnie (HSR wygasł, S-4 złożone), ale wymaga coraz większego finansowania akcjami — a ryzyko poślizgu Neutronu na 2027 rok tylko tę presję zwiększa, bo opóźniona rakieta oznacza gorsze warunki refinansowania kredytu pomostowego.</p>
+<p><strong>3. Rozjazd między fundamentami a kursem pogłębia się teraz w trzech miejscach: NUKL, Rocket Lab i AST SpaceMobile</strong></p>
+<p>Westinghouse złożył wniosek o własne IPO (mocny sygnał dla tezy jądrowej), a NUKL nadal stoi w miejscu. AST SpaceMobile z sukcesem wystrzelił trzy nowe satelity, a jego kurs spadł mocniej niż rynek. Żaden z tych rozjazdów nie jest twardym sygnałem redukcji, ale lista miejsc, gdzie fundamenty i kurs się rozjeżdżają, rośnie.</p>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (kupowane za 5 000 zł/mies. w fazie rozruchu)</h3>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Kurs (przybliż.)</th><th>Zmiana</th><th>Co się dzieje</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="ETF"><strong>IWDA</strong> (MSCI World)</td><td data-etykieta="Kurs (przybliż.)">ok. <strong>147,83 USD</strong> (LSE, 18.08)</td><td data-etykieta="Zmiana">-0,86% wobec 149,11 USD (poprzednie zamknięcie)</td><td data-etykieta="Co się dzieje">Szeroki rynek światowy pod presją wtorkowej wyprzedaży technologicznej i rosnących rentowności obligacji USA</td><td data-etykieta="Teza">✅ Bez zmian w ocenie</td></tr><tr><td data-etykieta="ETF"><strong>SMH</strong> (producenci chipów)</td><td data-etykieta="Kurs (przybliż.)">szacunek ok. <strong>560–570 USD</strong> (dokładna baza niepewna)</td><td data-etykieta="Zmiana"><strong>-4,09%</strong> (18.08, potwierdzone) — najgorsza sesja w tym cyklu raportów</td><td data-etykieta="Co się dzieje">Sektor chipów dostał realny cios: rosnące rentowności obligacji plus nowa fala krytyki "kolistego finansowania" platformy AI NVIDII</td><td data-etykieta="Teza">🟡 Fundamenty popytu bez zmian, ale wycena sektora testowana przez rynek</td></tr><tr><td data-etykieta="ETF"><strong>RBOT</strong> (robotyka, iShares Automation &amp; Robotics UCITS ETF)</td><td data-etykieta="Kurs (przybliż.)">ostatni potwierdzony odczyt: NAV <strong>22,1052 USD</strong> (14.08)</td><td data-etykieta="Zmiana">Brak nowszych, pewnych danych z 15–18.08</td><td data-etykieta="Co się dzieje">Debiut Unitree już jutro (19.08) — realny wynik pierwszego dnia notowań wciąż nieznany</td><td data-etykieta="Teza">✅ Bez zmian w ocenie</td></tr><tr><td data-etykieta="ETF"><strong>NUKL</strong> (energia jądrowa, VanEck Uranium and Nuclear Technologies UCITS ETF)</td><td data-etykieta="Kurs (przybliż.)">ok. <strong>42–44 EUR</strong> (zakres niepewny, dokładny odczyt z 18.08 niepotwierdzony)</td><td data-etykieta="Zmiana">Praktycznie płasko wobec ok. 42,2–42,8 EUR (17.08)</td><td data-etykieta="Co się dzieje">Westinghouse (JV Cameco/Brookfield) złożył poufny wniosek o własne IPO — kolejny mocny fundamentalny katalizator, kurs funduszu wciąż nie reaguje</td><td data-etykieta="Teza">🟡 Rozjazd fundamenty–kurs pogłębia się dalej</td></tr><tr><td data-etykieta="ETF"><strong>JEDI</strong> (kosmos, VanEck Space Innovators UCITS ETF)</td><td data-etykieta="Kurs (przybliż.)">ostatni potwierdzony odczyt: NAV <strong>91,73 USD</strong> (14.08)</td><td data-etykieta="Zmiana">Brak nowszych, pewnych danych</td><td data-etykieta="Co się dzieje">AST SpaceMobile: udany start satelitów, ale kurs spadł mocniej niż rynek; Rocket Lab: postęp w przejęciu Iridium, ale rośnie ryzyko rozwodnienia</td><td data-etykieta="Teza">🟡 Fundamenty sektora mocne, ale nierówno przekładają się na kursy pozycji docelowych</td></tr><tr><td data-etykieta="ETF"><strong>EIMI</strong> (rynki wschodzące)</td><td data-etykieta="Kurs (przybliż.)">NAV <strong>54,8652 USD</strong> (17.08, oficjalne dane iShares)</td><td data-etykieta="Zmiana">+0,47% d/d</td><td data-etykieta="Co się dzieje">Dolar nadal słaby, Chiny: giełdy nadal rosną (Shanghai +0,19% do 3990 pkt, Hang Seng +0,07% do 25 471 pkt, 18.08) mimo słabych danych makro za lipiec</td><td data-etykieta="Teza">✅ Bez zmian w ocenie</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze NIEKUPIONE — monitorowane)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga doc.</th><th>Kurs</th><th>Kurs (PLN)</th><th>Co nowego</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="Spółka"><strong>TSMC</strong></td><td data-etykieta="Waga doc.">6%</td><td data-etykieta="Kurs"><strong>430,97 USD</strong> (zamknięcie 18.08, potwierdzone)</td><td data-etykieta="Kurs (PLN)">ok. 1 608 PLN</td><td data-etykieta="Co nowego">Kurs spadł o 3,7–4,1% (źródła się różnią) w ramach szerszej wyprzedaży sektora — obawy o przewartościowanie (P/E &gt;28x wobec mediany 5-letniej 22,8x) i presję marż z rozbudowy zagranicznej, nie zmiana popytu; fundamenty (lipcowa sprzedaż +44,7% r/r, podniesione prognozy) bez zmian</td><td data-etykieta="Teza">✅ Teza bez zmian, spadek kursu ma podłoże wycenowe</td></tr><tr><td data-etykieta="Spółka"><strong>NVIDIA</strong></td><td data-etykieta="Waga doc.">5%</td><td data-etykieta="Kurs">ok. <strong>219–220 USD</strong> (18.08, skala spadku niepewna: -2% do -5% wg różnych źródeł) / 225,20 USD (17.08, potwierdzone)</td><td data-etykieta="Kurs (PLN)">ok. 819–840 PLN</td><td data-etykieta="Co nowego">Spadek w ramach wyprzedaży sektora, ale z własnym wątkiem: rynek zaczął głośno kwestionować "kolistość" platformy finansowania AI za 500 mld USD (NVIDIA pożycza kapitał partnerom, którzy kupują za niego jej chipy — przykład: umowa z Lambda); CEO Huang: "popyt jest realny", kapitał nie jest przychodem NVIDII; dodatkowa presja konkurencyjna ze strony AMD</td><td data-etykieta="Teza">🟡 Popyt bez zmian, ale wiarygodność modelu finansowania testowana przez rynek</td></tr><tr><td data-etykieta="Spółka"><strong>Google (GOOGL)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs">ok. <strong>344,20 USD</strong> (18.08)</td><td data-etykieta="Kurs (PLN)">ok. 1 284 PLN</td><td data-etykieta="Co nowego">Kurs praktycznie bez zmian wobec 345,90 USD (15–16.08); Gemini 3.5 Pro nadal bez daty premiery, zamiast tego wypuszczono Gemini 3.7 Flash (13.08); potwierdzone odejście czterech weteranów (Jeff Dean, Sanjay Ghemawat, Quoc Le, Oriol Vinyals) do własnego startupu Discovery Loop — rozstanie polubowne, Google inwestuje w nowy podmiot; Demis Hassabis obejmuje rolę przewodniczącego DeepMind i głównego naukowca Alphabet</td><td data-etykieta="Teza">🔴 Presja fundamentalna (model, odpływ talentów) się utrzymuje, kurs na razie stabilny</td></tr><tr><td data-etykieta="Spółka"><strong>Microsoft (MSFT)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs">dokładny kurs z 17–18.08 niepotwierdzony (źródła rozbieżne: 480,35–495,40 USD)</td><td data-etykieta="Kurs (PLN)">ok. 1 792–1 848 PLN</td><td data-etykieta="Co nowego">Prognoza capexu na 2026 kalendarzowy podtrzymana na ok. 190 mld USD; roczny przychód z AI na Azure przekroczył 37 mld USD (+123% r/r), Azure +43% r/r</td><td data-etykieta="Teza">✅ Fundamenty bez zmian względem poprzedniego raportu</td></tr><tr><td data-etykieta="Spółka"><strong>Amazon (AMZN)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs"><strong>260,30 USD</strong> (17.08, ostatnie potwierdzone zamknięcie)</td><td data-etykieta="Kurs (PLN)">ok. 971 PLN</td><td data-etykieta="Co nowego">Kapitalizacja rynkowa przekroczyła 3 bln USD; capex na 2026 bez zmian (220 mld USD); część szerszej narracji o chłodnącym popycie na obligacje hyperscalerów — niedawna emisja długu Amazona wymagała podniesienia oprocentowania o 18–21 punktów bazowych z powodu słabszego popytu inwestorów</td><td data-etykieta="Teza">✅ Teza bez zmian, koszt finansowania rośnie na marginesie</td></tr><tr><td data-etykieta="Spółka"><strong>Tesla (TSLA)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs"><strong>339,30 USD</strong> (18.08, potwierdzone)</td><td data-etykieta="Kurs (PLN)">ok. 1 266 PLN</td><td data-etykieta="Co nowego">Linia produkcyjna Optimus V3 dopiero "się instaluje" we Fremont, Musk ostrzega, że tempo produkcji będzie "dość wolne"; pierwsze egzemplarze trafiają do zbierania danych treningowych, nie do klientów — wciąż zero sprzedaży komercyjnej</td><td data-etykieta="Teza">🔴 Presja na sygnał (c) się utrzymuje, brak poprawy</td></tr><tr><td data-etykieta="Spółka"><strong>ASML</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs">ADR ok. <strong>1 883,12 USD</strong> (17.08, potwierdzone) / Euronext ok. <strong>1 630,40 EUR</strong> (17.08, niepotwierdzone, bez zmian od poprzedniego raportu)</td><td data-etykieta="Kurs (PLN)">ok. 7 026 PLN (ADR) / 7 043 PLN (Euronext)</td><td data-etykieta="Co nowego">Kurs blisko rekordowych poziomów; podniesiona prognoza przychodów 2026 do 43–45 mld EUR i marży brutto do 54–56%; wypłacona dywidenda śródroczna 1,88 EUR/akcję (5.08), trwający skup akcji (1,1 mld EUR w Q2)</td><td data-etykieta="Teza">✅ Fundamenty i kurs silne, bez zmian w ocenie</td></tr><tr><td data-etykieta="Spółka"><strong>Rocket Lab (RKLB)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Kurs"><strong>82,08 USD</strong> (18.08, potwierdzone)</td><td data-etykieta="Kurs (PLN)">ok. 306 PLN</td><td data-etykieta="Co nowego">Istotny postęp w przejęciu Iridium: wygasł okres antymonopolowy HSR (12.08), złożono formularz S-4 i wnioski do FCC (10.08), uruchomiono nowy program emisji akcji na ok. 1,94 mld USD (zastępujący program z maja) na sfinansowanie części akwizycji i redukcję 3,6 mld USD kredytu pomostowego; ryzyko poślizgu Neutronu na 2027 rok rośnie, co pogłębia presję na dalsze rozwodnienie</td><td data-etykieta="Teza">🔴 Ryzyko rozwodnienia rośnie z dwóch stron jednocześnie (Iridium + potencjalny poślizg Neutronu)</td></tr><tr><td data-etykieta="Spółka"><strong>AST SpaceMobile (ASTS)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Kurs"><strong>66,69 USD</strong> (18.08, potwierdzone)</td><td data-etykieta="Kurs (PLN)">ok. 249 PLN</td><td data-etykieta="Co nowego">Kurs spadł mocniej niż rynek (ok. -6% w tydzień) mimo udanego startu trzech kolejnych satelitów BlueBird (5.08, prawie podwojona przepustowość pobierania danych); harmonogram pełnej usługi komercyjnej bez zmian (I połowa 2027), nadal zależny od powrotu New Glenn do lotów</td><td data-etykieta="Teza">🟡 Realny postęp operacyjny nie przekłada się na kurs</td></tr></tbody></table></div>
+<hr>
+<h2>3. Stan twardych sygnałów redukcji</h2>
+<div class="tabela"><table><thead><tr><th>Sygnał</th><th>Status</th><th>Co wiemy dzisiaj</th></tr></thead><tbody><tr><td data-etykieta="Sygnał"><strong>(a) Dwa kwartały cięcia capexu gigantów</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Microsoft podtrzymuje prognozę capexu na 2026 kalendarzowy (ok. 190 mld USD), przychód z AI na Azure +123% r/r. Rosną jednak wątpliwości rynku wokół sposobu finansowania tej rozbudowy: emisje długu Amazona, Alphabet i innych hyperscalerów sięgnęły ok. 194 mld USD od początku roku (+79% r/r), a popyt inwestorów zaczyna słabnąć (Amazon musiał podnieść oprocentowanie ostatniej emisji o 18–21 pb) — to nie cięcie budżetów, ale sygnał, że finansowanie zaczyna kosztować więcej</td></tr><tr><td data-etykieta="Sygnał"><strong>(b) Spadek GPU / odpisy data centers</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Brak dowodów spadku wykorzystania GPU czy odpisów. Nowy wątek do obserwacji: rynek zaczął głośno kwestionować "kolistość" platformy finansowania AI NVIDII za 500 mld USD (czy firma nie finansuje popytu na własne chipy) — to na razie spór o wiarygodność księgowań, nie dowód spadku realnego zapotrzebowania. CoreWeave zamknęło kolejną transzę finansowania (2,6 mld USD, 10.08), łącznie ponad 30 mld USD kapitału pozyskanego w tym roku, dług wciąż 35,6 mld USD. Kimi K3 (chiński otwarty model) tak zwiększył popyt, że sam Moonshot musiał wstrzymać nowe subskrypcje z powodu braku mocy GPU — rynek nadal czyta to jako czynnik zwiększający, nie zmniejszający popyt na chipy</td></tr><tr><td data-etykieta="Sygnał"><strong>(c) Zero Optimusa przez 18–24 mies.</strong></td><td data-etykieta="Status">🟡 Bez zmian formalnie, presja się utrzymuje</td><td data-etykieta="Co wiemy dzisiaj">Linia produkcyjna Optimus V3 dopiero "się instaluje" we Fremont (lipiec–sierpień), Musk ostrzega, że początkowe tempo będzie "dość wolne". Pierwsze egzemplarze trafiają do zbierania danych treningowych, nie do klientów. Wciąż zero jednostek sprzedanych komercyjnie</td></tr><tr><td data-etykieta="Sygnał"><strong>(d) Poślizg Neutrona</strong></td><td data-etykieta="Status">🟡 Bez zmian formalnie, ryzyko rośnie dalej</td><td data-etykieta="Co wiemy dzisiaj">Rocket Lab wciąż celuje w dostawę rakiety na wyrzutnię w Q4 2026, ale od 10.08 nie potwierdza już startu jeszcze w tym roku — poślizg na 2027 rok jest opisywany jako "coraz bardziej prawdopodobny". Nowy element: opóźnienie Neutronu bezpośrednio zwiększa presję na rozwodnienie akcji przy finansowaniu przejęcia Iridium (gorsze warunki refinansowania kredytu pomostowego w razie dalszych poślizgów)</td></tr><tr><td data-etykieta="Sygnał"><strong>(e) ASTS bez usługi + duże rozmycie</strong></td><td data-etykieta="Status">🟡 Bez zmian formalnie</td><td data-etykieta="Co wiemy dzisiaj">Pełna komercyjna usługa z ciągłym pokryciem nadal celowana na I połowę 2027. Pozytyw operacyjny: udany start trzech kolejnych satelitów BlueBird (5.08, na rakiecie Falcon 9, niezależnie od New Glenn), niemal dwukrotnie wyższa przepustowość pobierania danych. Harmonogram powrotu New Glenn do lotów (kluczowy dla dalszych startów) wciąż bez potwierdzonej daty. Brak nowej emisji akcji w tym okresie</td></tr></tbody></table></div>
+<h3>Ryzyko poza formalną listą — bez rozstrzygnięcia</h3>
+<p>Cieśnina Ormuz pozostaje jakościowo bez zmian względem poprzedniego raportu — formalny rozejm wygasł, Trump grozi teraz również Omanowi, jeśli ten "przeszkodzi" w uregulowaniu sytuacji, a Iran mówi o "skomplikowanych, ale trwających" rozmowach. Warto jednak zauważyć, że cena ropy Brent dziś spadła (do ok. 85 USD/b), a nie wzrosła — rynek na razie nie wycenia pełnego zerwania dostaw przez cieśninę, mimo eskalacyjnej retoryki. Osobno: rynek obligacji korporacyjnych hyperscalerów zaczyna wykazywać oznaki chłodzenia popytu (droższe finansowanie długu Amazona) — to nie jest twardy sygnał redukcji portfela, ale warto obserwować, czy ten trend się pogłębi.</p>
+<hr>
+<h2>4. ETFBDIVPL — obserwowana pozycja poza portfelem wzrostowym</h2>
+<p>Beta ETF Dywidenda Plus Portfelowy FIZ (ETFBDIVPL, notowany na GPW) śledzi indeks WIGdivplus, koszyk kilkudziesięciu spółek dywidendowych z GPW (banki, energetyka, spółki Skarbu Państwa). Opłata za zarządzanie: 0,90% rocznie, wypłata dochodu kwartalnie. Fundusz <strong>nie realizuje żadnej z trzech tez portfela wzrostowego i nie wchodzi do jego oceny</strong> — to osobna, obserwowana pozycja.</p>
+<ul><li><strong>(a) Wypłaty vs. stopa dywidendy indeksu — luka nadal się nie domyka.</strong> Od uruchomienia funduszu zadeklarowano łącznie 3,41 zł dochodu na certyfikat (transza majowa 0,57 zł + transza z dniem ustalenia prawa 4 sierpnia w wysokości 2,84 zł, gotówka trafi do inwestorów dopiero 1 września). Przy kursie certyfikatu ok. 299 zł (18.08) to ok. 1,14% w skali roku — praktycznie bez zmian względem poprzedniego odczytu. Druga transza fizycznie jeszcze nie wpłynęła, więc oceny nie da się na razie zaktualizować; indeks WIGdivplus dał w 2025 r. stopę dywidendy rzędu 6,2–6,5% — rozjazd pozostaje bardzo duży.</li><li><strong>(b) Opłata 0,90% rocznie zjada niemal całą dotychczasową wypłatę.</strong> Roczna stopa wypłaty (ok. 1,14%) tylko nieznacznie przewyższa samą opłatę za zarządzanie. Różnica między tym a stopą dywidendy indeksu bazowego musi więc trafiać do reinwestycji lub wyceny portfela funduszu, a nie do bieżącej gotówki dla inwestora.</li><li><strong>(c) Aktywa i płynność — brak świeższych danych specyficznych dla tego funduszu w tym tygodniu.</strong> Poprzedni raport odnotował wzrost aktywów netto z ok. 239 mln zł do ok. 300–320 mln zł. Dostępne w tym tygodniu dane (lipcowe podsumowanie miesięczne z ok. 95,4 mln zł napływu netto i 438 mln zł obrotu giełdowego) dotyczą całej rodziny funduszy BETA ETF, nie samego Dywidenda Plus, więc nie da się ich jednoznacznie przypisać do tej pozycji. Sam kierunek (rosnące zainteresowanie funduszami BETA ETF jako grupą) jest pozytywny, ale skala pojedynczego funduszu wciąż jest niewielka, więc ryzyko utraty płynności przy trwałym odpływie pozostaje aktualne.</li><li><strong>(d) Ryzyko polityczne — bez nowych wydarzeń od poprzedniego raportu.</strong> Znane ryzyka pozostają bez zmian: podatek od nadzwyczajnych zysków na paliwach (60%, moc wsteczna od marca) już obowiązuje, CIT dla banków wzrósł z 19% do 30% od 2026 r., PGE wciąż nie wypłaca dywidendy po stracie za 2025 r. W przeciwwadze: PKO BP już wypłacił dywidendę, a Tauron wrócił do dywidendy po 11 latach przerwy — to wciąż nieodwrócone.</li></ul>
+<p><strong>Werdykt: DO OBSERWACJI.</strong> Druga transza dochodu fizycznie wpłynie dopiero 1 września, więc ocena "działa jak zakładano" jest wciąż przedwczesna. Wąska marża nad opłatą za zarządzanie i utrzymujące się ryzyko polityczne (już zmaterializowany podatek od nadzwyczajnych zysków, wyższy CIT banków, brak dywidendy PGE) każą trzymać się ostrożnej oceny.</p>
+<hr>
+<h2>5. Werdykt + co dalej obserwować</h2>
+<h3>Werdykt: <strong>SZUM — ale najsilniejsza jednodniowa wyprzedaż sektora chipów w tym cyklu raportów, a lista drobnych sygnałów ostrożności rośnie</strong></h3>
+<p><em>(Żaden z pięciu twardych sygnałów redukcji portfela się nie zapalił. Fundamenty głównych tez portfela — capex hyperscalerów, zamówienia TSMC i ASML, popyt na chipy — pozostają bez zmian. Jednocześnie sesja 18.08 przyniosła realny, kilkuprocentowy spadek sektora chipów napędzany rosnącymi rentownościami obligacji i nową falą krytyki wokół finansowania AI NVIDII, a lista miejsc, gdzie fundamenty i kurs się rozjeżdżają — NUKL, Rocket Lab, teraz też AST SpaceMobile — dalej się wydłuża. To wciąż nie jest sygnał ostrzegawczy, ale warto obserwować, czy te wątki zaczną się wzajemnie wzmacniać)</em></p>
+<hr>
+<h4>Dowody ZA (teza portfela trzyma):</h4>
+<ol><li><strong>Żaden z pięciu twardych sygnałów redukcji się nie zapalił.</strong></li><li><strong>TSMC: fundamenty bez zmian</strong> — lipcowa sprzedaż nadal na rekordowym poziomie (+44,7% r/r), podniesione prognozy podtrzymane; wtorkowy spadek kursu ma podłoże wycenowe (P/E powyżej mediany 5-letniej), nie fundamentalne.</li><li><strong>Microsoft: capex na 2026 kalendarzowy podtrzymany (~190 mld USD)</strong>, przychód z AI na Azure przekroczył 37 mld USD (+123% r/r), Azure +43% r/r.</li><li><strong>ASML: kurs blisko rekordów</strong>, podniesiona prognoza przychodów 2026 (43–45 mld EUR), wypłacona dywidenda i trwający skup akcji.</li><li><strong>AST SpaceMobile: udany start trzech kolejnych satelitów BlueBird</strong> (5.08) — realny postęp operacyjny mimo spadku kursu.</li><li><strong>Kimi K3: nawet twórca modelu musiał wstrzymać nowe subskrypcje</strong> z powodu własnego niedoboru GPU — rynek nadal czyta tanie chińskie modele jako czynnik zwiększający, nie zmniejszający popyt na chipy.</li></ol>
+<hr>
+<h4>Dowody PRZECIW (ryzyka, które wciąż są na stole):</h4>
+<ol><li><strong>Najsilniejsza jednodniowa wyprzedaż sektora chipów w tym cyklu raportów (18.08)</strong> — indeks półprzewodników spadł o kilka procent, TSMC -3,7% do -4,1%, NVIDIA -2% do -5% (źródła rozbieżne), SMH -4,09% — wywołana rosnącymi rentownościami obligacji i nową falą krytyki wobec "kolistego finansowania" platformy AI NVIDII za 500 mld USD.</li><li><strong>Rocket Lab: ryzyko rozwodnienia rośnie z dwóch stron naraz</strong> — finansowanie przejęcia Iridium plus coraz bardziej prawdopodobny poślizg Neutronu na 2027 rok, który pogarsza warunki refinansowania.</li><li><strong>Tesla/Optimus: linia produkcyjna V3 dopiero "się instaluje"</strong>, pierwsze egzemplarze trafiają do zbierania danych treningowych, nie do klientów — wciąż zero sprzedaży komercyjnej.</li><li><strong>Rynek obligacji hyperscalerów zaczyna chłodnąć</strong> — Amazon musiał podnieść oprocentowanie niedawnej emisji długu o 18–21 punktów bazowych z powodu słabszego popytu inwestorów; koszt finansowania rozbudowy AI zaczyna rosnąć na marginesie.</li><li><strong>Cieśnina Ormuz: sytuacja nierozstrzygnięta</strong> — rozejm formalnie wygasł, Trump grozi Omanowi, rozmowy "skomplikowane, ale trwające" — choć cena ropy dziś raczej spadła niż wzrosła.</li><li><strong>AST SpaceMobile: kurs spadł mocniej niż rynek</strong> (ok. -6% w tydzień) mimo udanego startu satelitów — rozjazd fundamenty-kurs pogłębia się także tutaj.</li></ol>
+<hr>
+<h3>Co obserwować</h3>
+<div class="tabela"><table><thead><tr><th>Termin</th><th>Co czekamy</th><th>Dlaczego ważne</th></tr></thead><tbody><tr><td data-etykieta="Termin"><strong>19 sierpnia 2026 (środa)</strong></td><td data-etykieta="Co czekamy">Debiut giełdowy Unitree na szanghajskim STAR Market</td><td data-etykieta="Dlaczego ważne">Cena emisyjna 150,80 CNY, oferta ponad 8000-krotnie przewyższona popytem — realny wynik pierwszego dnia notowań wciąż nieznany; pierwszy twardy test wyceny dużego konkurenta w robotyce humanoidalnej</td></tr><tr><td data-etykieta="Termin"><strong>Sierpień 2026 (data niepotwierdzona)</strong></td><td data-etykieta="Co czekamy">Możliwy debiut giełdowy AGIBOT w Hongkongu</td><td data-etykieta="Dlaczego ważne">Lider globalny w robotyce humanoidalnej szuka kapitału na giełdzie (cel wyceny 40–50 mld HKD), co przyspieszy jego przewagę konkurencyjną wobec Tesli, jeśli się powiedzie</td></tr><tr><td data-etykieta="Termin"><strong>26 sierpnia 2026</strong></td><td data-etykieta="Co czekamy">Wyniki NVIDIA (Q2 roku fiskalnego 2027)</td><td data-etykieta="Dlaczego ważne">Czy realne zamówienia i przychody potwierdzą platformę finansowania AI (500 mld USD) wobec narastających zarzutów o "kolistość" tego finansowania</td></tr><tr><td data-etykieta="Termin"><strong>Do końca sierpnia 2026</strong></td><td data-etykieta="Co czekamy">Gotowość skorygowanego zaworu tlenowego silnika BE-4 (New Glenn, Blue Origin)</td><td data-etykieta="Dlaczego ważne">Bezpośrednio wpływa na harmonogram kolejnych startów satelitów AST SpaceMobile, mimo że sierpniowy start BlueBird 11–13 odbył się niezależnie, na rakiecie Falcon 9</td></tr><tr><td data-etykieta="Termin"><strong>Q4 2026, z rosnącym ryzykiem poślizgu na 2027</strong></td><td data-etykieta="Co czekamy">Pierwszy lot rakiety Neutron (Rocket Lab)</td><td data-etykieta="Dlaczego ważne">Dotyczy twardego sygnału (d); poślizg opisywany jako "coraz bardziej prawdopodobny", dodatkowo powiązany teraz z ryzykiem rozwodnienia przy przejęciu Iridium</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona (złożono wniosek na początku sierpnia)</strong></td><td data-etykieta="Co czekamy">IPO Westinghouse (spółka joint venture Cameco i Brookfield)</td><td data-etykieta="Dlaczego ważne">Potencjalny katalizator re-ratingu tezy jądrowej (NUKL) — na razie fundusz na te wiadomości nie reaguje</td></tr><tr><td data-etykieta="Termin"><strong>1 września 2026</strong></td><td data-etykieta="Co czekamy">Fizyczna wypłata drugiej transzy dochodu ETFBDIVPL (2,84 zł/certyfikat)</td><td data-etykieta="Dlaczego ważne">Potwierdzi, czy fundusz rzeczywiście przekazuje zadeklarowaną kwotę na czas — pierwszy test wiarygodności harmonogramu wypłat</td></tr><tr><td data-etykieta="Termin"><strong>15–16 września 2026</strong></td><td data-etykieta="Co czekamy">Posiedzenie Fedu</td><td data-etykieta="Dlaczego ważne">CME FedWatch (dane z ok. połowy sierpnia) wskazywał na ok. 69% szans na brak zmian stóp — wyraźnie wyżej niż na początku sierpnia, kiedy rynek wyceniał głównie podwyżkę; prawdopodobieństwo wciąż się zmienia i wymaga bieżącej obserwacji</td></tr><tr><td data-etykieta="Termin"><strong>Połowa 2027</strong></td><td data-etykieta="Co czekamy">Planowane zamknięcie przejęcia Iridium przez Rocket Lab</td><td data-etykieta="Dlaczego ważne">Kluczowe dla ostatecznej skali rozwodnienia akcjonariuszy RKLB</td></tr><tr><td data-etykieta="Termin"><strong>I połowa 2027</strong></td><td data-etykieta="Co czekamy">Start pełnej komercyjnej usługi AST SpaceMobile z ciągłym pokryciem</td><td data-etykieta="Dlaczego ważne">Dotyczy twardego sygnału (e); termin graniczny to koniec 2027, bufor czasowy pozostaje ograniczony</td></tr><tr><td data-etykieta="Termin"><strong>Październik 2026</strong></td><td data-etykieta="Co czekamy">Wyniki Tesla Q3</td><td data-etykieta="Dlaczego ważne">Pierwsze potencjalnie policzalne dane o produkcji Optimusa V3, w kontekście przyspieszającej konkurencji komercyjnej z Chin i USA (Unitree, AGIBOT, Figure, Boston Dynamics)</td></tr></tbody></table></div>
+<hr>
+<h3>Działania w portfelu</h3>
+<p><strong>Faza rozruchu: NIC NIE ZMIENIAMY.</strong></p>
+<p>Sierpień pozostaje drugim miesiącem fazy rozruchu — nadal 5 000 zł/mies. wyłącznie w ETF-y zgodnie z ustalonym planem. Żaden z pięciu twardych sygnałów nie zapalił się na czerwono, a fundamenty głównych tez portfela (AI/chipy, robotyka, kosmos) pozostają bez zmian. Największą nowością tego tygodnia jest najsilniejsza jednodniowa wyprzedaż sektora chipów w tym cyklu raportów — na razie bez przełożenia na twarde sygnały, ale warta uważnej obserwacji, podobnie jak rosnąca lista miejsc, gdzie fundamenty i kurs się rozjeżdżają (NUKL, Rocket Lab, teraz też AST SpaceMobile). Jutrzejszy debiut Unitree (19.08) i wyniki NVIDIA (26.08) to najbliższe twarde testy dla tez robotyki i AI/chipów. To wciąż nie są powody do zmiany harmonogramu przejścia na pełne 10 000 zł/mies., która zapada na przełomie września i października.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://finance.yahoo.com/markets/live/stock-market-today-tuesday-august-18-dow-sp-500-nasdaq-080822735.html" rel="noopener">Stock market today, Tuesday August 18 — Yahoo Finance</a></li><li><a href="https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-aug-18-2026" rel="noopener">Stock Market Today (Aug. 18, 2026): Dow, S&amp;P 500 slips on higher oil prices, Treasury yields — TheStreet</a></li><li><a href="https://www.cnbc.com/amp/2026/08/17/stock-market-today-live-updates.html" rel="noopener">Stock market news for Aug. 18, 2026 — CNBC</a></li><li><a href="https://www.detroitnews.com/story/business/2026/08/18/tech-stocks-weigh-on-wall-street-as-iran-stalemate-lifts-oil-yields/91351153007/" rel="noopener">Tech selloff pulls Wall Street to two-week lows, oil and yields climb — Detroit News</a></li><li><a href="https://247wallst.com/investing/2026/08/18/marvell-technology-drops-6-as-rising-treasury-yields-swamp-a-bullish-ubs-ai-note/" rel="noopener">Marvell Technology Drops 6% as Rising Treasury Yields Swamp a Bullish UBS AI Note — 24/7 Wall St.</a></li><li><a href="https://www.gurufocus.com/news/8986933/nvidia-stock-falls-23-as-aichip-selloff-deepens" rel="noopener">Nvidia Stock Falls 2.3% as AI-Chip Selloff Deepens — GuruFocus</a></li><li><a href="https://invezz.com/pk/news/2026/08/18/why-nvidia-stock-is-down-over-2percent-on-tuesday/" rel="noopener">Why Nvidia stock is down over 2% on Tuesday — Invezz</a></li><li><a href="https://finance.yahoo.com/markets/article/nvidia-drops-nearly-5-leading-chip-stocks-lower-amid-renewed-worries-of-circular-financing-193309793.html" rel="noopener">Nvidia drops nearly 5%, leading chip stocks lower amid renewed worries of circular financing — Yahoo Finance</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/tsmc-stock-drops-4-1-183858715.html" rel="noopener">TSMC Stock Drops 4.1% as $2 Trillion AI Rout Spreads — Yahoo Finance</a></li><li><a href="https://www.cnbc.com/2026/08/11/nvidia-tries-to-quiet-circular-financing-accusations-wall-street-unsure-it-will-.html" rel="noopener">Nvidia is trying to quiet 'circular financing' accusations. Wall Street is unsure it will — CNBC</a></li><li><a href="https://www.axios.com/2026/08/10/nvidia-financing-ai-goldman-sachs-blackrock" rel="noopener">Nvidia, Wall Street partner on $500B AI financing — Axios</a></li><li><a href="https://nvidianews.nvidia.com/news/nvidia-partners-with-apollo-blackrock-blackstone-brookfield-goldman-sachs-and-kkr-to-establish-ai-compute-infrastructure-financing-platforms-to-mobilize-over-500-billion-of-third-party-capital" rel="noopener">NVIDIA Partners with Apollo, BlackRock, Blackstone, Brookfield, Goldman Sachs and KKR — NVIDIA Newsroom</a></li><li><a href="https://www.cnn.com/2026/08/17/world/live-news/iran-war-trump" rel="noopener">CNN — Deadline to reach US-Iran deal expires, Trump threatens Oman</a></li><li><a href="https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis" rel="noopener">2026 Strait of Hormuz crisis — Wikipedia</a></li><li><a href="https://strefabiznesu.pl/aktualne-18-08-2026-kursy-walut-euro-dolar-frank-i-funt-we-wtorek/ar/c3p1-23282237" rel="noopener">Kursy walut 18.08.2026 — Strefa Biznesu</a></li><li><a href="https://comparic.pl/kursy-walut-nbp-zloty-tanieje-sprawdz-ile-dzis-zaplacisz-za-euro-dolara-i-franka-18-sierpnia-2026/" rel="noopener">Kursy walut NBP 18 sierpnia 2026 — Comparic.pl</a></li><li><a href="https://www.globenewswire.com/news-release/2026/08/13/3344359/0/en/rocket-lab-corporation-announces-progress-on-iridium-acquisition-hsr-period-lapses-form-s-4-filed-fcc-applications-filed-capital-strategy-underway.html" rel="noopener">Rocket Lab Corporation Announces Progress on Iridium Acquisition — GlobeNewswire</a></li><li><a href="https://spacenews.com/first-neutron-launch-may-slip-to-2027/" rel="noopener">First Neutron launch may slip to 2027 — SpaceNews</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-08-10/rocket-lab-cautions-of-fresh-risks-to-key-neutron-rocket-debut" rel="noopener">Rocket Lab Warns Neutron Rocket Launch May Face Further Delays Into 2027 — Bloomberg</a></li><li><a href="https://spaceflightnow.com/2026/08/10/window-for-2026-launch-debut-of-rocket-labs-neutron-rocket-is-narrowing-as-development-continues/" rel="noopener">Window for 2026 launch debut of Rocket Lab's Neutron rocket is narrowing — Spaceflight Now</a></li><li><a href="https://www.businesswire.com/news/home/20260728125090/en/AST-SpaceMobile-Announces-Launch-Date-for-BlueBird-Satellites-11-12-and-13" rel="noopener">AST SpaceMobile Announces Launch Date for BlueBird Satellites 11, 12, and 13 — Businesswire</a></li><li><a href="https://www.space.com/space-exploration/launches-spacecraft/spacex-launches-ast-spacemobile-11-13-direct-to-cell-satellites" rel="noopener">SpaceX launches 3 giant BlueBird direct-to-cell satellites — Space.com</a></li><li><a href="https://www.cnbc.com/2026/08/05/google-chief-scientist-jeff-dean-leaving-company-after-27-years.html" rel="noopener">Google Chief Scientist Jeff Dean leaving company after 27 years — CNBC</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-08-06/google-grapples-with-exit-of-ai-pioneer-and-most-google-person" rel="noopener">Google Grapples With Exit of Jeff Dean — Bloomberg</a></li><li><a href="https://www.axios.com/2026/08/13/google-gemini-37-flash" rel="noopener">Google's Gemini 3.7 Flash arrives before Gemini 3.5 Pro — Axios</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-08-13/google-debuts-new-gemini-flash-while-top-ai-model-still-delayed" rel="noopener">Google debuts new Gemini Flash while top AI model still delayed — Bloomberg</a></li><li><a href="https://www.investing.com/news/earnings/microsoft-beats-on-profit-and-revenue-shares-rise-after-hours-4821565" rel="noopener">Microsoft surges on strong revenue outlook, maintained capex guidance — Investing.com</a></li><li><a href="https://aws.amazon.com/blogs/aws/aws-weekly-roundup-ec2-application-status-checks-iam-role-manager-openai-daybreak-on-bedrock-and-more-august-17-2026/" rel="noopener">AWS Weekly Roundup, August 17, 2026 — AWS News Blog</a></li><li><a href="https://www.ad-hoc-news.de/boerse/news/corporate-news/asml-stock-holds-near-record-levels-after-earnings-and-analyst-lift/69956908" rel="noopener">ASML stock holds near record levels after earnings and analyst lift — ad-hoc-news.de</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/asml-stock-rises-1-7-200347865.html" rel="noopener">ASML Stock Rises 1.7% as AI Demand Signal Strengthens — Yahoo Finance</a></li><li><a href="https://www.justetf.com/en/etf-profile.html?isin=IE000M7V94E1" rel="noopener">VanEck Uranium and Nuclear Technologies UCITS ETF — justETF</a></li><li><a href="https://www.tradingview.com/symbols/TRADEGATE-NUKL/" rel="noopener">NUKL Stock Fund Price and Chart — TRADEGATE:NUKL — TradingView</a></li><li><a href="https://www.world-nuclear-news.org/articles/cameco-announces-go-public-plans-for-westinghouse" rel="noopener">Cameco announces IPO plan for Westinghouse — World Nuclear News</a></li><li><a href="https://www.ans.org/news/2026-08-05/article-8272/westinghouse-updates-ap1000-potential-ipo-amentum-partnership/" rel="noopener">Westinghouse updates: AP1000 potential, IPO, Amentum partnership — ANS Nuclear Newswire</a></li><li><a href="https://www.mining.com/camecos-westinghouse-nuclear-power-venture-files-for-ipo/" rel="noopener">Cameco's Westinghouse nuclear power venture files for IPO — Mining.com</a></li><li><a href="http://global.chinadaily.com.cn/a/202608/18/WS6a83b187a3106bc57421c015.html" rel="noopener">Unitree Robotics to debut on STAR market — China Daily</a></li><li><a href="https://www.caixinglobal.com/2026-08-18/unitree-to-debut-at-61-billion-yuan-valuation-in-closely-watched-shanghai-ipo-102475173.html" rel="noopener">Unitree to Debut at 61 Billion Yuan Valuation in Closely Watched Shanghai IPO — Caixin Global</a></li><li><a href="https://edition.cnn.com/2026/08/18/tech/china-unitree-ipo-intl-hnk" rel="noopener">Unitree and its dancing robots waltz towards record IPO listing in China — CNN Business</a></li><li><a href="https://www.caixinglobal.com/2026-07-24/agibot-begins-hong-kong-ipo-process-as-chinas-embodied-ai-startups-race-to-list-102467856.html" rel="noopener">AgiBot begins Hong Kong IPO process — Caixin Global</a></li><li><a href="https://investors.coreweave.com/news/news-details/2026/CoreWeave-Closes-2-6-Billion-Loan-Facility-Expanding-Financing-Flexibility-for-AI-Infrastructure/default.aspx" rel="noopener">CoreWeave Closes $2.6 Billion Loan Facility — CoreWeave Investor Relations</a></li><li><a href="https://www.theregister.com/off-prem/2026/08/12/coreweave-revenue-doubles-as-debt-pile-reaches-356b/5286832" rel="noopener">CoreWeave revenue doubles as debt pile reaches $35.6B — The Register</a></li><li><a href="https://www.tomshardware.com/tech-industry/artificial-intelligence/kimi-k3-rocks-the-ai-industry-as-moonshot-ai-undercuts-closed-source-american-competitors-on-price-but-the-huge-2-8t-open-weight-model-still-needs-serious-hardware-to-deploy-at-scale" rel="noopener">Kimi K3 rocks the AI industry as Moonshot AI undercuts closed-source American competitors on price — Tom's Hardware</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/hyperscaler-debt-binge-pushes-yields-134825104.html" rel="noopener">Hyperscaler debt binge pushes yields up as investor demand cools — Yahoo Finance</a></li><li><a href="https://fortune.com/2026/07/31/ai-debt-hypescalers-capex-capital-spending-hidden-borrowing-bond-issuance/" rel="noopener">After a nearly 1,000% surge, the AI debt orgy can't last forever — Fortune</a></li><li><a href="https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html" rel="noopener">Odds the Fed will hike in September tumble following big July jobs miss — CNBC</a></li><li><a href="https://www.bankier.pl/inwestowanie/profile/quote.html?symbol=ETFBDIVPL" rel="noopener">ETFBDIVPL — profil, notowania — Bankier.pl</a></li><li><a href="https://www.biznesradar.pl/wiadomosci/ETFBDIVPL" rel="noopener">Wiadomości ETFBDIVPL — BiznesRadar.pl</a></li><li><a href="https://pl.investing.com/etfs/etfbdivpl" rel="noopener">Fundusz ETF BETA ETF DYWIDENDA PLUS PORTFELOWY FIZ — Investing.com Polska</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 18 sierpnia 2026 r. Dane cenowe pochodzą z sesji wtorkowej (18.08) i wcześniejszych pewnych notowań tam, gdzie udało się je potwierdzić — zaznaczono to przy każdej pozycji. Część notowań (m.in. dokładny kurs Microsoft, dokładna skala spadku NVIDII, dokładny odczyt NUKL i RBOT z 18.08) nie udało się jednoznacznie potwierdzić z powodu rozbieżności między dostępnymi źródłami — potraktuj je jako orientacyjne i zweryfikuj przed decyzją inwestycyjną. Nie stanowi porady inwestycyjnej.</em></p>
+    </article>
+
+    <nav class="nav-raporty"><a href="/raport-finansowy/2026-08-17-przeglad-rynku.html">&larr; Poprzedni raport</a><span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span><span></span></nav>
+    <footer><a href="/">Grzyb Times</a> &mdash; raport redagowany przez AI. Nie stanowi porady inwestycyjnej.</footer>
+  </div>
+
+<script>
+  /* ---- motyw (wspólny klucz z gazetą — jeden wybór na cały serwis) ---- */
+  const root = document.documentElement;
+  if (localStorage.getItem('gazeta-theme') === 'dark' ||
+      (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+  document.getElementById('theme-toggle').onclick = () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+  };
+
+  /* ---- podgląd DEMO: szablon otwarty bez podstawionej treści ---- */
+  const tresc = document.getElementById('tresc');
+  if (tresc.textContent.trim() === '__' + 'TRESC' + '__') {
+    document.title = 'Raport finansowy — podgląd szablonu';
+    document.getElementById('tytul').textContent = 'Przegląd rynku';
+    document.querySelector('.kicker').textContent = 'Raport finansowy · PODGLĄD SZABLONU';
+    const dt = document.getElementById('data-raportu');
+    dt.removeAttribute('data-iso');
+    dt.textContent = 'Poniedziałek, 1 stycznia 2026';
+    document.querySelector('.nav-raporty').innerHTML =
+      '<span></span><span class="nav-spacer"></span><a href="/">Archiwum</a>' +
+      '<span class="nav-spacer"></span><span></span>';
+    tresc.innerHTML = `
+      <p>To jest <strong>podgląd szablonu</strong> — plik otwarty bez podstawionej treści.
+      Rutyna zastępuje <em>__TRESC__</em> raportem wyrenderowanym z markdownu
+      (<code>routine/buduj_raporty.py</code>).</p>
+      <h2>Sekcja raportu</h2>
+      <p>Akapit z <strong>pogrubieniem</strong>, <em>kursywą</em> i
+      <a href="#">odnośnikiem do źródła</a>. Lorem ipsum dolor sit amet, consectetur
+      adipiscing elit, sed do eiusmod tempor incididunt ut labore.</p>
+      <blockquote><p><strong>Kontekst:</strong> cytat blokowy — używany w raportach na wstęp i wnioski.</p></blockquote>
+      <ul><li>Punkt pierwszy listy</li><li>Punkt drugi listy</li></ul>
+      <div class="tabela"><table>
+        <thead><tr><th>ETF</th><th>Waga</th><th>Zmiana</th><th>Teza</th></tr></thead>
+        <tbody>
+          <tr><td data-etykieta="ETF"><strong>Przykład A</strong></td><td data-etykieta="Waga">40%</td><td data-etykieta="Zmiana">+1,2%</td><td data-etykieta="Teza">bez zmian</td></tr>
+          <tr><td data-etykieta="ETF"><strong>Przykład B</strong></td><td data-etykieta="Waga">35%</td><td data-etykieta="Zmiana">−0,8%</td><td data-etykieta="Teza">obserwujemy</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Druga sekcja</h2>
+      <p>Spis treści powyżej buduje się automatycznie z nagłówków drugiego poziomu.</p>`;
+  }
+
+  /* ---- spis treści z H2 ---- */
+  const naglowki = [...tresc.querySelectorAll('h2')];
+  if (naglowki.length > 2) {
+    const ol = document.createElement('ol');
+    naglowki.forEach((h, i) => {
+      if (!h.id) h.id = 'sekcja-' + (i + 1);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+    });
+    const spis = document.getElementById('spis');
+    spis.innerHTML = '<div class="spis-tytul">W tym raporcie</div>';
+    spis.appendChild(ol);
+  }
+
+  /* ---- data raportu: ISO (UTC) → czas polski; fallback na tekst w HTML ---- */
+  const elData = document.getElementById('data-raportu');
+  const iso = elData.getAttribute('data-iso');
+  if (iso && !isNaN(new Date(iso).getTime())) {
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(new Date(iso)).reduce((o, x) => (o[x.type] = x.value, o), {});
+      const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+        Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+      const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+        'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      elData.textContent = `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}`;
+    } catch (e) {}
+  }
+
+  /* ---- pasek postępu czytania ---- */
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('progress').style.width =
+      (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+</script>
+</body>
+</html>
