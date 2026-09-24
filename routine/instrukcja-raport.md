@@ -160,8 +160,12 @@ cd "$REPO"
 FN="raport-finansowy/RRRR-MM-DD-przeglad-rynku"   # bez rozszerzenia, Twoja nazwa z KROK 2
 
 # 1) Strona raportu musi istnieć i nie może zostać z niepodstawionym miejscem na dane.
+#    Dopasowanie CAŁEJ linii (-x) — placeholder w szablonie stoi samotnie w linii;
+#    zwykły grep bez -x fałszywie łapie demo-tekst szablonu, który wspomina
+#    "__TRESC__" słownie w opisie podglądu (audyt 24.09: raport z 23.09 przeszedł
+#    ten check poprawnie zbudowany, ale niedokładny grep zgłosił fałszywy STOP).
 test -f "$FN.html" || { echo "STOP: brak $FN.html — KROK 4 nie zadziałał."; exit 1; }
-grep -q '__TRESC__' "$FN.html" && { echo "STOP: szablon niepodstawiony."; exit 1; }
+grep -qx '__TRESC__' "$FN.html" && { echo "STOP: szablon niepodstawiony."; exit 1; }
 
 # 2) Archiwum musi linkować nowy raport.
 grep -q "$(basename "$FN").html" index.html || { echo "STOP: index.html nie linkuje raportu."; exit 1; }
