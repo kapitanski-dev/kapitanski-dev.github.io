@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przegląd rynku – 3 października 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta i faktura papieru — te same zmienne co template.html (gazeta). */
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --up: #1d6b45;
+    --down: #a3271f;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --up: #5fbd8b;
+    --down: #e8776b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.7;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  /* Węższa kolumna niż gazeta — raport to jeden ciąg tekstu do czytania. */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead { text-align: center; padding: 40px 0 0; }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(2.4em, 7vw, 4em);
+    margin: 10px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Spis treści (budowany z H2 przez JS) ===== */
+  #spis {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    padding: 18px 22px; margin: 32px 0 8px; border-radius: 2px;
+  }
+  #spis:empty { display: none; }
+  #spis .spis-tytul {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: .7em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #spis ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  #spis li { position: relative; padding-left: 26px; margin: 5px 0; line-height: 1.45; }
+  #spis li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    position: absolute; left: 0; top: .15em;
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700; color: var(--accent);
+  }
+  #spis a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #spis a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ===== Treść raportu ===== */
+  .raport { padding-bottom: 8px; }
+  .raport > h1 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.8em; line-height: 1.2; margin: 40px 0 12px;
+  }
+  .raport h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.5em; line-height: 1.25;
+    margin: 48px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 20px;
+  }
+  .raport h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.15em; margin: 32px 0 10px; scroll-margin-top: 20px;
+  }
+  .raport h4 {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: .82em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin: 26px 0 8px;
+  }
+  .raport p { margin: 0 0 16px; }
+  .raport strong { font-weight: 700; }
+  .raport a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .raport a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .raport code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  .raport ul, .raport ol { margin: 0 0 18px; padding-left: 0; list-style: none; }
+  .raport li { position: relative; padding-left: 24px; margin: 7px 0; }
+  .raport ul > li::before {
+    content: "▪"; position: absolute; left: 4px; top: -.05em;
+    color: var(--accent); font-size: .85em;
+  }
+  .raport ol { counter-reset: li; }
+  .raport ol > li::before {
+    counter-increment: li; content: counter(li) ".";
+    position: absolute; left: 0; top: 0;
+    font-family: 'Inter', sans-serif; font-size: .8em; font-weight: 700; color: var(--accent);
+  }
+
+  .raport blockquote {
+    margin: 22px 0; padding: 16px 22px;
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    border-radius: 2px;
+  }
+  .raport blockquote p:last-child { margin-bottom: 0; }
+
+  .raport hr {
+    border: none; border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  /* Tabele — sedno raportu, więc nigdy nie chowamy ich w poziomym scrollu.
+     Szeroki ekran: tabela wychodzi poza kolumnę tekstu na całą dostępną
+     szerokość. Wąski (poniżej .tabela-karty): każdy wiersz staje się kartą
+     z podpisami z `data-etykieta`. `overflow-x` zostaje tylko jako zabezpieczenie
+     na patologiczną zawartość (długi URL bez spacji). */
+  .tabela {
+    margin: 26px 0;
+    width: min(1180px, calc(100vw - 48px));
+    margin-left: 50%; transform: translateX(-50%);
+    overflow-x: auto;
+    border: 1px solid var(--rule); border-radius: 2px;
+  }
+  .raport table {
+    border-collapse: collapse; width: 100%;
+    table-layout: auto;
+    font-family: 'Inter', sans-serif; font-size: .82em; line-height: 1.5;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .raport th, .raport td {
+    padding: 10px 14px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .raport th {
+    font-weight: 700; font-size: .92em; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+  }
+  .raport tbody tr:last-child td { border-bottom: none; }
+  .raport tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .raport td strong { font-weight: 600; }
+
+  /* Wąski ekran: tabela → karty. Zero przewijania w bok. */
+  @media (max-width: 900px) {
+    .tabela {
+      width: auto; margin-left: 0; transform: none;
+      overflow-x: visible; border: none; border-radius: 0;
+    }
+    .raport table { background: none; font-size: .86em; }
+    .raport thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .raport tbody tr {
+      display: block; margin-bottom: 12px; padding: 4px 0;
+      border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 2px;
+      background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    }
+    .raport tbody tr:hover { background: color-mix(in srgb, var(--card) 40%, var(--paper)); }
+    .raport tbody td {
+      display: grid; grid-template-columns: minmax(72px, 30%) 1fr; gap: 14px;
+      padding: 7px 14px; border-bottom: none;
+    }
+    .raport tbody td + td { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
+    .raport tbody td::before {
+      content: attr(data-etykieta);
+      font-size: .82em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--ink-soft); line-height: 1.4; padding-top: .15em;
+    }
+    .raport tbody td:not([data-etykieta]) { display: block; }
+    /* Pierwsza komórka wiersza to zwykle nazwa pozycji — niech będzie nagłówkiem karty. */
+    .raport tbody td:first-child {
+      display: block; font-size: 1.05em; font-weight: 700; padding-top: 10px;
+    }
+    .raport tbody td:first-child::before { display: none; }
+  }
+
+  /* ===== Nawigacja między raportami ===== */
+  .nav-raporty {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 46px; padding: 16px 0 4px;
+  }
+  .nav-raporty:empty { display: none; }
+  .nav-raporty a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-raporty a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-raporty .nav-spacer { flex: 1; }
+
+  footer {
+    margin: 40px 0 40px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+  footer a { color: inherit; }
+
+  /* ===== DRUK ===== */
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -1px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+    #spis { padding: 14px 16px; }
+    .raport h2 { font-size: 1.3em; margin-top: 36px; }
+    .nav-raporty { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav-raporty .nav-spacer { display: none; }
+  }
+
+  /* ===== DRUK — na końcu, żeby wygrać z układem kart (szerokość kartki < 900px) ===== */
+  @media print {
+    #progress, #theme-toggle, .nav-raporty, #spis { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .raport h2, .raport table, .tabela { break-inside: avoid; }
+    .tabela { width: auto; margin-left: 0; transform: none; overflow-x: visible;
+              border: 1px solid #999; }
+    .raport thead { position: static; width: auto; height: auto; clip-path: none; }
+    .raport tbody tr { display: table-row; border: none; background: none; margin: 0; }
+    .raport tbody td, .raport tbody td:first-child {
+      display: table-cell; font-size: inherit; font-weight: inherit;
+      padding: 6px 8px; border-bottom: 1px solid #ccc;
+    }
+    .raport tbody td::before { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker">Raport finansowy</div>
+      <h1><span id="tytul">Przegląd rynku</span></h1>
+      <div class="date-bar">
+        <span id="data-raportu" data-iso="2026-10-03T12:00:00Z">sobota, 3 października 2026</span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+
+    <nav id="spis" aria-label="Spis treści"></nav>
+
+    <article class="raport" id="tresc">
+<blockquote><p><strong>Kontekst:</strong> Tydzień od poprzedniego raportu nie przyniósł uspokojenia na froncie geopolitycznym, na które liczono tydzień temu — konflikt wokół Cieśniny Ormuz nie wygasł, a wręcz się zaostrzył (USA wysyłają trzecią grupę lotniskowcową, ok. 9 tys. żołnierzy w drodze do regionu, doniesienia o ostrzelaniu kilku statków). Rentowności obligacji USA wspięły się na nowe, ok. 20-letnie maksima. Giełdy w USA skończyły tydzień niżej niż tydzień wcześniej, choć w piątek 2.10 odrobiły część strat dzięki Nvidii, która ustanowiła nowy rekord kursu. Fundamenty popytu na infrastrukturę AI pozostają mocne — TSMC zwiększa moce produkcyjne chipów 2 nm, Nvidia bije rekordy giełdowe. Na osobnym froncie: prezydent RP podpisał ustawę o podatku od nadzwyczajnych zysków koncernów paliwowych (ale kieruje ją jednocześnie do Trybunału Konstytucyjnego), Tesla opublikowała dostawy za III kwartał (lepsze niż oczekiwano, ale bez jakichkolwiek oficjalnych danych o produkcji robota Optimus), a termin odpowiedzi Tesli dla amerykańskiego regulatora bezpieczeństwa ruchu (NHTSA) minął w ciszy — bez potwierdzonego wyniku. ETF na spółki uranowe (NUKL) zaliczył dotkliwy spadek, choć sama cena uranu się nie zmieniła. Żaden z pięciu twardych sygnałów redukcji portfela nie zapalił się w tym oknie. Na koniec raportu — jak zwykle — krótka analiza spółki CD Projekt RED (CDR), poza śledzonym portfelem; tydzień przyniósł premierę remastera Wiedźmina 3 z rekordem popularności, ale i falą krytyki technicznej.</p></blockquote>
+<p><em>Kurs USD/PLN w dniu raportu: ok. <strong>3,89 zł</strong> (2.10.2026, ostatnia sesja rozliczeniowa NBP przed weekendem, tabela 192/A/NBP/2026, dokładnie 3,8881 zł). Kurs EUR/PLN: ok. <strong>4,37 zł</strong> (2.10.2026, tabela NBP, dokładnie 4,3745 zł). Wszystkie przeliczenia w raporcie używają tych samych kursów.</em></p>
+<hr>
+<h2>Co nowego od poprzedniego raportu (28 września 2026)</h2>
+<ul><li><strong>Konflikt wokół Cieśniny Ormuz nie wygasł — eskaluje.</strong> Zamiast deeskalacji, w tym oknie doszło do dalszej militaryzacji: USA wysyłają trzecią grupę lotniskowcową na Bliski Wschód, wg CBS News ok. 9 tys. żołnierzy jest w drodze do regionu, a Trump rozważa wznowienie bombardowań Iranu, deklarując zakończenie konfliktu „tuż po wyborach” (listopadowe wybory uzupełniające w USA). Doniesienia mówią o co najmniej czterech statkach trafionych niezidentyfikowanymi projektylami w cieśninie lub wokół niej. Irańscy parlamentarzyści przyjęli ustawę deklarującą pełną kontrolę nad Ormuzem, a Trump odpowiedział wpisem nazywającym cieśninę „Trump Strait”. <strong>To wyraźnie gorszy obraz niż tydzień temu</strong> — nie ma mowy o przełomie dyplomatycznym w żadną stronę.</li><li><strong>Mimo to ropa Brent spadła, nie wzrosła</strong> — z poziomu 105–108 USD/bbl (28.09) do ok. 99–103 USD/bbl (2.10.2026), WTI ok. 91 USD/bbl. To rozjazd między retoryką wojenną a ceną ropy — rynek najwyraźniej uznał, że realny eksport przez cieśninę nie jest jeszcze fizycznie zagrożony.</li><li><strong>Rentowności obligacji USA wspięły się jeszcze wyżej.</strong> 10-letnie: ok. 5,27% (2.10), czyli wyżej niż 5,21% z 28.09 — nowe, blisko 20-letnie maksimum. 30-letnie: ok. 5,61–5,63%, najwyżej od ok. 24 lat.</li><li><strong>Giełdy w USA zamknęły tydzień niżej niż tydzień wcześniej, ale piątek przyniósł odbicie dzięki Nvidii.</strong> S&amp;P 500 spadł z 7764,64 pkt (22.09) do ok. 7722,72 pkt (2.10) — ok. <strong>-0,5%</strong> w tygodniu, bez powrotu do rekordu. Nasdaq Composite spadł z 27244,28 do ok. 26871,60 pkt — ok. <strong>-1,4%</strong>. W piątek 2.10 S&amp;P 500 odrobił część strat (+0,73% d/d) po słabszych danych z rynku pracy (rynek liczy, że Fed nie będzie zmuszony do kolejnej podwyżki), a Nvidia ustanowiła nowy rekord kursu wszech czasów.</li><li><strong>Rynki azjatyckie: mocny początek tygodnia, załamanie w piątek.</strong> Nikkei +3,1% i KOSPI +1,6% w środę (1.10, na chipach/AI), ale w piątek 2.10 Hang Seng spadł o ok. -2,6% do -2,7% — najgorsza sesja od lipca 2026, po powrocie giełdy z przerwy na Dzień Narodowy Chin.</li><li><strong>Prezydent RP podpisał ustawę o 60% podatku od nadzwyczajnych zysków koncernów paliwowych (1.10.2026), ale jednocześnie skieruje ją do Trybunału Konstytucyjnego</strong> w trybie kontroli następczej (zarzut: działanie prawa wstecz). Ustawa wchodzi w życie 1.11.2026. Minister finansów zapowiedział obniżki cen na stacjach paliw. To bezpośrednio dotyczy Orlenu — istotnej spółki w indeksie WIGdivplus (zob. sekcja ETFBDIVPL).</li><li><strong>Tesla opublikowała dostawy za III kwartał 2026 (2.10.2026): 486 532 pojazdów</strong>, lepiej niż oczekiwano przez rynek (konsensus ok. 462 tys.), ale wciąż niżej r/r (-2,1% vs Q3 2025). <strong>Pełne wyniki finansowe (przychody, zysk) są dopiero 21.10.2026</strong> — poprzedni raport błędnie szacował je na „ok. 1.10”; to sprostowanie. W komunikacie o dostawach <strong>nie było żadnej oficjalnej liczby dot. produkcji robota Optimus</strong> — ani jednej.</li><li><strong>Termin odpowiedzi Tesli dla NHTSA (Special Order AQ26002, dochodzenie ws. Cybercab) minął 30.09.2026 — ale wynik nie jest publicznie potwierdzony.</strong> Żadne źródło nie informuje, czy Tesla odpowiedziała, czy poprosiła o przedłużenie, czy NHTSA podjęła dalsze kroki. To pozostaje otwarte ryzyko, nie rozstrzygnięcie.</li><li><strong>ETF NUKL (energia jądrowa) spadł o ok. 7% w tydzień</strong> — ale to efekt wyprzedaży samych spółek uranowych na giełdzie (np. UEC -25%, Energy Fuels -24% we wrześniu), NIE spadku ceny uranu, która utrzymała się na poziomie ok. 89–90 USD/funt. Sektor nadal zbiera nowe kontrakty (Rolls-Royce SMR, inwestycja EIB w fińską Steady Energy, ramowe porozumienie USA–Korea Płd. na ok. 120 mld USD inwestycji jądrowych).</li><li><strong>Premiera remastera Wiedźmina 3 (29.09.2026) ustanowiła rekord popularności na Steam (ok. 121 tys. graczy jednocześnie), ale wywołała też falę krytyki technicznej</strong> (spadki wydajności, błędy graficzne, problem z zapisami gry) — opisane szczegółowo w dodatku o CD Projekt RED na końcu raportu.</li></ul>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p><strong>Jedno zdanie:</strong> Geopolityka wokół Iranu pogorszyła się, a nie poprawiła, rentowności obligacji USA wspięły się na nowe wieloletnie maksima i giełdy skończyły tydzień niżej — ale rdzeń tezy portfela (popyt na infrastrukturę AI) wygląda nadal solidnie, bo Nvidia ustanowiła nowy rekord kursu a TSMC zwiększa moce produkcyjne, a żaden z pięciu twardych sygnałów redukcji portfela nie zapalił się.</p>
+<h3>Trzy wątki dnia:</h3>
+<p><strong>1. Geopolityka: z „deeskalacji” do dalszej militaryzacji w ciągu tygodnia</strong></p>
+<p>To, co poprzedni raport nazwał odwróceniem kierunku (odrzucenie irańskiej propozycji), w tym tygodniu pogłębiło się: trzecia grupa lotniskowcowa USA w drodze, tysiące żołnierzy przerzucanych do regionu, ostrzelane statki, irański parlament deklarujący kontrolę nad cieśniną. Paradoksalnie ropa w tym samym czasie spadła (105–108 → 99–103 USD/bbl) — rynek ropy i rynek akcji na razie nie reagują jednakowo na tę samą wiadomość.</p>
+<p><strong>2. AI/chipy: fundamenty nie tylko trzymają się, ale rynek to teraz widzi w cenie</strong></p>
+<p>Nvidia ustanowiła nowy rekord kursu (kapitalizacja blisko 5,65 bln USD), Morgan Stanley przywrócił ją jako „top pick” w sektorze półprzewodników. TSMC zwiększa planowaną moc produkcyjną chipów 2 nm o 20% (do 120 tys. wafli/mies. do końca roku) i jej kurs poszedł w górę o ponad 4,5% w tydzień. ETF SMH (producenci chipów) odrobił ponad 5% w tydzień. Jedyna rysa: Nvidia ma nowy problem reputacyjno-regulacyjny — śledztwo ws. przemytu jej chipów do Chin i aresztowanie obywatela USA za nielegalny eksport za 300 mln USD.</p>
+<p><strong>3. Portfel zbiera drobne, ale nieformalne sygnały ostrzegawcze w kilku miejscach naraz</strong></p>
+<p>Żaden z pięciu twardych sygnałów redukcji nie zapalił się, ale lista nierozstrzygniętych, niepokojących wątków portfelowych rośnie: cisza NHTSA wobec Tesli po minionym terminie, zero oficjalnych danych o Optimusie w raporcie dostawczym Tesli, trzeci tydzień ciszy FCC wobec AST SpaceMobile i nowy, bardziej szczegółowy pozew zbiorowy wobec tej spółki, oraz spadek ETF NUKL o 7% (sektorowy, nie fundamentalny). To wciąż szum, nie trend, ale warto go odnotować.</p>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (kupowane za 5 000 zł/mies. w fazie rozruchu)</h3>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Kurs/NAV (przybliż.)</th><th>Zmiana od 25–28.09</th><th>Co się dzieje</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="ETF"><strong>IWDA</strong> (MSCI World)</td><td data-etykieta="Kurs/NAV (przybliż.)">NAV ok. <strong>145,44 USD</strong> (1.10)</td><td data-etykieta="Zmiana od 25–28.09">Proxy S&amp;P 500: 7764,64 (22.09) → 7722,72 pkt (2.10), ok. <strong>-0,5%</strong> w tygodniu</td><td data-etykieta="Co się dzieje">Rynek zszedł niżej niż tydzień temu w reakcji na obligacje i geopolitykę, ale piątek przyniósł odbicie dzięki Nvidii</td><td data-etykieta="Teza">🟡 Ruch razem z rynkiem, powód makro, tezy funduszu nie dotyczy</td></tr><tr><td data-etykieta="ETF"><strong>SMH</strong> (producenci chipów)</td><td data-etykieta="Kurs/NAV (przybliż.)">ok. <strong>630,68 USD</strong> (2.10) wobec 598,76 USD (28.09)</td><td data-etykieta="Zmiana od 25–28.09">ok. <strong>+5,4%</strong></td><td data-etykieta="Co się dzieje">Mocne odbicie: TSMC zwiększa moce produkcji 2 nm, Nvidia na nowym rekordzie kursu</td><td data-etykieta="Teza">✅ Ruch zgodny z fundamentami tezy</td></tr><tr><td data-etykieta="ETF"><strong>RBOT</strong> (robotyka)</td><td data-etykieta="Kurs/NAV (przybliż.)">NAV ok. <strong>22,19 USD</strong> (1.10) wobec 22,03 USD (25.09)</td><td data-etykieta="Zmiana od 25–28.09">ok. <strong>+0,7%</strong>, praktycznie płasko</td><td data-etykieta="Co się dzieje">Brak istotnych newsów sektorowych w tym oknie</td><td data-etykieta="Teza">✅ Stabilny</td></tr><tr><td data-etykieta="ETF"><strong>NUKL</strong> (energia jądrowa)</td><td data-etykieta="Kurs/NAV (przybliż.)">NAV ok. <strong>48,99 USD</strong> (1.10) wobec 52,78 USD (25.09)</td><td data-etykieta="Zmiana od 25–28.09">ok. <strong>-7,2%</strong></td><td data-etykieta="Co się dzieje"><strong>Wyprzedaż spółek uranowych</strong> (np. UEC -25%, Energy Fuels -24% we wrześniu) opisywana jako „odkręcenie nastrojów” — sama cena uranu spot utrzymała się ok. 89–90 USD/funt, bez zmian. Sektor wciąż zbiera kontrakty (Rolls-Royce SMR, inwestycja EIB, ramowe porozumienie USA–Korea Płd. na ok. 120 mld USD/~467 mld zł)</td><td data-etykieta="Teza">🟡 Spadek sektorowy/sentymentalny, nie potwierdzony pogorszeniem fundamentów — do obserwacji, czy to się powtórzy</td></tr><tr><td data-etykieta="ETF"><strong>JEDI</strong> (kosmos)</td><td data-etykieta="Kurs/NAV (przybliż.)">Dane tego okna <strong>rozbieżne i niepotwierdzone</strong> (jeden agregator wskazał niższy NAV i niższy wynik YTD niż tydzień wcześniej, co jest niespójne z mocnym zachowaniem Rocket Lab w tym samym okresie — prawdopodobnie błąd doboru klasy jednostek/notowania)</td><td data-etykieta="Zmiana od 25–28.09">Nie do ustalenia w tym oknie</td><td data-etykieta="Co się dzieje">Dane do zweryfikowania bezpośrednio u dostawcy funduszu przed kolejnym raportem</td><td data-etykieta="Teza">— Brak wiarygodnej aktualizacji w tym oknie</td></tr><tr><td data-etykieta="ETF"><strong>EIMI</strong> (rynki wschodzące)</td><td data-etykieta="Kurs/NAV (przybliż.)">NAV ok. <strong>54,95 USD</strong> (1.10) wobec 55,59 USD (25.09)</td><td data-etykieta="Zmiana od 25–28.09">ok. <strong>-1,2%</strong></td><td data-etykieta="Co się dzieje">Presja z rosnących rentowności obligacji USA i geopolityki nasiliła się w pierwszej połowie tygodnia (indeks MSCI EM najniżej od tygodnia), ale ustabilizowała się w piątek</td><td data-etykieta="Teza">🟡 Krótkoterminowa presja makro, bez zmiany długoterminowego trendu</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze NIEKUPIONE — monitorowane)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga doc.</th><th>Kurs (ok. 25–28.09)</th><th>Kurs (najświeższy, 1–3.10)</th><th>Co nowego</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="Spółka"><strong>TSMC</strong></td><td data-etykieta="Waga doc.">6%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 452 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>472,78 USD</strong> (2.10)</td><td data-etykieta="Co nowego"><strong>Zwiększenie planowanej produkcji chipów 2 nm o 20% do 120 tys. wafli/mies. do końca 2026.</strong> Raport sprzedaży za wrzesień dopiero 8.10, wyniki Q3 15.10.2026</td><td data-etykieta="Teza">✅ Najmocniejsza pozycja tygodnia w portfelu spółek docelowych — fundamenty i kurs razem w górę</td></tr><tr><td data-etykieta="Spółka"><strong>NVIDIA</strong></td><td data-etykieta="Waga doc.">5%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 230,61 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>233,95 USD</strong> (2.10, nowy rekord kursu dnia: 237,88 USD)</td><td data-etykieta="Co nowego"><strong>Nowy rekord kursu, kapitalizacja ok. 5,65 bln USD</strong>; Morgan Stanley przywrócił spółkę jako „top pick” w półprzewodnikach po dwumiesięcznej korekcie. <strong>Nowy problem: śledztwo ws. przemytu chipów Nvidii do Chin, aresztowanie obywatela USA za nielegalny eksport za 300 mln USD (~1,17 mld zł)</strong> — spółka odcięła ponad połowę wcześniej autoryzowanych azjatyckich kupców po zaostrzeniu kontroli. Dochodzenie DOJ ws. umowy z Groq i strategia zgłoszenia przejęcia Hugging Face do KE wciąż bez rozstrzygnięcia</td><td data-etykieta="Teza">✅ Kurs na rekordzie, ale pierwszy wyraźny sygnał reputacyjno-regulacyjny tego typu w tej serii raportów</td></tr><tr><td data-etykieta="Spółka"><strong>Google (GOOGL)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 344 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>340,35 USD</strong> (2.10)</td><td data-etykieta="Co nowego">Termin wspólnego projektu wyroku ws. środków zaradczych Google AdX minął 2.10.2026 — <strong>nie potwierdzono jednoznacznie, czy strony faktycznie złożyły dokument</strong> tego dnia. Gemini 3.5 Pro wciąż bez daty premiery (rynkowa mediana oczekiwań: 31.10.2026)</td><td data-etykieta="Teza">🟡 Kurs lekko w dół, kluczowy termin prawny mija bez potwierdzonego rozstrzygnięcia</td></tr><tr><td data-etykieta="Spółka"><strong>Microsoft (MSFT)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 516 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>517,53 USD</strong> (2.10)</td><td data-etykieta="Co nowego">Brak istotnych nowych komunikatów firmowych w tym oknie — kurs utrzymuje poziom po mocnym tygodniu z nowym Copilotem</td><td data-etykieta="Teza">✅ Stabilny po mocnym poprzednim tygodniu</td></tr><tr><td data-etykieta="Spółka"><strong>Amazon (AMZN)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 250 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>251,52 USD</strong> (2.10)</td><td data-etykieta="Co nowego">Niejasność ws. terminu procesu monopolowego FTC: jedno źródło wskazuje wciąż 13.10.2026, inne (powołujące się na starszy harmonogram) sugeruje przesunięcie na 29.03.2027 — <strong>do potwierdzenia przed terminem</strong>, traktuj z rezerwą</td><td data-etykieta="Teza">🟡 Kurs stabilny, status prawny wymaga potwierdzenia</td></tr><tr><td data-etykieta="Spółka"><strong>Tesla (TSLA)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 368,50 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>371,42 USD</strong> (3.10, dane z agregatora, do potwierdzenia)</td><td data-etykieta="Co nowego"><strong>Dostawy Q3: 486 532 pojazdów, lepiej niż konsensus, ale -2,1% r/r.</strong> Zero oficjalnych danych o produkcji Optimusa w komunikacie. <strong>Termin odpowiedzi dla NHTSA (30.09) minął bez potwierdzonego wyniku.</strong> Pełne wyniki finansowe przesunięte na 21.10.2026. Głosowanie UE nad homologacją FSD przesunięte z października na grudzień 2026. Ruszyła seryjna produkcja Tesla Semi w nowej fabryce w Sparks, Nevada</td><td data-etykieta="Teza">🟡 Dostawy lepsze niż oczekiwano, ale dwa kluczowe nierozstrzygnięte wątki regulacyjne (NHTSA, Optimus) pozostają otwarte</td></tr><tr><td data-etykieta="Spółka"><strong>ASML</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 1534,60 EUR (giełda w Amsterdamie)</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">Dane tego tygodnia dostępne tylko dla ADR w USD (ok. 1867 USD) — <strong>różne waluty/notowania, nie da się bezpośrednio porównać bez przeliczenia</strong>, do zweryfikowania w kolejnym raporcie</td><td data-etykieta="Co nowego">Brak istotnych nowych komunikatów firmowych w tym oknie</td><td data-etykieta="Teza">— Brak porównywalnej aktualizacji w tym oknie</td></tr><tr><td data-etykieta="Spółka"><strong>Rocket Lab (RKLB)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 73,61 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>73,92 USD</strong> (2.10)</td><td data-etykieta="Co nowego">Owiewka rakiety Neutron zakończyła wszystkie testy przed pierwszym lotem, silnik Archimedes przeszedł setki testów (w tym pełny test górnego stopnia) — <strong>harmonogram IV kw. 2026 bez zmian.</strong> Przejęcie Iridium: finansowanie domknięte (anulowano 3,6 mld USD/~14 mld zł linii pomostowej), zgoda antymonopolowa (HSR) uzyskana, dokumenty złożone do SEC — zamknięcie wciąż planowane na połowę 2027</td><td data-etykieta="Teza">✅ Stabilny, harmonogram Neutrona i transakcja Iridium idą zgodnie z planem</td></tr><tr><td data-etykieta="Spółka"><strong>AST SpaceMobile (ASTS)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Kurs (ok. 25–28.09)">ok. 61,06 USD</td><td data-etykieta="Kurs (najświeższy, 1–3.10)">ok. <strong>58,46 USD</strong> (2.10)</td><td data-etykieta="Co nowego">ok. <strong>-4,3%</strong>. <strong>Trzeci tydzień ciszy ws. wyniku testów FCC 800 MHz</strong> (pozwolenie wygasło 12.09). <strong>Nowy, bardziej szczegółowy pozew zbiorowy</strong> — zarzuca, że trzy emisje obligacji zamiennych (po 1 mld USD/~3,9 mld zł każda, od marca 2025 do lipca 2026) maskowały potrzeby kapitałowe spółki; termin dla głównego powoda 13.11.2026. Aukcja pasma widma FCC (ok. 6 mld USD/~23 mld zł) zamyka się 5.11.2026. Harmonogram startów ok. 45 satelitów na wczesny 2027 bez zmian</td><td data-etykieta="Teza">🔴 Najsłabsza pozycja tygodnia — rosnąca liczba nierozstrzygniętych wątków regulacyjnych i prawnych</td></tr></tbody></table></div>
+<p><em>Uwaga: część kursów (TSLA 3.10, ASTS 2.10, JEDI, ASML ADR) pochodzi z agregatorów finansowych wskazanych przez wyszukiwarkę, nie z bezpośredniego odczytu giełdy — polecamy weryfikację przed decyzją inwestycyjną. Dostęp WebFetch do części serwisów (Bloomberg, Yahoo Finance, justETF, VanEck, iShares, stooq.pl, bankier.pl, biznesradar.pl) był w tej sesji badawczej ograniczony przez proxy sieciowy.</em></p>
+<hr>
+<h2>3. Stan twardych sygnałów redukcji</h2>
+<div class="tabela"><table><thead><tr><th>Sygnał</th><th>Status</th><th>Co wiemy dzisiaj</th></tr></thead><tbody><tr><td data-etykieta="Sygnał"><strong>(a) Dwa kwartały cięcia capexu gigantów</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Brak nowych ogłoszeń capexu w tym oknie — obowiązują wytyczne z lipca/sierpnia: łącznie ok. 725–732 mld USD (~2 821–2 848 mld zł) na 2026 (+77% r/r) u czterech hiperskalerów. 29–30.09 odbył się w Białym Domu „szczyt AI” z udziałem szefów Nvidii, Google, Microsoftu, Mety, Amazona, Anthropic i Tesli — podpisano dobrowolny kodeks samoregulacji AI, bez sygnałów o cięciu inwestycji</td></tr><tr><td data-etykieta="Sygnał"><strong>(b) Spadek GPU / odpisy data centers</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Brak nowych doniesień o odpisach lub upadłościach neochmur w tym oknie. Nvidia na nowym rekordzie kursu, TSMC zwiększa moce produkcyjne o 20% — kierunek wskazuje na rosnący, nie słabnący, popyt na GPU</td></tr><tr><td data-etykieta="Sygnał"><strong>(c) Zero Optimusa przez 18–24 mies.</strong></td><td data-etykieta="Status">🟡 Formalnie nie zapalony, wzorzec się utrzymuje</td><td data-etykieta="Co wiemy dzisiaj">Tesla opublikowała dostawy Q3 2.10.2026 i <strong>po raz kolejny nie podała żadnej oficjalnej liczby produkcji/dostaw robota Optimus.</strong> Krążące nieoficjalne szacunki (serwis The Information, cytowany przez media) mówią o wzroście z „kilkudziesięciu/tydz.” do „kilkuset/tydz.” w sierpniu, z celem &gt;1000/tydz. do końca roku — ale to wciąż nie są dane od samej spółki. Generacja 3 robota nadal oficjalnie niepokazana</td></tr><tr><td data-etykieta="Sygnał"><strong>(d) Poślizg Neutrona</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Owiewka zakończyła wszystkie testy przedlotowe, silnik Archimedes przeszedł pełny test górnego stopnia — harmonogram „dostawa na wyrzutnię w IV kw. 2026” bez zmian</td></tr><tr><td data-etykieta="Sygnał"><strong>(e) ASTS bez usługi + duże rozmycie</strong></td><td data-etykieta="Status">🟡 Ryzyko narasta, wciąż daleko do granicznego terminu</td><td data-etykieta="Co wiemy dzisiaj">Trzeci tydzień ciszy ws. testów FCC 800 MHz. Nowy pozew zbiorowy jest bardziej konkretny niż poprzednie (konkretne emisje obligacji, konkretne daty) — to pogłębienie, nie nowy wątek. Graniczny termin sygnału (koniec 2027) pozostaje odległy</td></tr></tbody></table></div>
+<h3>Ryzyko poza formalną listą — zmiany tego okna</h3>
+<p><strong>Geopolityka pogorszyła się, nie poprawiła</strong> — wbrew nadziei z poprzedniego raportu, konflikt wokół Ormuzu wygląda na bardziej, nie mniej, zmilitaryzowany. <strong>Rentowności obligacji USA przy nowych wieloletnich maksimach</strong> — to realne ryzyko makro dla wszystkich aktywów ryzykownych, nie tylko dla portfela. <strong>Nvidia zebrała pierwszy w tej serii raportów wyraźny sygnał reputacyjno-regulacyjny</strong> (przemyt chipów do Chin) — na razie nie wpływa na kurs, ale warto to śledzić. <strong>Tesla i AST SpaceMobile zbierają kolejne nierozstrzygnięte wątki naraz</strong> — żaden formalnie nie narusza twardych sygnałów, ale obraz w obu spółkach systematycznie się pogarsza od kilku raportów z rzędu.</p>
+<hr>
+<h2>4. ETFBDIVPL — obserwowana pozycja poza portfelem wzrostowym</h2>
+<p>Beta ETF Dywidenda Plus Portfelowy FIZ (ETFBDIVPL, notowany na GPW) śledzi indeks WIGdivplus, koszyk ok. 55 spółek dywidendowych z GPW (banki, energetyka, spółki Skarbu Państwa). Opłata za zarządzanie (TER): 0,90% rocznie, wypłata dochodu kwartalnie. Fundusz <strong>nie realizuje żadnej z trzech tez portfela wzrostowego i nie wchodzi do jego oceny</strong> — to osobna, obserwowana pozycja.</p>
+<ul><li><strong>(a) Brak nowej wypłaty w tym oknie — luka wobec stopy dywidendy indeksu nadal się nie domyka.</strong> Łączna suma wypłat w 2026 roku pozostaje na poziomie 3,41 zł/certyfikat. Kolejna (trzecia) wypłata wciąż planowana na wczesny grudzień 2026, ale żaden komunikat w tym oknie nie podał konkretnej daty ustalenia prawa. Kurs certyfikatu w ostatniej potwierdzonej sesji (1.10.2026) to ok. 301 zł — lekki spadek wobec ok. 306 zł z 28.09; danych z 2–3.10 nie udało się zweryfikować. Wobec tego kursu dotychczasowa wypłata to wciąż ok. 1,1–1,15% w skali roku, nadal wyraźnie poniżej stopy dywidendy samego indeksu WIGdivplus za 2025 rok (ok. 6,4%). Test domykania luki dopiero przy grudniowej wypłacie.</li><li><strong>(b) Opłata 0,90% rocznie nadal zjada znaczną część dotychczasowej wypłaty.</strong> Bez zmian względem poprzedniego raportu.</li><li><strong>(c) Aktywa funduszu najpewniej lekko wzrosły, ale dokładna kwota i numer najnowszego raportu nie są w pełni potwierdzone.</strong> Ostatnia jednoznacznie potwierdzona wycena to ok. 276 mln zł (raport ESPI 187/2026, 11.09.2026). W tym oknie znaleziono poszlaki wskazujące na nowszy raport z kwotą w przedziale ok. 280–284 mln zł (przełom września/października), ale bez w pełni wiarygodnego potwierdzenia numeru raportu i daty — do zweryfikowania w kolejnym raporcie. Fundusz pozostaje mały i młody — trwały odpływ kapitału byłby ryzykiem dla jego płynności.</li><li><strong>(d) Ryzyko polityczne — jedna duża niewiadoma się rozstrzygnęła, ale nie po stronie uspokojenia.</strong> Prezydent RP podpisał ustawę o 60% podatku od nadzwyczajnych zysków koncernów paliwowych (1.10.2026), <strong>jednocześnie zapowiadając skierowanie jej do Trybunału Konstytucyjnego</strong> w trybie kontroli następczej (zarzut: działanie prawa wstecz) — ustawa i tak wchodzi w życie 1.11.2026, a ewentualne orzeczenie TK mogłoby ją podważyć dopiero później. To bezpośrednio dotyczy Orlenu, istotnej spółki w indeksie. Potwierdzono też konkretny harmonogram podwyżki CIT dla dużych firm energetycznych: 30% w 2027, 26% w 2028, 23% w 2029, powrót do stawki bazowej od 2030 — to nieco rozkłada w czasie obciążenie, które poprzedni raport opisywał jako jednorazowy skok do 30%. Resort energii planuje też podnieść minimalne opłaty koncesyjne pięciokrotnie i usunąć ich górny limit. <strong>Przeciwwaga:</strong> minister aktywów państwowych potwierdził zapowiedź rekordowych 13,9 mld zł (~61 mld zł po przeliczeniu — czyt. uwaga: kwota już w zł) wpływów z dywidend spółek Skarbu Państwa w 2027 r. (+76% r/r wobec 8,7 mld zł w 2026) na oficjalnym briefingu rządowym — to twardsza, bardziej wiarygodna zapowiedź niż poprzednio.</li></ul>
+<p><strong>Werdykt: DO OBSERWACJI.</strong> Nie zmienia się względem poprzedniego raportu. Decyzja prezydenta rozstrzygnęła jedną niewiadomą (podpis, nie weto), ale skierowanie do TK oznacza, że temat prawny wcale się nie zamknął — tylko przesunął w czasie. Luka między wypłatą funduszu a stopą dywidendy indeksu wciąż się nie domyka. Kluczowe testy nadal te same: grudniowa wypłata dochodu i dalszy przebieg sprawy przed Trybunałem Konstytucyjnym.</p>
+<hr>
+<h2>5. Werdykt + co dalej obserwować</h2>
+<h3>Werdykt: <strong>SZUM — ale lista pojedynczych, nieformalnych sygnałów ostrzegawczych w portfelu rośnie</strong></h3>
+<hr>
+<h4>Dowody ZA (teza portfela trzyma):</h4>
+<ol><li><strong>Nvidia ustanowiła nowy rekord kursu</strong> (kapitalizacja ok. 5,65 bln USD/~22 bln zł), Morgan Stanley przywrócił ją jako „top pick” w półprzewodnikach.</li><li><strong>TSMC zwiększa planowaną moc produkcyjną chipów 2 nm o 20%</strong> do 120 tys. wafli/mies. do końca 2026 — twardy sygnał popytu, nie tylko deklaracja; kurs spółki +4,6% w tydzień.</li><li><strong>ETF SMH (producenci chipów) odrobił ponad 5% w tydzień</strong> — sektor reaguje na fundamenty, nie tylko na szum makro.</li><li><strong>Brak jakichkolwiek nowych sygnałów odpisów czy spadku popytu na GPU</strong> u dużych „wynajmujących” moc obliczeniową.</li><li><strong>Rakieta Neutron (Rocket Lab) i przejęcie Iridium idą zgodnie z planem</strong> — bez nowych poślizgów czy przeszkód regulacyjnych w tym oknie.</li><li><strong>Żaden z pięciu twardych sygnałów redukcji formalnie się nie zapalił.</strong></li></ol>
+<hr>
+<h4>Dowody PRZECIW (ryzyka, które wciąż są na stole):</h4>
+<ol><li><strong>Konflikt wokół Cieśniny Ormuz się zaostrzył, nie wygasł</strong> — trzecia grupa lotniskowcowa USA, tysiące żołnierzy w drodze, ostrzelane statki, irański parlament deklarujący kontrolę nad cieśniną. To gorszy obraz niż tydzień temu, mimo że sama cena ropy spadła.</li><li><strong>Rentowności obligacji USA na nowych, blisko 20-letnich maksimach</strong> (10-letnie ok. 5,27%) — realne ryzyko makro dla wszystkich aktywów ryzykownych.</li><li><strong>Rynki azjatyckie zaliczyły gwałtowny spadek w piątek</strong> (Hang Seng -2,6% do -2,7%, najgorsza sesja od lipca) — sygnał „risk-off”, wart śledzenia w kolejnym tygodniu.</li><li><strong>Tesla: termin odpowiedzi dla NHTSA minął bez potwierdzonego wyniku, a raport o dostawach po raz kolejny nie zawierał żadnych oficjalnych danych o produkcji Optimusa</strong> — dokładnie wzorzec, który ma wychwycić twardy sygnał (c).</li><li><strong>AST SpaceMobile: trzeci tydzień ciszy ws. testów FCC i nowy, bardziej szczegółowy pozew zbiorowy</strong> — obraz się pogarsza z raportu na raport, choć wciąż bez formalnego naruszenia sygnału (e).</li><li><strong>ETF NUKL spadł o 7% w tydzień</strong> mimo stabilnej ceny uranu — czysto sentymentalna/sektorowa wyprzedaż akcji spółek uranowych, ale realny spadek wartości tej części portfela.</li><li><strong>Nvidia zebrała nowy problem reputacyjno-regulacyjny</strong> (śledztwo ws. przemytu chipów do Chin) — na razie bez wpływu na kurs, ale warto obserwować.</li></ol>
+<hr>
+<h3>Co obserwować</h3>
+<div class="tabela"><table><thead><tr><th>Termin</th><th>Co czekamy</th><th>Dlaczego ważne</th></tr></thead><tbody><tr><td data-etykieta="Termin"><strong>8 października 2026</strong></td><td data-etykieta="Co czekamy">Raport sprzedaży TSMC za wrzesień</td><td data-etykieta="Dlaczego ważne">Pierwszy twardy wskaźnik po zwiększeniu zamówień i mocy produkcyjnej chipów 2 nm</td></tr><tr><td data-etykieta="Termin"><strong>13 października 2026 (do potwierdzenia)</strong></td><td data-etykieta="Co czekamy">Rozprawa w sprawie monopolowej FTC przeciw Amazonowi</td><td data-etykieta="Dlaczego ważne">Jedno źródło wskazuje możliwe przesunięcie na 29.03.2027 — wymaga potwierdzenia przed tą datą</td></tr><tr><td data-etykieta="Termin"><strong>15 października 2026</strong></td><td data-etykieta="Co czekamy">Wyniki Q3 TSMC</td><td data-etykieta="Dlaczego ważne">Potwierdzenie skali podwyżki zamówień na chipy 2 nm i planu capexu na 2026</td></tr><tr><td data-etykieta="Termin"><strong>21 października 2026</strong></td><td data-etykieta="Co czekamy">Pełne wyniki finansowe Tesli za Q3 (przychody, zysk)</td><td data-etykieta="Dlaczego ważne">Nowa, potwierdzona data (poprzedni raport mylnie szacował ok. 1.10); pierwsza okazja na jakiekolwiek oficjalne dane o Optimusie</td></tr><tr><td data-etykieta="Termin"><strong>27–28 października 2026</strong></td><td data-etykieta="Co czekamy">Posiedzenie FOMC (Fed)</td><td data-etykieta="Dlaczego ważne">Decyzja o stopach bez nowego dot-plot (kolejny dopiero 9.12.2026)</td></tr><tr><td data-etykieta="Termin"><strong>5 listopada 2026</strong></td><td data-etykieta="Co czekamy">Termin zamknięcia aukcji pasma widma FCC (Grain Management, ok. 6 mld USD/~23 mld zł)</td><td data-etykieta="Dlaczego ważne">Rozstrzygnie, czy i za ile AST SpaceMobile zdobędzie dodatkowe pasmo</td></tr><tr><td data-etykieta="Termin"><strong>13 listopada 2026</strong></td><td data-etykieta="Co czekamy">Termin dla głównego powoda w pozwie zbiorowym akcjonariuszy ASTS</td><td data-etykieta="Dlaczego ważne">Wyznacza dalszy tryb postępowania sądowego wobec spółki</td></tr><tr><td data-etykieta="Termin"><strong>Październik 2026 (nadal niepotwierdzone)</strong></td><td data-etykieta="Co czekamy">Publiczne złożenie prospektu IPO Westinghouse Electric (cel wyceny &gt;50 mld USD/~195 mld zł)</td><td data-etykieta="Dlaczego ważne">Wciąż tylko poufne zgłoszenie S-1; banki prowadzące Citigroup, Goldman Sachs i inne</td></tr><tr><td data-etykieta="Termin"><strong>2026/2027 (data niepotwierdzona)</strong></td><td data-etykieta="Co czekamy">Możliwy debiut giełdowy AGIBOT w Hongkongu (cel wyceny 5,1–6,4 mld USD/~20–25 mld zł)</td><td data-etykieta="Dlaczego ważne">Nadal brak daty debiutu; proces trwa od lipca 2026</td></tr><tr><td data-etykieta="Termin"><strong>Do końca 2026 (cel spółki)</strong></td><td data-etykieta="Co czekamy">Powrót rakiety New Glenn (Blue Origin) do lotów po naprawie zaworu silnika BE-4</td><td data-etykieta="Dlaczego ważne">Dotyczy pośrednio ASTS — New Glenn ma wynosić część jej satelitów</td></tr><tr><td data-etykieta="Termin"><strong>Wczesny 2027</strong></td><td data-etykieta="Co czekamy">Start kampanii wystrzeliwania ok. 45 satelitów AST SpaceMobile</td><td data-etykieta="Dlaczego ważne">Bezpośredni test tezy kosmicznej dla ASTS przed granicznym terminem sygnału (e)</td></tr><tr><td data-etykieta="Termin"><strong>Q4 2026, harmonogram bez zmian</strong></td><td data-etykieta="Co czekamy">Dostawa rakiety Neutron (Rocket Lab) na wyrzutnię</td><td data-etykieta="Dlaczego ważne">Dotyczy twardego sygnału (d); testy owiewki i silnika zakończone zgodnie z planem</td></tr><tr><td data-etykieta="Termin"><strong>Grudzień 2026</strong></td><td data-etykieta="Co czekamy">Głosowanie UE nad homologacją autopilota FSD Tesli</td><td data-etykieta="Dlaczego ważne">Przesunięte z października; dotyczy ekspansji Tesli w Europie</td></tr><tr><td data-etykieta="Termin"><strong>Wczesny grudzień 2026</strong></td><td data-etykieta="Co czekamy">Trzecia wypłata dochodu ETFBDIVPL</td><td data-etykieta="Dlaczego ważne">Test, czy luka wobec stopy dywidendy indeksu zaczyna się domykać</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Rozstrzygnięcie postępowania Trybunału Konstytucyjnego ws. ustawy o podatku od nadzwyczajnych zysków koncernów paliwowych</td><td data-etykieta="Dlaczego ważne">Ustawa już podpisana i wchodzi w życie 1.11.2026, ale TK może ją później podważyć — dotyczy bezpośrednio Orlenu w indeksie WIGdivplus</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Decyzja DOJ ws. umowy NVIDIA–Groq (17–20 mld USD/~66–78 mld zł)</td><td data-etykieta="Dlaczego ważne">Wciąż bez rozstrzygnięcia</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Ustalenie strategii zgłoszenia przejęcia Hugging Face przez NVIDIĘ do Komisji Europejskiej</td><td data-etykieta="Dlaczego ważne">Wciąż nieustalona</td></tr><tr><td data-etykieta="Termin"><strong>Oczekiwana ok. 31 października 2026 (mediana rynkowa, niepotwierdzona)</strong></td><td data-etykieta="Co czekamy">Premiera modelu Gemini 3.5 Pro (Google)</td><td data-etykieta="Dlaczego ważne">Już trzykrotnie przesuwana; bezpośrednio dotyczy tezy „Google jako sprzedawca AI firmom”</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Wynik testów FCC 800 MHz AST SpaceMobile</td><td data-etykieta="Dlaczego ważne">Cisza trzeci raport z rzędu, mimo że pozwolenie wygasło 12.09.2026</td></tr><tr><td data-etykieta="Termin"><strong>I połowa 2027</strong></td><td data-etykieta="Co czekamy">Planowane zamknięcie przejęcia Hugging Face przez NVIDIĘ</td><td data-etykieta="Dlaczego ważne">Wymaga zgód regulacyjnych w USA i UE</td></tr><tr><td data-etykieta="Termin"><strong>Połowa 2027</strong></td><td data-etykieta="Co czekamy">Planowane zamknięcie przejęcia Iridium przez Rocket Lab</td><td data-etykieta="Dlaczego ważne">Finansowanie domknięte, zgoda antymonopolowa uzyskana — teraz formalności SEC</td></tr><tr><td data-etykieta="Termin"><strong>2027–2030</strong></td><td data-etykieta="Co czekamy">Stopniowa podwyżka CIT dla dużych firm energetycznych (30%→26%→23%→22%) oraz wzrost opłat koncesyjnych</td><td data-etykieta="Dlaczego ważne">Rozłożone w czasie ryzyko polityczne dla spółek energetycznych w indeksie WIGdivplus (ETFBDIVPL)</td></tr><tr><td data-etykieta="Termin"><strong>Koniec 2027</strong></td><td data-etykieta="Co czekamy">Graniczny termin twardego sygnału (e) — pełna komercyjna usługa AST SpaceMobile</td><td data-etykieta="Dlaczego ważne">Ostateczny test tezy kosmicznej dla tej spółki</td></tr></tbody></table></div>
+<hr>
+<h3>Działania w portfelu</h3>
+<p><strong>Faza rozruchu się zakończyła — żaden twardy sygnał się nie zapalił, więc zgodnie z planem portfel przechodzi na pełne 10 000 zł/mies.</strong> Dziesiąty tydzień z rzędu żaden z pięciu twardych sygnałów redukcji nie osiągnął progu formalnego zapalenia, a fundamenty popytu na infrastrukturę AI (rekord kursu Nvidii, zwiększenie mocy produkcyjnej TSMC) są, jeśli już, mocniejsze niż tydzień temu. Jedyne nierozstrzygnięte wątki z ostatnich dni dotyczące pojedynczych spółek (cisza NHTSA wobec Tesli, cisza FCC wobec AST SpaceMobile) nie są same w sobie twardymi sygnałami i nie uzasadniają odstąpienia od planu. Geopolityczna eskalacja wokół Ormuzu to realne ryzyko makro dla całego portfela (razem z rynkiem), ale — zgodnie z definicją przyjętą w tej serii raportów — mieści się w kategorii szumu rynkowego, nie twardego sygnału dotyczącego samego portfela.</p>
+<hr>
+<h2>Dodatek: krótka analiza CD Projekt RED (CDR)</h2>
+<p>Cykliczna analiza spółki poza śledzonym portfelem wzrostowym — <strong>CD Projekt RED NIE jest częścią portfela</strong> i nie podlega ocenie wg twardych sygnałów opisanych wyżej.</p>
+<p><strong>Kurs akcji.</strong> Ostatnia potwierdzona sesja: <strong>2.10.2026 — 253,50 zł (-0,39% d/d)</strong>, otwarcie 255,20 zł, zakres dnia 252,10–257,90 zł. To wzrost względem ok. 247–251 zł sprzed premiery (28–29.09). Danych z sesji 3.10 (dzisiejsza, sobota — giełda zamknięta) nie ma; ostatnia sesja handlowa to piątek 2.10.</p>
+<p><strong>Premiera remastera Wiedźmina 3: Dziki Gon — rekord popularności i fala krytyki technicznej jednocześnie.</strong> Darmowa aktualizacja 2.0 wystartowała 29.09.2026 w południe, na PC, PS5, Xbox Series X|S i Nintendo Switch 2. Gra ustanowiła <strong>rekord platformy Steam — ok. 121 tys. graczy jednocześnie</strong>, najwyższy wynik w 11-letniej historii tytułu (poprzedni rekord: ok. 103 tys. z 2020 roku). Chwilowo Metacritic wskazywał ok. 94%. Po premierze jednak pojawiła się duża fala problemów technicznych: spadki liczby klatek (nawet do ok. 20 FPS, głównie na kartach graficznych AMD), błędy graficzne (znikające elementy, problemy z włosami/modelami), błąd przy zapisach stanu gry. Efekt: w ciągu kilkudziesięciu godzin ponad 4,5 tys. nowych recenzji na Steam, z czego tylko ok. 67% pozytywnych — część graczy i mediów mówi o „fali review bombingu”. CD Projekt RED wydało już pierwszą małą łatkę na PC/PS5/Xbox, z osobnym hotfixem dla błędu zapisów zapowiedzianym na najbliższy czas.</p>
+<p><strong>Szacunki sprzedaży — na razie tylko od analityków, nie od spółki.</strong> Erste Group szacuje sprzedaż remastera na ok. 3 mln egzemplarzy i do 100–125 mln zł (~26–32 mln USD) przychodu bezpośredniego w II połowie 2026 (chodzi o płatne kopie dla nowych graczy — obecni posiadacze gry dostali aktualizację bezpłatnie). Inna firma analityczna (Alinea Analytics) szacuje do 2,4 mln graczy w jednym dniu i ok. 130 tys. sprzedanych kopii w dniu premiery i dzień później. Żadna z tych liczb nie jest potwierdzonym komunikatem spółki.</p>
+<p><strong>Rekomendacje analityków — bez potwierdzonej zmiany po premierze.</strong> Ostatnie potwierdzone poziomy: Noble Securities „akumuluj” (cel 250 zł, z 18.06.2026), DM BOŚ „trzymaj” (cel 270 zł), Santander BM „niedoważaj” (cel 185 zł). <strong>Nie udało się potwierdzić żadnej nowej, zrewidowanej rekomendacji po premierze</strong> w tym oknie badawczym — jeden z wyników wyszukiwania wskazywał inną cenę docelową Noble Securities, ale wygląda to na błąd/nieaktualne dane i nie traktujemy tego jako wiarygodne.</p>
+<p><strong>Pozostałe projekty — bez nowych informacji.</strong> Trzeci dodatek „Pieśni przeszłości” (z Fool's Theory) nadal celowany na 2027 rok. Wiedźmin 4 (z Ciri jako główną postacią) nadal na 2028 rok. Brak nowych informacji w tym oknie.</p>
+<p><strong>Krótkie podsumowanie.</strong> Premiera przyniosła dokładnie to, czego można się było obawiać po mieszanych pierwszych recenzjach — rekord popularności i realne zainteresowanie, ale też realne problemy techniczne wymagające szybkich łatek. Rynek na razie reaguje spokojnie (kurs w okolicy 253–257 zł, lekko wyżej niż przed premierą), ale prawdziwy test — czy łatki naprawią wrażenia graczy i jak to przełoży się na sprzedaż płatnych kopii — będzie można ocenić dopiero w kolejnym raporcie.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://www.totalmoney.pl/kursy-walut/nbp/kurs-USD" rel="noopener">Kursy walut NBP (USD) — totalmoney.pl</a></li><li><a href="https://www.totalmoney.pl/kursy-walut/nbp/kurs-EUR" rel="noopener">Kursy walut NBP (EUR) — totalmoney.pl</a></li><li><a href="https://www.money.pl/pieniadze/ile-kosztuje-euro-kurs-euro-do-zlotego-pln-eur-02-10-2026-7335597447227680a.html" rel="noopener">Kurs euro 2.10.2026 — Money.pl</a></li><li><a href="https://www.fxmag.pl/waluty/po-ile-jest-euro-kurs-eurpln-w-piatek-2-pazdziernika-nbp-prognoza-wykres-notowania" rel="noopener">Kurs EUR/PLN 2.10.2026 — FXMAG.pl</a></li><li><a href="https://www.cnbc.com/2026/10/02/stock-market-today-live-updates.html" rel="noopener">Stock market today, live updates 28.09–2.10 — CNBC</a></li><li><a href="https://finance.yahoo.com/markets/live/stock-market-today-tuesday-september-29-dow-sp-500-nasdaq-080526442.html" rel="noopener">Stock market today — Yahoo Finance, 29.09</a></li><li><a href="https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-sept-30-2026" rel="noopener">Stock market today updates, 30.09 — TheStreet</a></li><li><a href="https://uk.finance.yahoo.com/news/stock-market-news-oct-1-073600668.html" rel="noopener">Stock market news, 1.10 — Yahoo Finance UK</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/stock-market-today-oct-2-135416764.html" rel="noopener">Stock market today, 2.10 — Yahoo Finance</a></li><li><a href="https://www.cnbc.com/2026/10/02/nvidia-breaks-through-to-new-record-highs-plus-more-good-news-for-boeing.html" rel="noopener">Nvidia breaks through to new record highs — CNBC, 2.10</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-10-02/nvidia-hits-first-record-since-may-as-value-nears-6-trillion" rel="noopener">Nvidia hits first record since May as value nears $6 trillion — Bloomberg, 2.10</a></li><li><a href="https://www.bloomberg.com/news/features/2026-10-01/nvidia-faces-questions-over-china-ai-chip-smuggling-cases" rel="noopener">Nvidia faces questions over China AI chip smuggling cases — Bloomberg, 1.10</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-10-02/man-charged-by-us-with-illegally-shipping-nvidia-chips-to-china" rel="noopener">Man charged with illegally shipping Nvidia chips to China — Bloomberg, 2.10</a></li><li><a href="https://www.gurufocus.com/news/9100066/tsmc-to-increase-2nm-wafer-output-by-20-in-2026-ticker-tsm" rel="noopener">TSMC to increase 2nm wafer output by 20% in 2026 — GuruFocus</a></li><li><a href="https://investor.tsmc.com/english/financial-calendar" rel="noopener">TSMC financial calendar — TSMC Investor Relations</a></li><li><a href="https://ppc.land/google-faces-six-year-worldwide-ad-tech-decree-instead-of-adx-sale/" rel="noopener">Google Ad Exchange decree, Brinkema ruling — ppc.land</a></li><li><a href="https://www.courtlistener.com/docket/67828404/federal-trade-commission-v-amazoncom-inc/" rel="noopener">FTC v. Amazon.com docket — CourtListener</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-09-10/doj-probes-nvidia-s-license-deal-with-groq-on-antitrust-concerns" rel="noopener">DOJ probes Nvidia's license deal with Groq — Bloomberg, 10.09</a></li><li><a href="https://globalcompetitionreview.com/article/nvidia-yet-finalise-eu-notification-strategy-hugging-face-tie" rel="noopener">Nvidia yet to finalise EU notification strategy for Hugging Face tie-up — Global Competition Review</a></li><li><a href="https://futuresearch.ai/app/p/a/when-will-google-make-gemini-3-5-pro-generally" rel="noopener">Gemini 3.5 Pro release forecast — FutureSearch</a></li><li><a href="https://www.cnbc.com/2026/09/30/trumps-ai-lunch-included-everyone-but-apple.html" rel="noopener">Trump's AI lunch included everyone but Apple — CNBC, 30.09</a></li><li><a href="https://www.tomshardware.com/tech-industry/big-tech/big-techs-ai-spending-plans-reach-725-billion" rel="noopener">Big tech's AI spending plans reach $725 billion — Tom's Hardware</a></li><li><a href="https://electrek.co/2026/10/02/tesla-q3-2026-deliveries-486532/" rel="noopener">Tesla Q3 2026 deliveries — Electrek, 2.10</a></li><li><a href="https://ir.tesla.com/press-release/tesla-third-quarter-2026-production-deliveries-and-deployments" rel="noopener">Tesla third quarter 2026 production, deliveries and deployments — Tesla IR</a></li><li><a href="https://www.cnbc.com/2026/10/02/tesla-tsla-q3-2026-vehicle-delivery-production.html" rel="noopener">Tesla Q3 2026 vehicle delivery/production — CNBC, 2.10</a></li><li><a href="https://autos.yahoo.com/policy-and-environment/articles/tesla-owes-nhtsa-21-cybercab-230000436.html" rel="noopener">Tesla owes NHTSA 21 Cybercab answers today — Yahoo Autos, 30.09</a></li><li><a href="https://electrek.co/2026/09/15/nhtsa-tesla-cybercab-special-order-fmvss-certification/" rel="noopener">NHTSA Tesla Cybercab special order, FMVSS certification — Electrek, 15.09</a></li><li><a href="https://electrek.co/2026/09/25/tesla-optimus-production-ramp-hands-ai-generalization-problems/" rel="noopener">Tesla Optimus production ramp, hands/generalization problems — Electrek, 25.09</a></li><li><a href="https://finance.yahoo.com/markets/stocks/articles/auto-weekly-teslas-semi-play-013050211.html" rel="noopener">Tesla's Semi play — Yahoo Finance</a></li><li><a href="https://www.notateslaapp.com/news/4761/tesla-fsd-to-get-navigation-improvements-and-pothole-detection" rel="noopener">Tesla FSD navigation improvements, pothole detection — NotATeslaApp</a></li><li><a href="https://www.nasaspaceflight.com/2026/09/rocket-lab-update/" rel="noopener">Rocket Lab Neutron update, wrzesień 2026 — NASASpaceFlight</a></li><li><a href="https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-acquire-iridium-historic-deal-creating-fully" rel="noopener">Rocket Lab to acquire Iridium — Rocket Lab Investor Relations</a></li><li><a href="https://www.benzinga.com/news/space/26/08/61101750/ast-spacemobile-targets-45-satellites-by-early-2027-were-not-betting-on-blue-origins-new-glenn" rel="noopener">AST SpaceMobile targets 45 satellites by early 2027 — Benzinga, 08.2026</a></li><li><a href="https://www.fool.com/investing/2026/09/23/ast-spacemobile-pushed-commercial-launch-to-2027-h/" rel="noopener">AST SpaceMobile pushed commercial launch to 2027 — Motley Fool, 23.09</a></li><li><a href="https://www.prnewswire.com/news-releases/ast-spacemobile-inc-nasdaq-asts-securities-fraud-class-action-lawsuit-filed-november-13-2026-lead-plaintiff-deadline-302896679.html" rel="noopener">AST SpaceMobile securities fraud class action, lead plaintiff deadline 13.11.2026 — PRNewswire</a></li><li><a href="https://www.globenewswire.com/news-release/2026/10/02/3373888/0/en/asts-investors-have-opportunity-to-lead-ast-spacemobile-inc-securities-fraud-lawsuit-with-sbs-law.html" rel="noopener">AST SpaceMobile investors lawsuit update — GlobeNewswire, 2.10</a></li><li><a href="https://www.ans.org/news/article-6434/uranium-prices-see-increase-as-october-begins/" rel="noopener">Uranium prices see increase as October begins — ANS Nuclear Newswire</a></li><li><a href="https://sprott.com/insights/uranium-s-tale-of-two-markets/" rel="noopener">Uranium's tale of two markets — Sprott</a></li><li><a href="https://www.gurufocus.com/news/9103335/energy-sector-slumps-as-uranium-energy-corp-uec-drops-25-in-september-2026" rel="noopener">Energy sector slumps as Uranium Energy Corp drops 25% in September — GuruFocus</a></li><li><a href="https://www.cameco.com/media/news/cameco-announces-westinghouses-confidential-submission-of-draft-registration-statement" rel="noopener">Westinghouse's confidential submission of draft registration statement — Cameco</a></li><li><a href="https://www.power-eng.com/nuclear/westinghouse-electric-files-for-ipo-as-nuclear-demand-grows/" rel="noopener">Westinghouse Electric files for IPO as nuclear demand grows — Power Engineering</a></li><li><a href="https://www.bloomberg.com/news/articles/2026-09-28/emerging-stocks-slide-as-oil-gains-on-renewed-mideast-tensions" rel="noopener">Emerging stocks slide as oil gains on renewed Mideast tensions — Bloomberg, 28.09</a></li><li><a href="https://www.caixinglobal.com/2026-07-24/agibot-begins-hong-kong-ipo-process-as-chinas-embodied-ai-startups-race-to-list-102467856.html" rel="noopener">AgiBot begins Hong Kong IPO process — Caixin Global, 24.07</a></li><li><a href="https://www.pbs.org/newshour/world/trump-rejects-irans-proposal-to-reopen-the-strait-of-hormuz-and-other-middle-east-news" rel="noopener">Trump rejects Iran's proposal to reopen the Strait of Hormuz — PBS NewsHour</a></li><li><a href="https://www.cbsnews.com/live-updates/iran-war-us-strait-of-hormuz-sanctions/" rel="noopener">Iran war, US Strait of Hormuz sanctions live updates — CBS News</a></li><li><a href="https://www.cbsnews.com/live-updates/trump-iran-war-us-midterm-elections-troops-deployment" rel="noopener">Trump-Iran war, midterm elections, troops deployment — CBS News</a></li><li><a href="https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis" rel="noopener">2026 Strait of Hormuz crisis — Wikipedia</a></li><li><a href="https://www.bankier.pl/wiadomosc/Prezydent-podpisal-ustawe-o-windfall-tax-Domanski-zapowiada-obnizki-na-stacjach-paliw-9206371.html" rel="noopener">Prezydent podpisał ustawę o windfall tax, Domański zapowiada obniżki na stacjach paliw — Bankier.pl</a></li><li><a href="https://www.parkiet.com/surowce-i-paliwa/art45237441-prezydent-podpisal-ustawe-paliwowa-i-kieruje-ja-do-tk-zada-obnizki-cen-na-stacjach" rel="noopener">Prezydent podpisał ustawę paliwową i kieruje ją do TK — Parkiet.com</a></li><li><a href="https://dorzeczy.pl/kraj/951097/nawrocki-podpisalem-ustawe-o-podatku-od-nadzwyczajnych-zyskow.html" rel="noopener">Nawrocki: podpisałem ustawę o podatku od nadzwyczajnych zysków — DoRzeczy.pl</a></li><li><a href="https://energia.rp.pl/elektroenergetyka/art45036371-rzad-podnosi-cit-energetyce-ale-nikt-nie-wie-jeszcze-ile-firmy-naprawde-zaplaca" rel="noopener">Rząd podnosi CIT energetyce — Energia.rp.pl</a></li><li><a href="https://energetyka24.com/energetyka/elektroenergetyka/wyzsze-daniny-dla-energetyki-rzad-chce-podniesc-cit-i-oplaty-koncesyjne" rel="noopener">Wyższe daniny dla energetyki — Energetyka24.com</a></li><li><a href="https://strefainwestorow.pl/dywidendy/dywidendy-spolek-skarbu-panstwa-szacunki-2027" rel="noopener">Dywidendy spółek Skarbu Państwa — szacunki 2027 — Strefa Inwestorów</a></li><li><a href="https://strefainwestorow.pl/dywidendy/beta-etf-dywidenda-plus-druga-wyplata-2026" rel="noopener">Beta ETF Dywidenda Plus — druga wypłata 2026 — Strefa Inwestorów</a></li><li><a href="https://www.bankier.pl/wiadomosc/BETA-ETF-DYWIDENDA-PLUS-PORTFELOW-FIZ-Raport-biezacy-nr-202-2026-9205887.html" rel="noopener">BETA ETF Dywidenda Plus, raport bieżący nr 202/2026 — Bankier.pl</a></li><li><a href="https://comparic.pl/wiedzmin-3-remaster-bije-rekord-niemal-121-tys-graczy-jednoczesnie-na-steam-po-11-latach/" rel="noopener">Wiedźmin 3 Remaster bije rekord — ok. 121 tys. graczy na Steam — Comparic.pl</a></li><li><a href="https://www.gry-online.pl/newsroom/wiedzmin-3-remaster-z-problemami-na-starcie-gracze-zglaszaja-spad/z031d7a" rel="noopener">Wiedźmin 3 Remaster z problemami na starcie — Gry-Online.pl</a></li><li><a href="https://www.gry-online.pl/newsroom/wiedzmin-3-remaster-dostal-pierwszy-patch-cd-projekt-red-celuje-w/ze31da5" rel="noopener">Wiedźmin 3 Remaster dostał pierwszy patch — Gry-Online.pl</a></li><li><a href="https://www.ppe.pl/news/428625/wiedzmin-3-remastered-bombardowanymi-negatywnymi-recenzjami-tylu-zlych-opinii-jeszcze-nie-bylo.html" rel="noopener">Wiedźmin 3 Remastered bombardowany negatywnymi recenzjami — PPE.pl</a></li><li><a href="https://strefainwestorow.pl/gaming/cdprojekt-akcje-wiedzmin3-remaster-steam-wyniki" rel="noopener">CDProjekt — akcje, Wiedźmin 3 Remaster, wyniki Steam — Strefa Inwestorów</a></li><li><a href="https://www.stockwatch.pl/wiadomosci/wiedzmin-3-remaster-rekord-steam-cd-projekt-red,akcje,381878" rel="noopener">Wiedźmin 3 Remaster — rekord Steam, CD Projekt RED — StockWatch.pl</a></li><li><a href="https://www.bankier.pl/wiadomosc/Debiutuje-Wiedzmin-3-Dziki-Gon-Remaster-do-konca-26-sprzedaz-moze-wyniesc-ok-3-mln-szt-opinia-9204197.html" rel="noopener">Debiutuje Wiedźmin 3: Dziki Gon Remaster, sprzedaż może wynieść ok. 3 mln szt. — Bankier.pl</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 3 października 2026 r. Dostęp WebFetch do części serwisów źródłowych (Bloomberg, Yahoo Finance, justETF, VanEck, iShares, stooq.pl, bankier.pl, biznesradar.pl, parkiet.com, stockwatch.pl, nbp.pl) był w tej sesji badawczej ograniczony przez proxy sieciowy, więc część liczb pochodzi z zagregowanych wyników wyszukiwania, nie z bezpośrednio otwartych stron pierwotnych — potraktuj je jako orientacyjne i zweryfikuj przed decyzją inwestycyjną. Analiza CD Projekt RED (CDR) na końcu raportu nie jest częścią śledzonego portfela wzrostowego. Nie stanowi porady inwestycyjnej.</em></p>
+    </article>
+
+    <nav class="nav-raporty"><a href="/raport-finansowy/2026-09-28-przeglad-rynku.html">&larr; Poprzedni raport</a><span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span><span></span></nav>
+    <footer><a href="/">Grzyb Times</a> &mdash; raport redagowany przez AI. Nie stanowi porady inwestycyjnej.</footer>
+  </div>
+
+<script>
+  /* ---- motyw (wspólny klucz z gazetą — jeden wybór na cały serwis) ---- */
+  const root = document.documentElement;
+  if (localStorage.getItem('gazeta-theme') === 'dark' ||
+      (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+  document.getElementById('theme-toggle').onclick = () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+  };
+
+  /* ---- podgląd DEMO: szablon otwarty bez podstawionej treści ---- */
+  const tresc = document.getElementById('tresc');
+  if (tresc.textContent.trim() === '__' + 'TRESC' + '__') {
+    document.title = 'Raport finansowy — podgląd szablonu';
+    document.getElementById('tytul').textContent = 'Przegląd rynku';
+    document.querySelector('.kicker').textContent = 'Raport finansowy · PODGLĄD SZABLONU';
+    const dt = document.getElementById('data-raportu');
+    dt.removeAttribute('data-iso');
+    dt.textContent = 'Poniedziałek, 1 stycznia 2026';
+    document.querySelector('.nav-raporty').innerHTML =
+      '<span></span><span class="nav-spacer"></span><a href="/">Archiwum</a>' +
+      '<span class="nav-spacer"></span><span></span>';
+    tresc.innerHTML = `
+      <p>To jest <strong>podgląd szablonu</strong> — plik otwarty bez podstawionej treści.
+      Rutyna zastępuje <em>__TRESC__</em> raportem wyrenderowanym z markdownu
+      (<code>routine/buduj_raporty.py</code>).</p>
+      <h2>Sekcja raportu</h2>
+      <p>Akapit z <strong>pogrubieniem</strong>, <em>kursywą</em> i
+      <a href="#">odnośnikiem do źródła</a>. Lorem ipsum dolor sit amet, consectetur
+      adipiscing elit, sed do eiusmod tempor incididunt ut labore.</p>
+      <blockquote><p><strong>Kontekst:</strong> cytat blokowy — używany w raportach na wstęp i wnioski.</p></blockquote>
+      <ul><li>Punkt pierwszy listy</li><li>Punkt drugi listy</li></ul>
+      <div class="tabela"><table>
+        <thead><tr><th>ETF</th><th>Waga</th><th>Zmiana</th><th>Teza</th></tr></thead>
+        <tbody>
+          <tr><td data-etykieta="ETF"><strong>Przykład A</strong></td><td data-etykieta="Waga">40%</td><td data-etykieta="Zmiana">+1,2%</td><td data-etykieta="Teza">bez zmian</td></tr>
+          <tr><td data-etykieta="ETF"><strong>Przykład B</strong></td><td data-etykieta="Waga">35%</td><td data-etykieta="Zmiana">−0,8%</td><td data-etykieta="Teza">obserwujemy</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Druga sekcja</h2>
+      <p>Spis treści powyżej buduje się automatycznie z nagłówków drugiego poziomu.</p>`;
+  }
+
+  /* ---- spis treści z H2 ---- */
+  const naglowki = [...tresc.querySelectorAll('h2')];
+  if (naglowki.length > 2) {
+    const ol = document.createElement('ol');
+    naglowki.forEach((h, i) => {
+      if (!h.id) h.id = 'sekcja-' + (i + 1);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+    });
+    const spis = document.getElementById('spis');
+    spis.innerHTML = '<div class="spis-tytul">W tym raporcie</div>';
+    spis.appendChild(ol);
+  }
+
+  /* ---- data raportu: ISO (UTC) → czas polski; fallback na tekst w HTML ---- */
+  const elData = document.getElementById('data-raportu');
+  const iso = elData.getAttribute('data-iso');
+  if (iso && !isNaN(new Date(iso).getTime())) {
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(new Date(iso)).reduce((o, x) => (o[x.type] = x.value, o), {});
+      const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+        Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+      const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+        'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      elData.textContent = `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}`;
+    } catch (e) {}
+  }
+
+  /* ---- pasek postępu czytania ---- */
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('progress').style.width =
+      (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+</script>
+</body>
+</html>
