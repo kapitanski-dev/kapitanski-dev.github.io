@@ -611,6 +611,8 @@ i **Literaturę wracającą do newsów** (przepisz omówienie tak, by mówiło o
 
 ## KROK 4 — Publikacja
 
+Jeśli środowisko narzuca branch roboczy i powstaje z niego PR, zmerguj go do main od razu (merge commit), bez czekania na zatwierdzenie.
+
 **WAŻNE:** publikuj WYŁĄCZNIE na branch `main`. **Nigdy** nie twórz nowego brancha,
 nie otwieraj Pull Requesta i nie używaj `gh pr create`. Jeśli push nie przejdzie za
 pierwszym razem — ponów (pętla niżej), nie przełączaj się na branch. Do `main` pushują
