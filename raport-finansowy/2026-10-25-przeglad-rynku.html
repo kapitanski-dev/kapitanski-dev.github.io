@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Przegląd rynku – 25 października 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&display=swap" rel="stylesheet">
+<style>
+  /* Paleta i faktura papieru — te same zmienne co template.html (gazeta). */
+  :root {
+    --paper: #faf7f0;
+    --ink: #17150f;
+    --ink-soft: #55503f;
+    --rule: #d8d2c2;
+    --accent: #8a1c1c;
+    --card: #ffffff;
+    --up: #1d6b45;
+    --down: #a3271f;
+  }
+  html.dark {
+    --paper: #14130f;
+    --ink: #ece7da;
+    --ink-soft: #a39d8b;
+    --rule: #35322a;
+    --accent: #e0655a;
+    --card: #1d1b16;
+    --up: #5fbd8b;
+    --down: #e8776b;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  html, body { overflow-x: hidden; overflow-x: clip; }
+
+  body {
+    font-family: 'Newsreader', serif;
+    background: var(--paper);
+    background-image: radial-gradient(ellipse 120% 60% at 50% -5%,
+      color-mix(in srgb, #fff 45%, var(--paper)), var(--paper) 70%);
+    background-attachment: fixed;
+    color: var(--ink);
+    margin: 0;
+    line-height: 1.7;
+    font-size: clamp(15px, 1vw + 11px, 17.5px);
+    text-rendering: optimizeLegibility;
+    transition: background .4s ease, color .4s ease;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 90;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: .045; mix-blend-mode: multiply;
+  }
+  html.dark body::before { opacity: .06; mix-blend-mode: screen; }
+  html.dark body { background-image: none; }
+  ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 100;
+    transition: width .1s linear;
+  }
+
+  /* Węższa kolumna niż gazeta — raport to jeden ciąg tekstu do czytania. */
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== Nagłówek ===== */
+  header.masthead { text-align: center; padding: 40px 0 0; }
+  .masthead .kicker {
+    font-family: 'Inter', sans-serif;
+    font-size: .7em; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--ink-soft);
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+  }
+  .masthead .kicker::before, .masthead .kicker::after {
+    content: ""; height: 1px; width: clamp(30px, 8vw, 90px); background: var(--rule);
+  }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-variation-settings: "opsz" 144;
+    font-weight: 900;
+    font-size: clamp(2.4em, 7vw, 4em);
+    margin: 10px 0 4px;
+    letter-spacing: -1px;
+    line-height: 1.05;
+  }
+  .masthead h1 a { color: inherit; text-decoration: none; }
+  .date-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: 'Inter', sans-serif;
+    font-size: .72em; text-transform: uppercase; letter-spacing: 2px;
+    font-weight: 600; color: var(--ink-soft);
+    border-top: 1px solid var(--rule);
+    border-bottom: 3px double var(--ink);
+    padding: 10px 0; margin-top: 22px;
+  }
+  #theme-toggle {
+    background: none; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--ink-soft); font: inherit; cursor: pointer; padding: 3px 12px;
+    letter-spacing: 2px;
+  }
+  #theme-toggle:hover { color: var(--accent); border-color: var(--accent); }
+
+  /* ===== Spis treści (budowany z H2 przez JS) ===== */
+  #spis {
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    padding: 18px 22px; margin: 32px 0 8px; border-radius: 2px;
+  }
+  #spis:empty { display: none; }
+  #spis .spis-tytul {
+    font-family: 'Inter', sans-serif; font-weight: 700; font-size: .7em;
+    text-transform: uppercase; letter-spacing: 3px; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  #spis ol { list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  #spis li { position: relative; padding-left: 26px; margin: 5px 0; line-height: 1.45; }
+  #spis li::before {
+    counter-increment: s; content: counter(s, decimal-leading-zero);
+    position: absolute; left: 0; top: .15em;
+    font-family: 'Inter', sans-serif; font-size: .7em; font-weight: 700; color: var(--accent);
+  }
+  #spis a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  #spis a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+  /* ===== Treść raportu ===== */
+  .raport { padding-bottom: 8px; }
+  .raport > h1 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.8em; line-height: 1.2; margin: 40px 0 12px;
+  }
+  .raport h2 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.5em; line-height: 1.25;
+    margin: 48px 0 14px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 20px;
+  }
+  .raport h3 {
+    font-family: 'Fraunces', serif; font-weight: 700;
+    font-size: 1.15em; margin: 32px 0 10px; scroll-margin-top: 20px;
+  }
+  .raport h4 {
+    font-family: 'Inter', sans-serif; font-weight: 700;
+    font-size: .82em; text-transform: uppercase; letter-spacing: 2px;
+    color: var(--accent); margin: 26px 0 8px;
+  }
+  .raport p { margin: 0 0 16px; }
+  .raport strong { font-weight: 700; }
+  .raport a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+  .raport a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .raport code {
+    font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: .85em;
+    background: color-mix(in srgb, var(--accent) 8%, transparent);
+    padding: 1px 5px; border-radius: 2px;
+  }
+
+  .raport ul, .raport ol { margin: 0 0 18px; padding-left: 0; list-style: none; }
+  .raport li { position: relative; padding-left: 24px; margin: 7px 0; }
+  .raport ul > li::before {
+    content: "▪"; position: absolute; left: 4px; top: -.05em;
+    color: var(--accent); font-size: .85em;
+  }
+  .raport ol { counter-reset: li; }
+  .raport ol > li::before {
+    counter-increment: li; content: counter(li) ".";
+    position: absolute; left: 0; top: 0;
+    font-family: 'Inter', sans-serif; font-size: .8em; font-weight: 700; color: var(--accent);
+  }
+
+  .raport blockquote {
+    margin: 22px 0; padding: 16px 22px;
+    border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    border-radius: 2px;
+  }
+  .raport blockquote p:last-child { margin-bottom: 0; }
+
+  .raport hr {
+    border: none; border-top: 1px solid var(--rule);
+    margin: 40px 0;
+  }
+
+  /* Tabele — sedno raportu, więc nigdy nie chowamy ich w poziomym scrollu.
+     Szeroki ekran: tabela wychodzi poza kolumnę tekstu na całą dostępną
+     szerokość. Wąski (poniżej .tabela-karty): każdy wiersz staje się kartą
+     z podpisami z `data-etykieta`. `overflow-x` zostaje tylko jako zabezpieczenie
+     na patologiczną zawartość (długi URL bez spacji). */
+  .tabela {
+    margin: 26px 0;
+    width: min(1180px, calc(100vw - 48px));
+    margin-left: 50%; transform: translateX(-50%);
+    overflow-x: auto;
+    border: 1px solid var(--rule); border-radius: 2px;
+  }
+  .raport table {
+    border-collapse: collapse; width: 100%;
+    table-layout: auto;
+    font-family: 'Inter', sans-serif; font-size: .82em; line-height: 1.5;
+    background: color-mix(in srgb, var(--card) 40%, var(--paper));
+  }
+  .raport th, .raport td {
+    padding: 10px 14px; text-align: left; vertical-align: top;
+    border-bottom: 1px solid var(--rule);
+    overflow-wrap: anywhere; hyphens: auto;
+  }
+  .raport th {
+    font-weight: 700; font-size: .92em; text-transform: uppercase; letter-spacing: 1px;
+    color: var(--ink-soft);
+    border-bottom: 2px solid var(--ink);
+  }
+  .raport tbody tr:last-child td { border-bottom: none; }
+  .raport tbody tr:hover { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+  .raport td strong { font-weight: 600; }
+
+  /* Wąski ekran: tabela → karty. Zero przewijania w bok. */
+  @media (max-width: 900px) {
+    .tabela {
+      width: auto; margin-left: 0; transform: none;
+      overflow-x: visible; border: none; border-radius: 0;
+    }
+    .raport table { background: none; font-size: .86em; }
+    .raport thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .raport tbody tr {
+      display: block; margin-bottom: 12px; padding: 4px 0;
+      border: 1px solid var(--rule); border-left: 3px solid var(--accent); border-radius: 2px;
+      background: color-mix(in srgb, var(--card) 40%, var(--paper));
+    }
+    .raport tbody tr:hover { background: color-mix(in srgb, var(--card) 40%, var(--paper)); }
+    .raport tbody td {
+      display: grid; grid-template-columns: minmax(72px, 30%) 1fr; gap: 14px;
+      padding: 7px 14px; border-bottom: none;
+    }
+    .raport tbody td + td { border-top: 1px solid color-mix(in srgb, var(--rule) 60%, transparent); }
+    .raport tbody td::before {
+      content: attr(data-etykieta);
+      font-size: .82em; font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--ink-soft); line-height: 1.4; padding-top: .15em;
+    }
+    .raport tbody td:not([data-etykieta]) { display: block; }
+    /* Pierwsza komórka wiersza to zwykle nazwa pozycji — niech będzie nagłówkiem karty. */
+    .raport tbody td:first-child {
+      display: block; font-size: 1.05em; font-weight: 700; padding-top: 10px;
+    }
+    .raport tbody td:first-child::before { display: none; }
+  }
+
+  /* ===== Nawigacja między raportami ===== */
+  .nav-raporty {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    font-family: 'Inter', sans-serif; font-size: .72em; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    border-top: 3px double var(--ink); margin-top: 46px; padding: 16px 0 4px;
+  }
+  .nav-raporty:empty { display: none; }
+  .nav-raporty a {
+    color: var(--ink-soft); text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 2px; padding: 6px 16px;
+    transition: all .2s; white-space: nowrap;
+  }
+  .nav-raporty a:hover { color: var(--accent); border-color: var(--accent); }
+  .nav-raporty .nav-spacer { flex: 1; }
+
+  footer {
+    margin: 40px 0 40px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: 'Inter', sans-serif; font-size: .72em; color: var(--ink-soft);
+    text-align: center; letter-spacing: 1px; text-transform: uppercase;
+  }
+  footer a { color: inherit; }
+
+  /* ===== DRUK ===== */
+  /* ===== MOBILE ===== */
+  @media (max-width: 768px) {
+    body { font-size: 15px; }
+    .wrap { padding: 0 16px; }
+    header.masthead { padding: 24px 0 0; }
+    .masthead h1 { letter-spacing: -1px; }
+    .date-bar { flex-direction: column; align-items: center; gap: 6px; padding: 8px 0; font-size: .65em; }
+    #theme-toggle { padding: 5px 14px; }
+    #spis { padding: 14px 16px; }
+    .raport h2 { font-size: 1.3em; margin-top: 36px; }
+    .nav-raporty { flex-direction: column; align-items: stretch; text-align: center; }
+    .nav-raporty .nav-spacer { display: none; }
+  }
+
+  /* ===== DRUK — na końcu, żeby wygrać z układem kart (szerokość kartki < 900px) ===== */
+  @media print {
+    #progress, #theme-toggle, .nav-raporty, #spis { display: none !important; }
+    body::before { display: none; }
+    body { background: #fff; font-size: 11pt; }
+    .raport h2, .raport table, .tabela { break-inside: avoid; }
+    .tabela { width: auto; margin-left: 0; transform: none; overflow-x: visible;
+              border: 1px solid #999; }
+    .raport thead { position: static; width: auto; height: auto; clip-path: none; }
+    .raport tbody tr { display: table-row; border: none; background: none; margin: 0; }
+    .raport tbody td, .raport tbody td:first-child {
+      display: table-cell; font-size: inherit; font-weight: inherit;
+      padding: 6px 8px; border-bottom: 1px solid #ccc;
+    }
+    .raport tbody td::before { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="progress"></div>
+
+  <div class="wrap">
+    <header class="masthead">
+      <div class="kicker">Raport finansowy</div>
+      <h1><span id="tytul">Przegląd rynku</span></h1>
+      <div class="date-bar">
+        <span id="data-raportu" data-iso="2026-10-25T12:00:00Z">niedziela, 25 października 2026</span>
+        <button id="theme-toggle" title="Przełącz motyw">◐ motyw</button>
+      </div>
+    </header>
+
+    <nav id="spis" aria-label="Spis treści"></nav>
+
+    <article class="raport" id="tresc">
+<blockquote><p><strong>Kontekst:</strong> Trzy dni od poprzedniego raportu przyniosły zmianę głównego tematu rynku — z obaw o wydatki na AI na starą, dobrze znaną zmienną: ceny ropy. Napięcia wokół Cieśniny Ormuz wypchnęły ropę Brent do ok. 116,72 USD za baryłkę, a wyprzedaż z piątku 23.10 objęła szerszy rynek, nie tylko spółki technologiczne. W tle, cichym, ale coraz głośniejszym wątkiem pozostaje CoreWeave — spółka poza portfelem, ale kluczowa dla ekosystemu wynajmu GPU dla AI — której kurs i koszt zabezpieczenia długu (CDS) ustanowiły w tym miesiącu kolejne rekordy, zanim jeszcze dotarły do tego okna. Dla samego portfela: żaden z pięciu twardych sygnałów redukcji nie zmienił statusu. Najbliższe dni (27–29.10) przyniosą trzy kluczowe testy tezy chipowo-AI naraz — wyniki Microsoftu, Google i Amazona — więc ten raport jest krótszym, "łącznikowym" odcinkiem przed tą falą. Na końcu — jak zawsze — analiza CD Projekt RED.</p></blockquote>
+<p><em>Kurs USD/PLN w dniu raportu: ok. <strong>3,90 zł</strong> (ostatnia w pełni potwierdzona tabela NBP to wciąż 15.10.2026, dokładnie 3,8952 zł — nie udało się potwierdzić nowszej tabeli, tak jak w dwóch poprzednich raportach). Kurs EUR/PLN: ok. <strong>4,37 zł</strong> (ta sama tabela, dokładnie 4,3691 zł). Wszystkie przeliczenia w raporcie używają tych samych dwóch kursów.</em></p>
+<hr>
+<h2>Co nowego od poprzedniego raportu (22 października 2026)</h2>
+<ul><li><strong>Temat tygodnia się zmienił: z obaw o AI na ceny ropy.</strong> W piątek 23.10 S&amp;P 500 spadł o 0,52% do 7623,68 pkt, Nasdaq o 0,21% do 25 955,34 pkt, a Dow Jones o 1,23% (-653 pkt) do 52 215,16 pkt — główną przyczyną był skok ropy Brent do ok. 116,72 USD za baryłkę (~455 zł), w reakcji na napięcia wokół Cieśniny Ormuz. W całym tygodniu (19–23.10) S&amp;P 500 spadł o ok. 0,5%, Nasdaq o ok. 0,7%, a Dow zyskał ok. 0,4% — sektor energetyczny był liderem tygodnia (+1,56%), a spadki objęły szeroki rynek: na Nasdaq 334 spółki ustanowiły nowe roczne minima wobec tylko 74 nowych maksimów.</li><li><strong>CoreWeave: napięcie wokół zadłużenia AI ustanowiło w październiku nowe rekordy, a kurs akcji kontynuuje zjazd.</strong> 5-letni CDS (koszt zabezpieczenia się przed niewypłacalnością spółki) wzrósł w połowie października do rekordowego poziomu ok. 1195 punktów bazowych — rynek wycenia to jako ok. 60% szans na niewypłacalność w ciągu 5 lat (to wycena rynkowa, nie ocena agencji ratingowej). Obligacje spółki notowane są ok. 76,5–81 centów na dolarze nominału. Kurs akcji, który 21–22.10 spadł do rocznego minimum 57,21 USD, w tym oknie zjechał dalej — najświeższy dostępny odczyt (niepotwierdzony co do dokładnej daty) wskazuje poziom ok. 54 USD. CEO spółki nazwał reakcję rynku „irracjonalną". Media (CNN, komentarz Bloomberga) zaczęły pisać o CoreWeave jako możliwym „kanarku w kopalni" dla całego boomu finansowania infrastruktury AI długiem — ale <strong>formalnie twardy sygnał (b) wciąż się nie zapalił</strong>: nie było odpisu księgowego ani upadłości. Potwierdzona nowa data wyników spółki: 9 listopada 2026 — to będzie kluczowy test, czy stres się stabilizuje.</li><li><strong>FOMC: potwierdzony termin i godzina decyzji.</strong> Rezerwa Federalna ogłosi decyzję o stopach 28 października 2026 o 14:00 czasu wschodniego USA (ok. 20:00 w Polsce), z konferencją prasową pół godziny później. Obecny przedział stóp to 3,75–4,00% (po wrześniowej podwyżce). Rynek w większości oczekuje utrzymania stóp, część komentatorów wskazuje na ryzyko jastrzębiego tonu — ale to pozostaje niepewne do samej decyzji.</li><li><strong>Microsoft, Google i Amazon — wyniki w tym samym tygodniu (28–29.10), od razu po tym raporcie.</strong> To będą kolejne trzy z czterech testów twardego sygnału (a) naraz. W tym oknie nie pojawiły się żadne nowe informacje o capexie tych spółek poza już znanymi (Amazon podniósł prognozę do ok. 220 mld USD, Meta utrzymała 135–145 mld USD — oba fakty z poprzedniego raportu).</li><li><strong>NVIDIA, Google (AdX), ASML, TSMC, Rocket Lab, AST SpaceMobile — brak nowych wiadomości fundamentalnych w tym oknie.</strong> Sprawa AdX wciąż czeka na podpisanie wyroku przez sędzię Brinkemę; Rocket Lab wciąż nie podało nowej daty Neutrona; AST SpaceMobile wciąż czeka na rozstrzygnięcie testów FCC i ma przed sobą termin w pozwie zbiorowym (13.11).</li><li><strong>CD Projekt RED: bez nowych komunikatów; oglądalność „Cyberpunk: Edgerunners 2" wciąż nieopublikowana przez Netflix.</strong> Szczegóły w dodatku na końcu raportu.</li></ul>
+<hr>
+<h2>1. Co się stało — TLDR</h2>
+<p><strong>Jedno zdanie:</strong> To był rzadki w tej serii raportów tydzień, w którym główne ryzyko dla portfela nie miało nic wspólnego z samą tezą AI — rynek przestraszył się ropy i Bliskiego Wschodu, a nie wydatków gigantów technologicznych — podczas gdy osobny, narastający od tygodni wątek zadłużenia CoreWeave ustanowił nowe rekordy napięcia, wciąż bez formalnego przekroczenia twardego sygnału (b).</p>
+<h3>Dwa wątki okna:</h3>
+<p><strong>1. Ropa i geopolityka, nie AI, napędziły piątkową wyprzedaż</strong></p>
+<p>Skok ceny ropy Brent do ok. 116,72 USD w reakcji na napięcia wokół Cieśniny Ormuz ściągnął w piątek 23.10 w dół cały rynek — S&amp;P 500 i Dow spadły mocniej niż Nasdaq, a sektor energetyczny był jedynym wyraźnym zwycięzcą tygodnia. To inny mechanizm ryzyka niż w poprzednich tygodniach tej serii (obawy o capex AI) — portfel jest na niego narażony przez samą ekspozycję na szeroki rynek (IWDA), nie przez swoją tezę.</p>
+<p><strong>2. CoreWeave: rekordowy stres zadłużenia, ale wciąż bez formalnego przekroczenia sygnału (b)</strong></p>
+<p>5-letni CDS CoreWeave sięgnął rekordowych ok. 1195 punktów bazowych (rynek wycenia to jako ok. 60% szans na niewypłacalność w 5 lat), a kurs akcji kontynuuje zjazd poniżej już i tak niskich poziomów z poprzedniego raportu. To największe dotąd napięcie w tej serii raportów wokół finansowania infrastruktury AI długiem — ale formalnie sygnał (b) wymaga odpisu księgowego albo upadłości dużego wynajmującego GPU, czego wciąż nie było. Wyniki CoreWeave 9.11.2026 będą ważnym testem.</p>
+<hr>
+<h2>2. Portfel — pozycja po pozycji</h2>
+<h3>ETF-y (kupowane za 5 000 zł/mies. w fazie rozruchu)</h3>
+<div class="tabela"><table><thead><tr><th>ETF</th><th>Ostatnia potwierdzona wycena</th><th>Zmiana w oknie</th><th>Co się dzieje</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="ETF"><strong>IWDA</strong> (MSCI World)</td><td data-etykieta="Ostatnia potwierdzona wycena">Proxy S&amp;P 500: 7623,68 pkt (23.10, -0,52% w dniu)</td><td data-etykieta="Zmiana w oknie">ok. <strong>-1,7%</strong> wobec 7757,17 pkt (21.10)</td><td data-etykieta="Co się dzieje">Piątkowa wyprzedaż (23.10) napędzona skokiem ceny ropy w reakcji na napięcia wokół Cieśniny Ormuz, nie obawami o AI — spadek objął szeroki rynek (więcej spółek traciło niż zyskiwało)</td><td data-etykieta="Teza">🟡 Ruch razem z rynkiem, przyczyna makro/geopolityczna, nie zmiana tezy funduszu</td></tr><tr><td data-etykieta="ETF"><strong>SMH</strong> (producenci chipów)</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej dokładnej wyceny w tym oknie</td><td data-etykieta="Zmiana w oknie">Nie do ustalenia wprost</td><td data-etykieta="Co się dzieje">Brak nowych newsów specyficznie o TSMC czy NVIDIA; piątkowa wyprzedaż dotknęła cały rynek, nie tylko chipy — sektor energetyczny, nie technologiczny, był w centrum uwagi tego tygodnia</td><td data-etykieta="Teza">— Fundamenty bez zmian, brak potwierdzonej liczby dla samego sektora w tym oknie</td></tr><tr><td data-etykieta="ETF"><strong>RBOT</strong> (robotyka)</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Zmiana w oknie">Nie do ustalenia</td><td data-etykieta="Co się dzieje">Brak nowych newsów specyficznych dla RBOT w tym oknie — temat Optimusa (pilotażowa produkcja, przesunięte dostawy) pozostaje bez zmian od poprzedniego raportu</td><td data-etykieta="Teza">— Bez nowej aktualizacji w tym oknie</td></tr><tr><td data-etykieta="ETF"><strong>NUKL</strong> (energia jądrowa)</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Zmiana w oknie">Nie do ustalenia</td><td data-etykieta="Co się dzieje">Cena uranu spot pozostaje stabilna, ok. 89,6–89,9 USD/funt — bez istotnej zmiany względem poprzednich raportów</td><td data-etykieta="Teza">— Bez istotnej zmiany</td></tr><tr><td data-etykieta="ETF"><strong>JEDI</strong> (kosmos)</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Zmiana w oknie">Nie do ustalenia</td><td data-etykieta="Co się dzieje">Obie spółki kosmiczne bliskie tezie funduszu (Rocket Lab, AST SpaceMobile) wciąż czekają na rozstrzygnięcia — bez nowych faktów w tym oknie</td><td data-etykieta="Teza">— Bez zmian względem poprzedniego raportu</td></tr><tr><td data-etykieta="ETF"><strong>EIMI</strong> (rynki wschodzące)</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Zmiana w oknie">Nie do ustalenia</td><td data-etykieta="Co się dzieje">Brak nowych danych makro dla rynków wschodzących w tym oknie</td><td data-etykieta="Teza">— Bez zmian względem poprzedniego raportu</td></tr></tbody></table></div>
+<hr>
+<h3>Spółki docelowe (jeszcze NIEKUPIONE — monitorowane)</h3>
+<div class="tabela"><table><thead><tr><th>Spółka</th><th>Waga doc.</th><th>Ostatnia potwierdzona wycena</th><th>Co nowego</th><th>Teza</th></tr></thead><tbody><tr><td data-etykieta="Spółka"><strong>TSMC</strong></td><td data-etykieta="Waga doc.">6%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak nowej potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Brak nowych newsów firmowych w tym oknie</td><td data-etykieta="Teza">✅ Bez zmian co do istoty — ostatni twardy dowód to wciąż rekordowe wyniki Q3 z wcześniejszych raportów</td></tr><tr><td data-etykieta="Spółka"><strong>NVIDIA</strong></td><td data-etykieta="Waga doc.">5%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak nowej potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Dochodzenie DOJ ws. umowy z Groq (ok. 17–20 mld USD/~66–78 mld zł) wciąż trwa, bez rozstrzygnięcia w tym oknie</td><td data-etykieta="Teza">🟡 Bez nowych informacji fundamentalnych w tym oknie</td></tr><tr><td data-etykieta="Spółka"><strong>Google (GOOGL)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego"><strong>Sprawa AdX wciąż bez podpisanego wyroku</strong> przez sędzię Brinkemę. Wyniki za III kwartał zapowiadane orientacyjnie na 28.10.2026 (po sesji), wciąż niepotwierdzone formalnie przez spółkę</td><td data-etykieta="Teza">🟡 Bez zmian co do istoty sprawy — najbliższe wyniki to jeden z trzech testów sygnału (a) w nadchodzącym tygodniu</td></tr><tr><td data-etykieta="Spółka"><strong>Microsoft (MSFT)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Wyniki za I kwartał roku fiskalnego 2027 potwierdzone na 28.10.2026, po sesji — bez nowego komentarza o capexie w tym oknie</td><td data-etykieta="Teza">— Bez nowej informacji cenowej, zbliżający się test sygnału (a)</td></tr><tr><td data-etykieta="Spółka"><strong>Amazon (AMZN)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Wyniki za III kwartał potwierdzone na 29.10.2026. Podwyżka prognozy capexu do ok. 220 mld USD (~858 mld zł) z poprzedniego raportu pozostaje bez zmian w tym oknie</td><td data-etykieta="Teza">✅ Bez nowych faktów w tym oknie, zbliżający się test sygnału (a)</td></tr><tr><td data-etykieta="Spółka"><strong>Tesla (TSLA)</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Ostatnia potwierdzona wycena">386,47 USD (21.10, przed ogłoszeniem wyników po sesji)</td><td data-etykieta="Co nowego">Reakcja rynku na wyniki Q3 (zysk operacyjny -56% r/r, obniżony capex, przesunięcie dostaw Optimusa do klientów na koniec 2027) nastąpiła już w poprzednim raporcie. <strong>Dokładne zamknięcia sesji z 22–24.10 pozostają niepotwierdzone w tej sesji badawczej</strong></td><td data-etykieta="Teza">🟡 Bez nowych faktów fundamentalnych w tym oknie — temat Optimusa bez zmian od poprzedniego raportu</td></tr><tr><td data-etykieta="Spółka"><strong>ASML</strong></td><td data-etykieta="Waga doc.">3%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Brak nowych wiadomości korporacyjnych w tym oknie</td><td data-etykieta="Teza">— Bez zmian co do istoty tezy</td></tr><tr><td data-etykieta="Spółka"><strong>Rocket Lab (RKLB)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego"><strong>Brak nowej konkretnej daty debiutu Neutrona w tym oknie</strong> — plan naprawy z poprzedniego raportu (kroki 1–2 do końca I kw. 2027, krok 3 w trakcie I kw. 2027) pozostaje bez zmian</td><td data-etykieta="Teza">🔴 Twardy sygnał (d) pozostaje zapalony, bez zmiany</td></tr><tr><td data-etykieta="Spółka"><strong>AST SpaceMobile (ASTS)</strong></td><td data-etykieta="Waga doc.">2%</td><td data-etykieta="Ostatnia potwierdzona wycena">Brak potwierdzonej wyceny w tym oknie</td><td data-etykieta="Co nowego">Brak nowych faktów w tym oknie — cisza ws. testów FCC pasma 800 MHz trwa dalej, termin w pozwie zbiorowym (13.11.2026) i opóźnienie New Glenn z poprzedniego raportu bez zmian</td><td data-etykieta="Teza">🔴 Bez nowych faktów, ale oba wcześniejsze negatywne fakty (opóźnienie New Glenn, termin sądowy) pozostają aktualne</td></tr></tbody></table></div>
+<p><em>Uwaga: dostęp do bezpośrednich źródeł danych giełdowych (stooq.pl, bankier.pl, nbp.pl, finance.yahoo.com, investing.com, stockanalysis.com i inne) był w tej sesji badawczej w dużej mierze zablokowany (błędy DNS), podobnie jak w poprzednich raportach. Dokładne zamknięcia kursów z sesji 22–25.10.2026 dla większości spółek i funduszy pozostają niepotwierdzone, z wyjątkiem punktów wyraźnie podanych wyżej (indeksy S&amp;P 500/Nasdaq/Dow z 23.10, Tesla z 21.10). Zweryfikuj dokładne kursy bezpośrednio w serwisie maklerskim przed jakąkolwiek decyzją inwestycyjną.</em></p>
+<hr>
+<h2>3. Stan twardych sygnałów redukcji</h2>
+<div class="tabela"><table><thead><tr><th>Sygnał</th><th>Status</th><th>Co wiemy dzisiaj</th></tr></thead><tbody><tr><td data-etykieta="Sygnał"><strong>(a) Dwa kwartały cięcia capexu gigantów</strong></td><td data-etykieta="Status">🟢 Nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Bez zmian od poprzedniego raportu — Amazon i Meta już potwierdziły wzrost capexu, nie spadek. Microsoft (28.10), Google (orientacyjnie 28.10) i Amazon (29.10) raportują wyniki w tym samym tygodniu, bezpośrednio po tym raporcie — to będą jednocześnie trzy kolejne testy tego sygnału</td></tr><tr><td data-etykieta="Sygnał"><strong>(b) Spadek GPU / odpisy data centers</strong></td><td data-etykieta="Status">🟡 Formalnie nie zapalony, napięcie ustanowiło nowy rekord</td><td data-etykieta="Co wiemy dzisiaj">CoreWeave: 5-letni CDS wzrósł do rekordowych ok. 1195 pb (rynek wycenia ok. 60% szans na niewypłacalność w 5 lat), obligacje notowane 76,5–81 centów na dolarze, kurs akcji kontynuuje zjazd poniżej rocznego minimum z poprzedniego raportu. CEO nazwał reakcję rynku „irracjonalną". Mimo to <strong>formalnie brak odpisu księgowego lub upadłości dużego wynajmującego GPU</strong> — próg aktywacji sygnału nie został przekroczony. Wyniki CoreWeave 9.11.2026 będą kluczowym testem</td></tr><tr><td data-etykieta="Sygnał"><strong>(c) Zero Optimusa przez 18–24 mies.</strong></td><td data-etykieta="Status">🟡 Formalnie nie zapalony</td><td data-etykieta="Co wiemy dzisiaj">Bez zmian od poprzedniego raportu — pilotażowa produkcja w Fremont wystartowała, ale realnych wolumenów komercyjnych wciąż nie ma, dostawy do klientów przesunięte na koniec 2027 roku</td></tr><tr><td data-etykieta="Sygnał"><strong>(d) Poślizg Neutrona</strong></td><td data-etykieta="Status">🔴 <strong>ZAPALONY (bez zmian)</strong></td><td data-etykieta="Co wiemy dzisiaj">Rocket Lab wciąż nie podało konkretnej nowej daty debiutu — plan naprawy z poprzedniego raportu bez zmian w tym oknie</td></tr><tr><td data-etykieta="Sygnał"><strong>(e) ASTS bez usługi + duże rozmycie</strong></td><td data-etykieta="Status">🟡 Bez zmian, wciąż daleko do granicznego terminu</td><td data-etykieta="Co wiemy dzisiaj">Opóźnienie New Glenn i termin w pozwie zbiorowym (13.11.2026) z poprzedniego raportu pozostają aktualne, bez nowych faktów w tym oknie. Graniczny termin sygnału (koniec 2027) pozostaje odległy</td></tr></tbody></table></div>
+<h3>Ryzyko poza formalną listą — zmiany tego okna</h3>
+<p><strong>Główne ryzyko rynkowe tego tygodnia nie miało nic wspólnego z tezą portfela.</strong> Skok ceny ropy w reakcji na napięcia wokół Cieśniny Ormuz pociągnął w dół cały szeroki rynek (S&amp;P 500, Dow) silniej niż Nasdaq — to inny mechanizm niż obawy o capex AI z poprzednich tygodni, ale wciąż realne ryzyko dla funduszu IWDA przez samą ekspozycję na indeks światowy. Jednocześnie <strong>napięcie wokół zadłużenia CoreWeave ustanowiło w październiku nowy rekord</strong> (CDS na poziomie wycenianym jako ok. 60% szans na niewypłacalność w 5 lat) — to spółka poza portfelem, ale jej kondycja jest najlepszym dostępnym barometrem tego, czy rynek finansowania infrastruktury AI długiem zaczyna się psuć. Wciąż nie ma formalnego odpisu czy upadłości, które aktywowałyby sygnał (b), ale odległość do tego progu się zmniejsza, nie powiększa.</p>
+<hr>
+<h2>4. ETFBDIVPL — obserwowana pozycja poza portfelem wzrostowym</h2>
+<p>Beta ETF Dywidenda Plus Portfelowy FIZ (ETFBDIVPL, notowany na GPW) śledzi indeks WIGdivplus, koszyk spółek dywidendowych z GPW (banki, energetyka, spółki Skarbu Państwa). Opłata za zarządzanie (TER): 0,90% rocznie, wypłata dochodu kwartalnie. Fundusz <strong>nie realizuje żadnej z trzech tez portfela wzrostowego i nie wchodzi do jego oceny</strong> — to osobna, obserwowana pozycja.</p>
+<ul><li><strong>(a) Brak nowej wypłaty w tym oknie — test domykania luki wobec stopy dywidendy indeksu wciąż odłożony do grudnia.</strong> Suma wypłat w 2026 roku pozostaje na poziomie 3,41 zł/certyfikat, co przy kursie ok. 300 zł z sierpnia dawało ok. 1,14% w skali roku — wobec stopy dywidendy samego indeksu WIGdivplus, która w 2025 r. wyniosła 6,2%. Brak nowego komunikatu funduszu o wypłacie w tym oknie; brak konkretnej daty ustalenia prawa do grudniowej transzy.</li><li><strong>(b) Opłata 0,90% rocznie nadal zjada znaczną część dotychczasowej wypłaty.</strong> Bez zmian względem poprzedniego raportu.</li><li><strong>(c) Aktywa funduszu — brak nowego potwierdzonego punktu w tym oknie.</strong> Ostatni pewny punkt to ok. 297,1 mln zł (16.10.2026), opisany w poprzednich raportach.</li><li><strong>(d) Ryzyko polityczne — bez rozstrzygnięcia, bez zmiany.</strong> Sprawa przed Trybunałem Konstytucyjnym ws. ustawy o podatku od nadzwyczajnych zysków koncernów paliwowych (sygn. Kp 2/26) wciąż nie ma wyznaczonej daty rozprawy. Limity wypłat dywidend bankowych ustalone przez KNF oraz podniesiony CIT dla banków (z 19% do 30% w 2026 roku) pozostają bez zmian — to są już przyjęte reguły na 2026 rok, nie nowe ryzyko w tym oknie.</li></ul>
+<p><strong>Werdykt: DO OBSERWACJI (bez zmiany).</strong> W tym oknie nie pojawił się żaden nowy, istotny fakt — ani pozytywny, ani negatywny. Kluczowe testy (grudniowa wypłata, rozstrzygnięcie Trybunału Konstytucyjnego) wciąż są przed nami.</p>
+<hr>
+<h2>5. Werdykt + co dalej obserwować</h2>
+<h3>Werdykt: <strong>BLIŻEJ SZUMU NIŻ SYGNAŁU OSTRZEGAWCZEGO — żaden twardy sygnał portfela się nie zmienił, ale narastający, osobny wątek zadłużenia AI (CoreWeave) zasługuje na baczne śledzenie, niezależnie od samej tezy chipowej</strong></h3>
+<hr>
+<h4>Dowody ZA (teza portfela trzyma):</h4>
+<ol><li><strong>Żaden z pięciu twardych sygnałów redukcji nie zmienił statusu w tym oknie</strong> — cztery pozostają formalnie nie zapalone, a jedyny zapalony (d, Rocket Lab) dotyczy wyłącznie jednej, niekupionej jeszcze pozycji docelowej (2% wagi).</li><li><strong>Główna przyczyna piątkowej wyprzedaży (ropa, geopolityka) nie dotyka bezpośrednio tezy portfela</strong> — to inny mechanizm ryzyka niż obawy o capex AI, które dominowały poprzednie tygodnie tej serii raportów.</li><li><strong>Amazon i Meta wciąż potwierdzają wzrost, nie spadek, wydatków na AI</strong> — ten najmocniejszy dotąd dowód przeciw sygnałowi (a) z poprzedniego raportu pozostaje w mocy, a kolejne trzy testy (Microsoft, Google, Amazon) nadejdą w ciągu kilku dni.</li><li><strong>CoreWeave formalnie wciąż nie aktywowała sygnału (b)</strong> — mimo rekordowego napięcia, brak odpisu księgowego czy upadłości oznacza, że próg nie został przekroczony.</li></ol>
+<hr>
+<h4>Dowody PRZECIW (ryzyka, które wciąż są na stole):</h4>
+<ol><li><strong>Napięcie wokół zadłużenia CoreWeave ustanowiło w październiku nowy rekord</strong> — 5-letni CDS na poziomie wycenianym jako ok. 60% szans na niewypłacalność w 5 lat to najmocniejszy dotąd sygnał stresu w finansowaniu infrastruktury AI długiem w całej tej serii raportów, nawet jeśli formalnie nie aktywuje sygnału (b).</li><li><strong>Rynek pokazał w tym tygodniu, że potrafi spadać z przyczyn zupełnie niezwiązanych z tezą portfela</strong> — skok ceny ropy przypomina, że ryzyko makro/geopolityczne jest realne niezależnie od tego, jak dobrze trzyma się teza chipowo-AI.</li><li><strong>Rocket Lab wciąż nie podało konkretnej daty Neutrona</strong> — sygnał (d) pozostaje zapalony bez nowych informacji o postępie.</li><li><strong>Trzy kluczowe testy sygnału (a) nadejdą w ciągu kilku dni (28–29.10)</strong> — dopóki Microsoft, Google i Amazon nie opublikują wyników, teza o rosnącym capexie pozostaje potwierdzona tylko przez dwie z czterech śledzonych firm.</li><li><strong>Większość dokładnych notowań z tego okna pozostaje niepotwierdzona</strong> z powodu ograniczeń dostępu do źródeł danych giełdowych w tej sesji badawczej — czytelnik powinien zweryfikować aktualne kursy przed jakąkolwiek decyzją.</li></ol>
+<hr>
+<h3>Co obserwować</h3>
+<div class="tabela"><table><thead><tr><th>Termin</th><th>Co czekamy</th><th>Dlaczego ważne</th></tr></thead><tbody><tr><td data-etykieta="Termin"><strong>28 października 2026, 14:00 ET (ok. 20:00 w Polsce)</strong></td><td data-etykieta="Co czekamy">Decyzja FOMC (Fed) o stopach</td><td data-etykieta="Dlaczego ważne">Obecny przedział 3,75–4,00%; rynek oczekuje w większości utrzymania stóp, ale decyzja i ton komunikatu mogą poruszyć cały rynek</td></tr><tr><td data-etykieta="Termin"><strong>28 października 2026 (potwierdzone przez spółkę), po sesji</strong></td><td data-etykieta="Co czekamy">Wyniki Microsoftu za I kwartał roku fiskalnego 2027</td><td data-etykieta="Dlaczego ważne">Druga twarda weryfikacja sygnału (a) — po tym, jak Amazon i Meta już pokazały wzrost capexu</td></tr><tr><td data-etykieta="Termin"><strong>ok. 28 października 2026 (data wciąż niepotwierdzona formalnie przez spółkę)</strong></td><td data-etykieta="Co czekamy">Wyniki Q3 Google/Alphabet</td><td data-etykieta="Dlaczego ważne">Kolejna weryfikacja sygnału (a); także szansa na informacje o podpisaniu wyroku ws. AdX</td></tr><tr><td data-etykieta="Termin"><strong>29 października 2026 (potwierdzone przez spółkę)</strong></td><td data-etykieta="Co czekamy">Pełne wyniki Q3 Amazon</td><td data-etykieta="Dlaczego ważne">Ostatnia z czterech firm śledzonych w ramach sygnału (a) — potwierdzenie już ogłoszonej podwyżki prognozy capexu</td></tr><tr><td data-etykieta="Termin"><strong>30 października 2026</strong></td><td data-etykieta="Co czekamy">Termin odpowiedzi Tesli dla NHTSA ws. Cybercaba</td><td data-etykieta="Dlaczego ważne">Rozstrzygnie, czy spółka przedstawi uzasadnienie self-certyfikacji czy regulator zaostrzy działania; możliwa kara do 139 mln USD (~542 mln zł)</td></tr><tr><td data-etykieta="Termin"><strong>9 listopada 2026</strong></td><td data-etykieta="Co czekamy">Wyniki CoreWeave za III kwartał</td><td data-etykieta="Dlaczego ważne">Kluczowy test, czy rekordowe napięcie wokół zadłużenia spółki (CDS, kurs akcji) zaczyna się stabilizować, czy pogłębia — najlepszy dostępny barometr dla sygnału (b)</td></tr><tr><td data-etykieta="Termin"><strong>Listopad 2026 (bez konkretnej daty)</strong></td><td data-etykieta="Co czekamy">Planowany start usługi Robotaxi Tesli w Dallas</td><td data-etykieta="Dlaczego ważne">Rozszerzenie usługi poza Austin — test tezy robotycznej/autonomicznej niezależny od Optimusa</td></tr><tr><td data-etykieta="Termin"><strong>5 listopada 2026</strong></td><td data-etykieta="Co czekamy">Termin zakończenia przez Grain Management postępowania konkurencyjnego ws. sprzedaży pasma 800 MHz (wymóg FCC)</td><td data-etykieta="Dlaczego ważne">Formalnie zamyka transakcję Grain–SpaceX, w której AST SpaceMobile przegrało</td></tr><tr><td data-etykieta="Termin"><strong>13 listopada 2026</strong></td><td data-etykieta="Co czekamy">Termin dla głównego powoda w pozwie zbiorowym akcjonariuszy ASTS</td><td data-etykieta="Dlaczego ważne">Wyznacza dalszy tryb postępowania sądowego wobec spółki</td></tr><tr><td data-etykieta="Termin"><strong>Grudzień 2026</strong></td><td data-etykieta="Co czekamy">Głosowanie UE nad homologacją autopilota FSD Tesli</td><td data-etykieta="Dlaczego ważne">Niemcy (KBA) wciąż nie zdecydowały, jak zagłosują</td></tr><tr><td data-etykieta="Termin"><strong>Wczesny grudzień 2026</strong></td><td data-etykieta="Co czekamy">Trzecia wypłata dochodu ETFBDIVPL</td><td data-etykieta="Dlaczego ważne">Test, czy luka wobec stopy dywidendy indeksu zaczyna się domykać</td></tr><tr><td data-etykieta="Termin"><strong>I kwartał 2027 (plan etapowy, konkretna data wciąż nieznana)</strong></td><td data-etykieta="Co czekamy">Nowy, formalnie ogłoszony termin debiutu Neutrona (Rocket Lab)</td><td data-etykieta="Dlaczego ważne">Spółka opisała plan naprawy, ale nie podała jeszcze konkretnej daty startu</td></tr><tr><td data-etykieta="Termin"><strong>Początek 2027 (przesunięte z grudnia 2026)</strong></td><td data-etykieta="Co czekamy">Powrót rakiety New Glenn (Blue Origin) do latania</td><td data-etykieta="Dlaczego ważne">Dotyczy bezpośrednio ASTS — New Glenn ma wynosić część jej satelitów</td></tr><tr><td data-etykieta="Termin"><strong>II kwartał 2027</strong></td><td data-etykieta="Co czekamy">Planowany start dostaw nienadzorowanego FSD do pierwszych klientów (Tesla)</td><td data-etykieta="Dlaczego ważne">Kolejny test tezy autonomicznej, niezależny od Optimusa</td></tr><tr><td data-etykieta="Termin"><strong>Koniec 2027</strong></td><td data-etykieta="Co czekamy">Docelowe tempo produkcji Optimusa (20 000 szt./tydzień) oraz pierwsze dostawy do klientów zewnętrznych</td><td data-etykieta="Dlaczego ważne">Kluczowy test twardego sygnału (c)</td></tr><tr><td data-etykieta="Termin"><strong>Koniec 2027</strong></td><td data-etykieta="Co czekamy">Graniczny termin twardego sygnału (e) — pełna komercyjna usługa AST SpaceMobile</td><td data-etykieta="Dlaczego ważne">Ostateczny test tezy kosmicznej dla tej spółki</td></tr><tr><td data-etykieta="Termin"><strong>Połowa 2027</strong></td><td data-etykieta="Co czekamy">Planowane zamknięcie przejęcia Iridium przez Rocket Lab</td><td data-etykieta="Dlaczego ważne">Zgoda antymonopolowa USA (HSR) uzyskana w sierpniu; zgoda FCC wciąż potrzebna</td></tr><tr><td data-etykieta="Termin"><strong>29 marca 2027</strong></td><td data-etykieta="Co czekamy">Proces monopolowy FTC przeciw Amazonowi</td><td data-etykieta="Dlaczego ważne">Potwierdzony, skorygowany termin</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Publiczne złożenie prospektu IPO Westinghouse Electric (cel wyceny &gt;50 mld USD/~195 mld zł)</td><td data-etykieta="Dlaczego ważne">Spółka wciąż ma tylko poufny prospekt; nowy termin nieznany</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Rozstrzygnięcie postępowania Trybunału Konstytucyjnego ws. ustawy o podatku od nadzwyczajnych zysków koncernów paliwowych (sygn. Kp 2/26)</td><td data-etykieta="Dlaczego ważne">Dotyczy bezpośrednio Orlenu w indeksie WIGdivplus</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Decyzja DOJ ws. umowy NVIDIA–Groq (ok. 17–20 mld USD/~66–78 mld zł)</td><td data-etykieta="Dlaczego ważne">Dochodzenie trwa, z równoległym dochodzeniem kongresowym senatorów Warren i Blumenthal</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Podpisanie ostatecznego wyroku przez sędzię Brinkemę ws. Google AdX</td><td data-etykieta="Dlaczego ważne">Część zapisów (wybór monitora, terminy wdrożenia, zakres geograficzny) wciąż jest sporna</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Premiera modelu Gemini 3.5 Pro (Google)</td><td data-etykieta="Dlaczego ważne">Wciąż niepotwierdzona</td></tr><tr><td data-etykieta="Termin"><strong>Data nieustalona</strong></td><td data-etykieta="Co czekamy">Wynik testów FCC pasma 800 MHz AST SpaceMobile</td><td data-etykieta="Dlaczego ważne">Spółka złożyła wniosek o kolejne przedłużenie testów; wynik nieznany</td></tr></tbody></table></div>
+<hr>
+<h3>Działania w portfelu</h3>
+<p><strong>Bez zmian w mechanice bieżących zakupów — portfel pozostaje w fazie rozruchu (5 000 zł/mies. wyłącznie w Plan ETF).</strong> Decyzja o przejściu na pełne 10 000 zł miesięcznie należy do właściciela portfela i nie jest przedmiotem tego raportu. To okno nie przyniosło żadnej zmiany w pięciu twardych sygnałach redukcji, a głównym ryzykiem tygodnia było coś spoza samej tezy portfela — skok cen ropy w reakcji na napięcia geopolityczne. Jedyny wątek wymagający uwagi w kolejnych raportach to narastające napięcie wokół zadłużenia CoreWeave, które — choć formalnie nie aktywuje sygnału (b) i dotyczy spółki poza portfelem — jest obecnie najlepszym dostępnym barometrem tego, czy finansowanie infrastruktury AI długiem zaczyna się psuć. Nadchodzący tydzień (28–29.10) z wynikami Microsoftu, Google i Amazona będzie najważniejszym testem tezy chipowo-AI od kilku raportów.</p>
+<hr>
+<h2>Dodatek: krótka analiza CD Projekt RED (CDR)</h2>
+<p>Cykliczna analiza spółki poza śledzonym portfelem wzrostowym — <strong>CD Projekt RED NIE jest częścią portfela</strong> i nie podlega ocenie wg twardych sygnałów opisanych wyżej.</p>
+<p><strong>Kurs akcji.</strong> Nie udało się potwierdzić żadnej wiarygodnej, dokładnie zadatowanej wyceny dla sesji z tego okna — dostęp do bezpośrednich źródeł giełdowych (GPW, stooq.pl, bankier.pl) był w tej sesji badawczej w dużej mierze zablokowany, podobnie jak dla reszty raportu. Ostatni pewny punkt pozostaje 262,40 zł z 16.10.2026. Czytelnik powinien zweryfikować aktualny kurs bezpośrednio na GPW lub stooq.pl przed jakąkolwiek decyzją.</p>
+<p><strong>„Cyberpunk: Edgerunners 2" — oglądalność wciąż nieopublikowana przez Netflix.</strong> Serial wystartował 20.10.2026 ze wszystkimi 10 odcinkami naraz. Netflix nie opublikował jeszcze liczb oglądalności (co jest normalne tuż po premierze) — to wciąż do sprawdzenia w kolejnym raporcie. Pierwsze recenzje krytyków, opisane w poprzednim raporcie jako mieszane, raczej pozytywne, pozostają bez nowych, istotnych głosów w tym oknie.</p>
+<p><strong>Rekomendacje analityków — bez zmian, bez nowych w tym oknie.</strong> Potwierdzone poziomy: Noble Securities „akumuluj" (cel 250 zł, raport z 18.06.2026), DM BOŚ „trzymaj" (cel 270 zł), Santander BM „niedoważaj" (cel 185 zł). Żadna nowa rekomendacja nie została wydana w tym oknie.</p>
+<p><strong>Komunikaty spółki — bez nowych w tym oknie.</strong> Najbliższa okazja na twarde liczby sprzedażowe to skonsolidowany raport za III kwartał 2026, zapowiedziany na <strong>24 listopada 2026</strong>.</p>
+<p><strong>Pozostałe projekty — bez zmian.</strong> Trzeci dodatek „Pieśni przeszłości" (Fool's Theory) nadal celowany na 2027 rok. Wiedźmin 4 nadal orientacyjnie na 2028 rok.</p>
+<p><strong>Krótkie podsumowanie.</strong> Spokojne okno dla CDR — brak nowych komunikatów spółki, brak nowych rekomendacji, a kluczowy test popularności „Edgerunners 2" (oglądalność Netflix) wciąż przed nami. Kurs akcji w tym oknie pozostaje niepotwierdzony — czytelnik powinien zweryfikować go samodzielnie przed jakąkolwiek decyzją.</p>
+<hr>
+<h2>Źródła</h2>
+<ul><li><a href="https://www.themarketbreakdown.com/p/tech-steadies-as-oil-climbs-and-selling" rel="noopener">Dow loses 653 points, Brent reaches $116.72, selling spreads beyond AI — The Market Breakdown</a></li><li><a href="https://deanfi.com/insights/marketpulse/2026-10-23/" rel="noopener">S&amp;P 500 down 0.52% — Market Pulse, Oct 23, 2026 — DeanFi</a></li><li><a href="https://x.com/marketsday/status/2113836498651123743" rel="noopener">US Weekly Top Gainers and Losers Highlights — Markets Today (X/Twitter)</a></li><li><a href="https://www.kucoin.com/news/flash/u-s-stocks-split-in-weekly-performance-amid-earnings-season" rel="noopener">U.S. stocks showed mixed weekly performance amid earnings season — KuCoin</a></li><li><a href="https://www.energyintel.com/0000017d-e438-de78-a77f-f4fd3d670000" rel="noopener">EIA October 2026 outlook — Brent spot price and Middle East supply disruption context — referenced via energy market research</a></li><li><a href="https://letsdatascience.com/news/coreweave-shares-and-bonds-slide-as-debt-fears-grip-ai-build-b082a38e" rel="noopener">CoreWeave Shares and Bonds Slide as Debt Fears Grip AI Build-Out — LetsDataScience</a></li><li><a href="https://primexbt.com/news/coreweaves-credit-risk-hits-a-record-as-new-borrowing-plans-unsettle-bondholders/" rel="noopener">CoreWeave's credit risk hits a record as new borrowing plans unsettle bondholders — PrimeXBT</a></li><li><a href="https://www.bloomberg.com/opinion/articles/2026-10-20/coreweave-s-bond-rout-should-make-the-fed-cautious" rel="noopener">CoreWeave's Bond Rout Should Make the Fed Cautious — Bloomberg Opinion</a></li><li><a href="https://www.cnn.com/2026/10/20/investing/ai-debt-coreweave-tech-stocks" rel="noopener">Canary in the coal mine or just a bad apple? CoreWeave debt drama roils Wall Street — CNN</a></li><li><a href="https://www.cnbc.com/2026/10/15/coreweave-credit-default-swaps-hit-distress-levels-as-investors-sour-on-ai-debt.html" rel="noopener">CoreWeave credit default swaps hit distress levels as investors sour on AI debt — CNBC</a></li><li><a href="https://www.benzinga.com/markets/bonds/26/10/62503267/coreweave-bonds-spacex-results-treasury-yield" rel="noopener">CoreWeave Bonds Steady After SpaceX, Yields Near 15% — Benzinga</a></li><li><a href="https://www.fool.com/quote/nasdaq/crwv/" rel="noopener">CoreWeave (CRWV) Stock Price Today — Motley Fool</a></li><li><a href="https://www.tradingview.com/symbols/NASDAQ-CRWV/" rel="noopener">CRWV Stock Price and Chart — TradingView</a></li><li><a href="https://www.tipranks.com/news/the-fly/meta-platforms-drops-6-to-706-48-after-q3-report-thefly" rel="noopener">16:13 EDT Meta Platforms (META) drops 6% to $706.48 after Q3 report — TipRanks/The Fly</a></li><li><a href="https://www.ifcmarkets.com/en-CA/next-week-calendar/usdidx-economic-calendar-20-10-2026" rel="noopener">FOMC decision schedule, October 28, 2026 — IFCM</a></li><li><a href="https://www.insiderfinance.io/news/alphabet-q3-2026-earnings-preview" rel="noopener">Alphabet Q3 2026 Earnings Preview — InsiderFinance</a></li><li><a href="https://mfn.se/one/a/asml-holding/asml-reports-eu11-7-billion-total-net-sales-and-eu5-0-billion-net-income-in-q3-2026-6f2ccf27" rel="noopener">ASML Reports €11.7 Billion Total Net Sales and €5.0 Billion Net Income in Q3 2026 — MFN</a></li><li><a href="https://skillings.net/uranium-price-forecast-2026-spot-price-resistance-and-the-bull-cycle-warming-up" rel="noopener">Uranium price forecast 2026 — Skillings</a></li><li><a href="https://investors.rocketlabcorp.com/news-releases/news-release-details/rocket-lab-provides-update-neutron-development-and-adjusts" rel="noopener">Rocket Lab Provides Update on Neutron Development and Adjusts Target Launch Timing — Rocket Lab Investor Relations</a></li><li><a href="https://www.marketbeat.com/articles/ast-spacemobile-looks-to-extend-its-30-day-fcc-satellite-testing-window/" rel="noopener">AST SpaceMobile looks to extend its 30-day FCC satellite testing window — MarketBeat</a></li><li><a href="https://info.westinghousenuclear.com/news/westinghouse-confidentially-submits-draft-registration-statement-for-proposed-initial-public-offering" rel="noopener">Westinghouse confidentially submits draft registration statement for proposed IPO — Westinghouse Nuclear</a></li><li><a href="https://www.sdxcentral.com/news/nvidias-groq-deal-facing-doj-probe-amid-regulator-scrutiny-into-acqui-hires-report/" rel="noopener">Nvidia's Groq deal facing DOJ probe amid regulator scrutiny — SDxCentral</a></li><li><a href="https://adexchanger.com/publishers/google-and-the-doj-filed-their-proposed-final-judgments-in-the-ad-tech-case-heres-what-theyre-still-arguing-about" rel="noopener">Google and the DOJ filed their proposed final judgments in the ad tech case — AdExchanger</a></li><li><a href="https://www.tvp.info/95940339/kursy-walut-nbp-15102026-eur-usd-chf-w-czwartek-15-pazdziernika-euro-dolar-frank-szwajcarski" rel="noopener">Kursy walut NBP 15.10.2026 — TVP Info</a></li><li><a href="https://comparic.pl/dolar-mocno-traci-skad-taka-nagla-zmiana-kursu-dolara-euro-franka-i-funta/" rel="noopener">Kursy walut NBP — comparic.pl (dolar mocno traci)</a></li></ul>
+<hr>
+<p><em>Raport wygenerowany automatycznie 25 października 2026 r. Dostęp WebFetch do źródeł danych giełdowych i walutowych (stooq.pl, bankier.pl, nbp.pl, finance.yahoo.com, investing.com, biznesradar.pl, stockanalysis.com, google.com/finance i inne) był w tej sesji badawczej w dużej mierze zablokowany (błędy DNS), tak jak w poprzednich raportach. Część liczb, zwłaszcza dokładne zamknięcia kursów spółek i funduszy z okna 22–25.10.2026, pozostaje niepotwierdzona i wyraźnie tak oznaczona w tekście. Potraktuj je jako orientacyjne i zweryfikuj przed decyzją inwestycyjną. Analiza CD Projekt RED (CDR) na końcu raportu nie jest częścią śledzonego portfela wzrostowego. Nie stanowi porady inwestycyjnej.</em></p>
+    </article>
+
+    <nav class="nav-raporty"><a href="/raport-finansowy/2026-10-22-przeglad-rynku.html">&larr; Poprzedni raport</a><span class="nav-spacer"></span><a href="/">Archiwum</a><span class="nav-spacer"></span><span></span></nav>
+    <footer><a href="/">Grzyb Times</a> &mdash; raport redagowany przez AI. Nie stanowi porady inwestycyjnej.</footer>
+  </div>
+
+<script>
+  /* ---- motyw (wspólny klucz z gazetą — jeden wybór na cały serwis) ---- */
+  const root = document.documentElement;
+  if (localStorage.getItem('gazeta-theme') === 'dark' ||
+      (!localStorage.getItem('gazeta-theme') && matchMedia('(prefers-color-scheme: dark)').matches)) {
+    root.classList.add('dark');
+  }
+  document.getElementById('theme-toggle').onclick = () => {
+    root.classList.toggle('dark');
+    localStorage.setItem('gazeta-theme', root.classList.contains('dark') ? 'dark' : 'light');
+  };
+
+  /* ---- podgląd DEMO: szablon otwarty bez podstawionej treści ---- */
+  const tresc = document.getElementById('tresc');
+  if (tresc.textContent.trim() === '__' + 'TRESC' + '__') {
+    document.title = 'Raport finansowy — podgląd szablonu';
+    document.getElementById('tytul').textContent = 'Przegląd rynku';
+    document.querySelector('.kicker').textContent = 'Raport finansowy · PODGLĄD SZABLONU';
+    const dt = document.getElementById('data-raportu');
+    dt.removeAttribute('data-iso');
+    dt.textContent = 'Poniedziałek, 1 stycznia 2026';
+    document.querySelector('.nav-raporty').innerHTML =
+      '<span></span><span class="nav-spacer"></span><a href="/">Archiwum</a>' +
+      '<span class="nav-spacer"></span><span></span>';
+    tresc.innerHTML = `
+      <p>To jest <strong>podgląd szablonu</strong> — plik otwarty bez podstawionej treści.
+      Rutyna zastępuje <em>__TRESC__</em> raportem wyrenderowanym z markdownu
+      (<code>routine/buduj_raporty.py</code>).</p>
+      <h2>Sekcja raportu</h2>
+      <p>Akapit z <strong>pogrubieniem</strong>, <em>kursywą</em> i
+      <a href="#">odnośnikiem do źródła</a>. Lorem ipsum dolor sit amet, consectetur
+      adipiscing elit, sed do eiusmod tempor incididunt ut labore.</p>
+      <blockquote><p><strong>Kontekst:</strong> cytat blokowy — używany w raportach na wstęp i wnioski.</p></blockquote>
+      <ul><li>Punkt pierwszy listy</li><li>Punkt drugi listy</li></ul>
+      <div class="tabela"><table>
+        <thead><tr><th>ETF</th><th>Waga</th><th>Zmiana</th><th>Teza</th></tr></thead>
+        <tbody>
+          <tr><td data-etykieta="ETF"><strong>Przykład A</strong></td><td data-etykieta="Waga">40%</td><td data-etykieta="Zmiana">+1,2%</td><td data-etykieta="Teza">bez zmian</td></tr>
+          <tr><td data-etykieta="ETF"><strong>Przykład B</strong></td><td data-etykieta="Waga">35%</td><td data-etykieta="Zmiana">−0,8%</td><td data-etykieta="Teza">obserwujemy</td></tr>
+        </tbody>
+      </table></div>
+      <h2>Druga sekcja</h2>
+      <p>Spis treści powyżej buduje się automatycznie z nagłówków drugiego poziomu.</p>`;
+  }
+
+  /* ---- spis treści z H2 ---- */
+  const naglowki = [...tresc.querySelectorAll('h2')];
+  if (naglowki.length > 2) {
+    const ol = document.createElement('ol');
+    naglowki.forEach((h, i) => {
+      if (!h.id) h.id = 'sekcja-' + (i + 1);
+      const li = document.createElement('li');
+      const a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      li.appendChild(a);
+      ol.appendChild(li);
+    });
+    const spis = document.getElementById('spis');
+    spis.innerHTML = '<div class="spis-tytul">W tym raporcie</div>';
+    spis.appendChild(ol);
+  }
+
+  /* ---- data raportu: ISO (UTC) → czas polski; fallback na tekst w HTML ---- */
+  const elData = document.getElementById('data-raportu');
+  const iso = elData.getAttribute('data-iso');
+  if (iso && !isNaN(new Date(iso).getTime())) {
+    try {
+      const p = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/Warsaw', weekday: 'long', day: 'numeric', month: 'numeric', year: 'numeric'
+      }).formatToParts(new Date(iso)).reduce((o, x) => (o[x.type] = x.value, o), {});
+      const dni = { Monday: 'poniedziałek', Tuesday: 'wtorek', Wednesday: 'środa',
+        Thursday: 'czwartek', Friday: 'piątek', Saturday: 'sobota', Sunday: 'niedziela' };
+      const mies = ['', 'stycznia', 'lutego', 'marca', 'kwietnia', 'maja', 'czerwca',
+        'lipca', 'sierpnia', 'września', 'października', 'listopada', 'grudnia'];
+      elData.textContent = `${dni[p.weekday]}, ${parseInt(p.day, 10)} ${mies[parseInt(p.month, 10)]} ${p.year}`;
+    } catch (e) {}
+  }
+
+  /* ---- pasek postępu czytania ---- */
+  addEventListener('scroll', () => {
+    const max = document.body.scrollHeight - innerHeight;
+    document.getElementById('progress').style.width =
+      (max > 0 ? (scrollY / max) * 100 : 0) + '%';
+  }, { passive: true });
+</script>
+</body>
+</html>
